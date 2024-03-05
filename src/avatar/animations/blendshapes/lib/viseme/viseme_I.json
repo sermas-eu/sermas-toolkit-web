@@ -1,0 +1,314 @@
+[
+  {
+      "index": 0,
+      "score": 0.0000018368413066127687,
+      "categoryName": "_neutral",
+      "displayName": ""
+  },
+  {
+      "index": 1,
+      "score": 0.03427436947822571,
+      "categoryName": "browDownLeft",
+      "displayName": ""
+  },
+  {
+      "index": 2,
+      "score": 0.030819710344076157,
+      "categoryName": "browDownRight",
+      "displayName": ""
+  },
+  {
+      "index": 3,
+      "score": 0.016365086659789085,
+      "categoryName": "browInnerUp",
+      "displayName": ""
+  },
+  {
+      "index": 4,
+      "score": 0.08926714956760406,
+      "categoryName": "browOuterUpLeft",
+      "displayName": ""
+  },
+  {
+      "index": 5,
+      "score": 0.033123649656772614,
+      "categoryName": "browOuterUpRight",
+      "displayName": ""
+  },
+  {
+      "index": 6,
+      "score": 0.000022432081095757894,
+      "categoryName": "cheekPuff",
+      "displayName": ""
+  },
+  {
+      "index": 7,
+      "score": 3.157209675919148e-7,
+      "categoryName": "cheekSquintLeft",
+      "displayName": ""
+  },
+  {
+      "index": 8,
+      "score": 1.4139308746052848e-7,
+      "categoryName": "cheekSquintRight",
+      "displayName": ""
+  },
+  {
+      "index": 9,
+      "score": 0.26403704285621643,
+      "categoryName": "eyeBlinkLeft",
+      "displayName": ""
+  },
+  {
+      "index": 10,
+      "score": 0.25644615292549133,
+      "categoryName": "eyeBlinkRight",
+      "displayName": ""
+  },
+  {
+      "index": 11,
+      "score": 0.4780615270137787,
+      "categoryName": "eyeLookDownLeft",
+      "displayName": ""
+  },
+  {
+      "index": 12,
+      "score": 0.47856414318084717,
+      "categoryName": "eyeLookDownRight",
+      "displayName": ""
+  },
+  {
+      "index": 13,
+      "score": 0.008290532976388931,
+      "categoryName": "eyeLookInLeft",
+      "displayName": ""
+  },
+  {
+      "index": 14,
+      "score": 0.2703847885131836,
+      "categoryName": "eyeLookInRight",
+      "displayName": ""
+  },
+  {
+      "index": 15,
+      "score": 0.25793787837028503,
+      "categoryName": "eyeLookOutLeft",
+      "displayName": ""
+  },
+  {
+      "index": 16,
+      "score": 0.011919054202735424,
+      "categoryName": "eyeLookOutRight",
+      "displayName": ""
+  },
+  {
+      "index": 17,
+      "score": 0.011744207702577114,
+      "categoryName": "eyeLookUpLeft",
+      "displayName": ""
+  },
+  {
+      "index": 18,
+      "score": 0.009668879210948944,
+      "categoryName": "eyeLookUpRight",
+      "displayName": ""
+  },
+  {
+      "index": 19,
+      "score": 0.20730678737163544,
+      "categoryName": "eyeSquintLeft",
+      "displayName": ""
+  },
+  {
+      "index": 20,
+      "score": 0.26966917514801025,
+      "categoryName": "eyeSquintRight",
+      "displayName": ""
+  },
+  {
+      "index": 21,
+      "score": 0.0023520870599895716,
+      "categoryName": "eyeWideLeft",
+      "displayName": ""
+  },
+  {
+      "index": 22,
+      "score": 0.0011060016695410013,
+      "categoryName": "eyeWideRight",
+      "displayName": ""
+  },
+  {
+      "index": 23,
+      "score": 0.00005933424472459592,
+      "categoryName": "jawForward",
+      "displayName": ""
+  },
+  {
+      "index": 24,
+      "score": 0.0015950159868225455,
+      "categoryName": "jawLeft",
+      "displayName": ""
+  },
+  {
+      "index": 25,
+      "score": 0.024187013506889343,
+      "categoryName": "jawOpen",
+      "displayName": ""
+  },
+  {
+      "index": 26,
+      "score": 0.00005766330286860466,
+      "categoryName": "jawRight",
+      "displayName": ""
+  },
+  {
+      "index": 27,
+      "score": 0.003986869007349014,
+      "categoryName": "mouthClose",
+      "displayName": ""
+  },
+  {
+      "index": 28,
+      "score": 0.0008463463163934648,
+      "categoryName": "mouthDimpleLeft",
+      "displayName": ""
+  },
+  {
+      "index": 29,
+      "score": 0.0042655072174966335,
+      "categoryName": "mouthDimpleRight",
+      "displayName": ""
+  },
+  {
+      "index": 30,
+      "score": 0.0025341494474560022,
+      "categoryName": "mouthFrownLeft",
+      "displayName": ""
+  },
+  {
+      "index": 31,
+      "score": 0.003364859614521265,
+      "categoryName": "mouthFrownRight",
+      "displayName": ""
+  },
+  {
+      "index": 32,
+      "score": 0.0017169634811580181,
+      "categoryName": "mouthFunnel",
+      "displayName": ""
+  },
+  {
+      "index": 33,
+      "score": 0.001084326533600688,
+      "categoryName": "mouthLeft",
+      "displayName": ""
+  },
+  {
+      "index": 34,
+      "score": 0.001007332350127399,
+      "categoryName": "mouthLowerDownLeft",
+      "displayName": ""
+  },
+  {
+      "index": 35,
+      "score": 0.0005847426946274936,
+      "categoryName": "mouthLowerDownRight",
+      "displayName": ""
+  },
+  {
+      "index": 36,
+      "score": 0.01576109603047371,
+      "categoryName": "mouthPressLeft",
+      "displayName": ""
+  },
+  {
+      "index": 37,
+      "score": 0.09030764549970627,
+      "categoryName": "mouthPressRight",
+      "displayName": ""
+  },
+  {
+      "index": 38,
+      "score": 0.004029520321637392,
+      "categoryName": "mouthPucker",
+      "displayName": ""
+  },
+  {
+      "index": 39,
+      "score": 0.0003932149847969413,
+      "categoryName": "mouthRight",
+      "displayName": ""
+  },
+  {
+      "index": 40,
+      "score": 0.020040905103087425,
+      "categoryName": "mouthRollLower",
+      "displayName": ""
+  },
+  {
+      "index": 41,
+      "score": 0.008632638491690159,
+      "categoryName": "mouthRollUpper",
+      "displayName": ""
+  },
+  {
+      "index": 42,
+      "score": 0.032590750604867935,
+      "categoryName": "mouthShrugLower",
+      "displayName": ""
+  },
+  {
+      "index": 43,
+      "score": 0.07229644060134888,
+      "categoryName": "mouthShrugUpper",
+      "displayName": ""
+  },
+  {
+      "index": 44,
+      "score": 0.0008027702569961548,
+      "categoryName": "mouthSmileLeft",
+      "displayName": ""
+  },
+  {
+      "index": 45,
+      "score": 0.0014607857447117567,
+      "categoryName": "mouthSmileRight",
+      "displayName": ""
+  },
+  {
+      "index": 46,
+      "score": 0.000984087586402893,
+      "categoryName": "mouthStretchLeft",
+      "displayName": ""
+  },
+  {
+      "index": 47,
+      "score": 0.004211658611893654,
+      "categoryName": "mouthStretchRight",
+      "displayName": ""
+  },
+  {
+      "index": 48,
+      "score": 0.003714581485837698,
+      "categoryName": "mouthUpperUpLeft",
+      "displayName": ""
+  },
+  {
+      "index": 49,
+      "score": 0.007825886830687523,
+      "categoryName": "mouthUpperUpRight",
+      "displayName": ""
+  },
+  {
+      "index": 50,
+      "score": 8.092116559055285e-7,
+      "categoryName": "noseSneerLeft",
+      "displayName": ""
+  },
+  {
+      "index": 51,
+      "score": 0.0000011934928352275165,
+      "categoryName": "noseSneerRight",
+      "displayName": ""
+  }
+]

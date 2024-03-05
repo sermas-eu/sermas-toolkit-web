@@ -1,0 +1,250 @@
+import {
+  Emotion,
+  MqttMessageEvent,
+  UserCharacterizationEventSource,
+  emitter,
+} from '..';
+import { HolisticV1Results } from '../detection';
+import { Logger } from '../utils';
+
+import {
+  AvatarAudioPlaybackStatus,
+  AvatarFaceBlendShape,
+  AvatarModel,
+  LipSync,
+} from '.';
+
+import {
+  DialogueMessageDto,
+  SessionChangedDto,
+  UserCharacterizationEventDto,
+} from '@sermas/api-client/asyncapi';
+import { ListenerFn } from 'eventemitter2';
+import { VisemeType } from './animations/blendshapes/lib/viseme';
+
+const logger = new Logger('webavatar.handler');
+
+interface AudioQueue {
+  chunkId: string;
+  buffer: Uint8Array;
+}
+
+export class WebAvatarHandler {
+  private lastSet: { time: number; emotion: string };
+
+  private audioQueue: AudioQueue[] = [];
+  private messagesQueue: {
+    [chunkId: string]: { [time: string]: Uint8Array[] };
+  } = {};
+
+  private lipsync?: LipSync;
+
+  // register callbacks to init/destroy. Bind `this` as function context
+  callbacks: Record<string, ListenerFn> = {
+    'detection.characterization': this.onDetection,
+    'dialogue.speech': this.onSpeech,
+    'dialogue.messages': this.onDialogueMessage,
+    'session.session': this.onSession,
+    'avatar.face': this.setFace,
+    'avatar.speech.stop': this.onForceStop,
+    'detection.pose': this.setPose,
+    'detection.audio': this.setListening,
+  };
+
+  constructor(private readonly avatar: AvatarModel) {
+    //
+  }
+
+  toggleAudio(enabled?: boolean) {
+    this.lipsync?.toggleAudio(enabled);
+  }
+
+  onForceStop() {
+    this.audioQueue = [];
+    //this.stopSpeech();
+  }
+
+  startSpeech() {
+    logger.debug('playing speech started');
+
+    const ev: AvatarAudioPlaybackStatus = { status: 'started' };
+    emitter.emit('avatar.speech', ev);
+
+    this.avatar.getAnimation()?.playGestureTalking();
+  }
+
+  stopSpeech() {
+    logger.debug('playing speech ended');
+
+    const ev: AvatarAudioPlaybackStatus = { status: 'ended' };
+    emitter.emit('avatar.speech', ev);
+
+    this.avatar.getAnimation()?.playGestureIdle();
+  }
+
+  // onPlaybackChange(ev: AvatarAudioPlaybackStatus) {
+  //   this.avatarModel.setSpeaking(ev.status !== "ended")
+  // }
+
+  onDetection(ev: UserCharacterizationEventDto) {
+    if (ev.source !== UserCharacterizationEventSource.emotion_tracker) return;
+
+    // console.warn("EV", ev)
+
+    if (!this.avatar) return;
+
+    if (!ev.detections || !ev.detections.length) return;
+    const { emotion } = ev.detections[0];
+
+    const emotionValue = emotion.value as Emotion;
+
+    if (
+      this.lastSet &&
+      (Date.now() - this.lastSet.time < 1000 ||
+        this.lastSet.emotion === emotionValue)
+    )
+      return;
+
+    // logger.log(emotion.value, emotion.probability);
+    this.lastSet = {
+      time: Date.now(),
+      emotion: emotionValue,
+    };
+    // sendStatus(`set face ${emotion.value}`);
+
+    // this.avatarModel.play('gesture', emotion.value);
+    logger.debug(`Set emotion ${emotionValue}`);
+    this.avatar.getBlendShapes()?.setEmotion(emotionValue);
+  }
+
+  setListening(op: 'started' | 'stopped') {
+    if (op === 'started') {
+      this.avatar.getAnimation()?.playGesture('gesture_listening');
+    } else {
+      this.avatar.getAnimation()?.playGesture('gesture_idle');
+    }
+  }
+
+  onSession(ev: SessionChangedDto) {
+    if (ev.operation === 'created') {
+      // avatar greeting
+      this.avatar.getAnimation()?.playGesture('gesture_waving');
+    }
+    if (ev.operation === 'updated') {
+      if (ev.record.closedAt) {
+        // avatar bye bye
+        this.avatar.getAnimation()?.playGesture('gesture_waving');
+      }
+    }
+  }
+
+  onSpeech(ev: unknown, raw: MqttMessageEvent) {
+    if (!this.lipsync) return;
+
+    const buffer = raw.message.payload as Uint8Array;
+
+    const [, chunkId] = raw.context;
+
+    // already playing, add to queue
+    this.audioQueue.push({ chunkId, buffer });
+
+    if (!this.lipsync?.paused) {
+      logger.debug(`lypsync is paused`);
+      return;
+    }
+    this.playAudio();
+  }
+
+  playAudio() {
+    logger.debug('play speech chunk');
+
+    if (!this.audioQueue.length) return;
+
+    const raw = this.audioQueue
+      .sort((a, b) => (+a.chunkId > +b.chunkId ? 1 : -1))
+      .splice(0, 1)[0];
+
+    this.lipsync?.startFromAudioFile(raw.buffer as Uint8Array);
+  }
+
+  onDialogueMessage(ev: DialogueMessageDto) {
+    if (ev.actor === 'user') return;
+    if (!ev.text) {
+      // empty text comes when the user speech is not recognizable
+      this.stopSpeech();
+      return;
+    }
+  }
+
+  setFace(blendingShapes: AvatarFaceBlendShape[]) {
+    // this.avatarModel?.showBlendShapeGui()
+    this.avatar?.getBlendShapes()?.setFaceBlendShapes(blendingShapes);
+  }
+
+  setPose(poses: HolisticV1Results) {
+    this.avatar?.setPoses(poses);
+  }
+
+  async stopLipsync() {
+    await this.lipsync?.destroy();
+    this.lipsync?.removeAllListeners();
+  }
+
+  async startLipsync() {
+    this.lipsync = new LipSync();
+
+    let speechStopped = true;
+
+    this.lipsync.on('viseme', (ev: { key: VisemeType; value: number }) => {
+      if (speechStopped) return;
+      this.avatar.getBlendShapes()?.setViseme(ev.key);
+    });
+
+    this.lipsync.on('start', () => {
+      this.startSpeech();
+      speechStopped = false;
+    });
+
+    this.lipsync.on('end', () => {
+      this.avatar.getBlendShapes()?.setViseme('neutral');
+
+      if (this.audioQueue.length) {
+        this.playAudio();
+        return;
+      }
+
+      speechStopped = true;
+      this.stopSpeech();
+    });
+
+    // this.audio = document.createElement('audio') as HTMLAudioElement
+
+    // this.audio.onplay = () => {
+    //   this.startSpeech()
+    // }
+    // this.audio.onended = () => {
+    //   if (this.audioQueue.length) {
+    //     this.playAudio(this.audioQueue.splice(0, 1)[0])
+    //     return
+    //   }
+    //   this.stopSpeech()
+    // }
+  }
+
+  async init() {
+    Object.keys(this.callbacks).forEach((key) => {
+      this.callbacks[key] = this.callbacks[key].bind(this);
+      emitter.on(key, this.callbacks[key]);
+    });
+
+    await this.startLipsync();
+
+    this.avatar.getAnimation()?.playGestureIdle();
+  }
+  async destroy() {
+    Object.keys(this.callbacks).forEach((key) => {
+      emitter.off(key, this.callbacks[key]);
+    });
+    await this.stopLipsync();
+  }
+}

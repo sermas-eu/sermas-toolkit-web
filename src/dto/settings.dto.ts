@@ -1,0 +1,29 @@
+import type {
+  AppPromptDto,
+  AppSettingsDto,
+} from '@sermas/api-client/openapi';
+
+export class AppSettings implements AppSettingsDto {
+  enableTestFaces: boolean;
+  testFace: string;
+  enableAvatar: boolean;
+  enableAnimation: boolean;
+  enableMirrorMode: boolean;
+  enableMic: boolean;
+  enableAudio: boolean;
+  enableVideoDetection: boolean;
+  animation: string;
+  animationList: string[];
+  showVideo: boolean;
+  devMode: boolean;
+  rpmUrl: string;
+  rpmGender: string;
+  detectorHuman: boolean;
+  detectorFaceLandmarker: boolean;
+  avatar: string;
+  background: string;
+  language: string;
+  llm: string;
+  login: boolean;
+  prompt?: AppPromptDto | undefined;
+}

@@ -1,0 +1,59 @@
+// import { Logger } from "../../logger";
+// import { FilesetResolver, HandLandmarker, HandLandmarkerResult } from "@mediapipe/tasks-vision";
+// import { DetectionRenderingContext, VideoDetector } from "./VideoDetector";
+// import { getMediapipeVision } from "./libs/mediapipe";
+
+// export class HandLandmarkDetectorConfig {
+//     //
+// }
+
+// export class HandLandmarkDetector extends VideoDetector<HandLandmarkerResult> {
+
+//     logger = new Logger(HandLandmarkDetector.name)
+
+//     config: HandLandmarkDetectorConfig
+//     handLandmarker: HandLandmarker
+
+//     async destroy() {
+//         this.handLandmarker?.close()
+//     }
+
+//     async init(config: Partial<HandLandmarkDetectorConfig>) {
+
+//         const defaultConfig: Partial<HandLandmarkDetectorConfig> = {
+//             //
+//         }
+
+//         this.config = {...defaultConfig, ...config} as HandLandmarkDetectorConfig
+
+//         const vision = await getMediapipeVision()
+//         this.handLandmarker = await HandLandmarker.createFromOptions(vision, {
+//             baseOptions: {
+//                 modelAssetPath: `https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task`,
+//                 delegate: "GPU"
+//             },
+//             runningMode: "VIDEO",
+//         });
+
+//     }
+
+//     async detect(video: HTMLVideoElement) : Promise<HandLandmarkerResult|null> {
+//         const ts = performance.now()
+//         const detections = this.handLandmarker.detectForVideo(video, ts);
+//         return  detections ? detections : null
+//     }
+
+//     render(context: DetectionRenderingContext, results: HandLandmarkerResult) {
+//         if (!results) return
+
+//         const drawingUtils = context.utils
+//         for (const landmarks of results.landmarks) {
+//             drawingUtils.drawConnectors(landmarks, HandLandmarker.HAND_CONNECTIONS, {
+//                 color: "#00FF00",
+//                 lineWidth: 2
+//             });
+//             drawingUtils.drawLandmarks(landmarks, { color: "#FF0000", lineWidth: 1 });
+//         }
+//     }
+
+// }

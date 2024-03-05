@@ -1,0 +1,41 @@
+{
+  "include": [
+    "./src/**/*",
+    "toolkit.d.ts",
+    "models.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ],
+  "compilerOptions": {
+    "lib": [
+      "esnext",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "moduleResolution": "node",
+    "module": "esnext",
+    "target": "esnext",
+    "ignoreDeprecations": "5.0",
+    "baseUrl": "./src",
+    "paths": {},
+    "declaration": true,
+    "sourceMap": true,
+    "outDir": "./dist",
+    "importHelpers": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "noImplicitAny": false,
+    "skipLibCheck": true,
+    "strictPropertyInitialization": false,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "allowJs": true,
+    "checkJs": true,
+    "importsNotUsedAsValues": "remove",
+    "preserveValueImports": false,
+    "noImplicitOverride": false,
+    "useDefineForClassFields": false,
+  }
+}

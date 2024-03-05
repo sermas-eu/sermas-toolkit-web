@@ -1,0 +1,25 @@
+name: Release npm latest package
+on:
+  push:
+    tags:        
+      - 'v*.*.*'
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # Setup .npmrc file to publish to npm
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '20.x'
+          registry-url: 'https://registry.npmjs.org'
+      - run: npm install
+      - run: npm run build
+      # - run: git config --global user.name "${{ github.actor }}"
+      # - run: git config --global user.email "github-action-${{ github.actor }}@users.noreply.github.com"
+      # - name: Set env
+      #   run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+      # - run: npm version ${{ env.RELEASE_VERSION }}
+      - run: cd dist && npm publish --access public --tag latest
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
