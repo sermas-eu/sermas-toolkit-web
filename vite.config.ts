@@ -5,7 +5,7 @@ const mqttProxy = process.env.MQTT_PROXY || 'http://mqtt:1884'
 // const nodeModulesBasePath = '../sermas-toolkit/'
 const nodeModulesBasePath = './'
 
-const copyFiles = [
+const copyFiles: string[][] = [
 
     // @vladmandic/human
     [`${nodeModulesBasePath}node_modules/@vladmandic/human/models/blazeface.json`, "human/models"],
@@ -50,7 +50,7 @@ export const SermasViteConfig = {
     }
 }
 
-export const getCopyFiles = () => {
+export const getCopyFiles = () : ({[key: string]: string})[] => {
     return copyFiles.map((filepath) => {
         const [src, dest] = filepath
         return {
