@@ -10,7 +10,7 @@
   },
   "type": "module",
   "scripts": {
-    "build": "npm run clean && tsc --build tsconfig.json && cp package.json ./dist && cp vite.config.ts ./dist",
+    "build": "npm run clean && tsc --build tsconfig.json && cp package.json ./dist && cp vite.config.* ./dist",
     "build:watch": "npm run clean && tsc -w",
     "clean": "rm -rf ./dist"
   },
