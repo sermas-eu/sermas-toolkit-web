@@ -1,5 +1,5 @@
 import { AvatarFaceBlendShape } from '../../../avatar/webavatar.dto';
-import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min';
+import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js';
 import { Logger } from '../../../logger';
 import { AnimationBase } from '../animation.base';
 

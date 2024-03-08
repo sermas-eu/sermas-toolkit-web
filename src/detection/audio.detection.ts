@@ -1,7 +1,7 @@
 import type { AudioClassifier } from '@mediapipe/tasks-audio';
 import type { MicVAD } from '@ricky0123/vad-web/dist/real-time-vad';
 import EventEmitter2 from 'eventemitter2';
-import { emitter } from '..';
+import { emitter } from '../events';
 import { Logger } from '../logger';
 import { AudioClassificationValue } from './audio/audio.detection.dto';
 import { createAudioClassifier } from './audio/mediapipe/audio.classifier';
@@ -272,7 +272,7 @@ export class AudioDetection extends EventEmitter2 {
       this.logger.error('mic not supported');
       this.emit(
         'error',
-        new Error('Microphone not supported', { cause: 'MIC_NOT_SUPPORTED' }),
+        new Error('Microphone not supported'),
       );
       return undefined;
     }

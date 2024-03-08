@@ -15,7 +15,7 @@ import {
 import {
   UserCharacterizationDto,
   UserEmotionValue,
-} from '@sermas/api-client/asyncapi';
+} from '@sermas/api-client';
 import { Emotion } from 'dto';
 
 // import {setWasmPaths} from '@tensorflow/tfjs-backend-wasm';
@@ -32,7 +32,7 @@ interface HumanExpressionValue {
   emotion: HumanEmotion;
 }
 
-class HumanWorker extends BaseDetectorWorker {
+export class HumanWorker extends BaseDetectorWorker {
   private readonly logger = new Logger(`${HumanWorker.name}.worker`);
 
   private human: Human | undefined;

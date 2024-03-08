@@ -1,5 +1,5 @@
-import { AppSettingsDto } from '@sermas/api-client/openapi';
-import { emitter } from '..';
+import { AppSettingsDto } from '@sermas/api-client';
+import { emitter } from '../events';
 import { DEFAULT_AVATAR_LANGUAGE } from '../constants';
 import { AppSettings } from '../dto/settings.dto';
 import { logger } from 'logger';
@@ -47,7 +47,7 @@ export class Settings {
     return appSettingsDto;
   }
 
-  getDefaults() {
+  getDefaults() : AppSettings {
     return {
       ...this.defaults,
     };

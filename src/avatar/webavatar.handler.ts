@@ -2,8 +2,11 @@ import {
   Emotion,
   MqttMessageEvent,
   UserCharacterizationEventSource,
+} from '../dto';
+import {
   emitter,
-} from '..';
+} from '../events';
+
 import { HolisticV1Results } from '../detection';
 import { Logger } from '../utils';
 
@@ -18,7 +21,7 @@ import {
   DialogueMessageDto,
   SessionChangedDto,
   UserCharacterizationEventDto,
-} from '@sermas/api-client/asyncapi';
+} from '@sermas/api-client';
 import { ListenerFn } from 'eventemitter2';
 import { VisemeType } from './animations/blendshapes/lib/viseme';
 

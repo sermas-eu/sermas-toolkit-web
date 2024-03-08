@@ -1,4 +1,5 @@
-import type Human from '@vladmandic/human';
+
+import {Human} from '@vladmandic/human';
 import { BaseDetector } from '../base.detector';
 import { type VideoDetectorType } from '../video.dto';
 import { type HumanDetectionResult, HumanDetectorConfig } from './human.dto';

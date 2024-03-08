@@ -1,8 +1,8 @@
-import { SessionChangedDto } from '@sermas/api-client/asyncapi';
+import { SessionChangedDto } from '@sermas/api-client';
 import {
   AgentHeartBeatEventDto,
   PlatformAppDto,
-} from '@sermas/api-client/openapi';
+} from '@sermas/api-client';
 import { InteractionType } from 'dto/detection.dto';
 import EventEmitter2, { ListenerFn } from 'eventemitter2';
 import { v4 as uuidv4 } from 'uuid';
@@ -16,10 +16,15 @@ import { Logger } from './logger';
 import { MqttClient } from './mqtt-client';
 import { Settings } from './settings';
 
-export * from './dto';
-export { emitter } from './events';
-
-export { UI } from './ui';
+// exports 
+// export * from './dto';
+export * from '@sermas/api-client';
+export * from './constants'
+// export * as avatar from './avatar';
+// export * as detection from './detection';
+// export { Logger, logger } from './logger';
+// export { UI } from './ui';
+// export * as util from './utils';
 
 export type Env = 'local' | 'dev' | 'staging' | 'prod';
 const defaultEnv: Env = 'prod';

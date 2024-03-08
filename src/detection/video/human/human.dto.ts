@@ -1,4 +1,4 @@
-import { UserCharacterizationDto } from '@sermas/api-client/asyncapi';
+import { UserCharacterizationDto } from '@sermas/api-client';
 import { VideoDetectorConfig } from '../video.dto';
 import { type Result } from '@vladmandic/human';
 

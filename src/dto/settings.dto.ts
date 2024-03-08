@@ -1,7 +1,7 @@
 import type {
   AppPromptDto,
   AppSettingsDto,
-} from '@sermas/api-client/openapi';
+} from '@sermas/api-client';
 
 export class AppSettings implements AppSettingsDto {
   enableTestFaces: boolean;

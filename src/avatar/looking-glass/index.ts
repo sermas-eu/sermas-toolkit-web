@@ -1,11 +1,13 @@
-import * as lookingglass from '@lookingglass/webxr';
-import { VRButton } from 'three/examples/jsm/webxr/VRButton';
+import { VRButton } from 'three/examples/jsm/webxr/VRButton.js';
 
 export class LookingGlassAdapter {
   constructor() {}
 
   async init(renderer: THREE.WebGLRenderer) {
+    
+    const lookingglass = await import('@lookingglass/webxr')
     console.log(lookingglass);
+
     const { LookingGlassWebXRPolyfill } = lookingglass;
     const lookingGlassWebXR = new LookingGlassWebXRPolyfill({
       tileHeight: 512,

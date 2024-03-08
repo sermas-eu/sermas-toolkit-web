@@ -1,5 +1,5 @@
-import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader';
-import { GLTFLoader, type GLTF } from 'three/examples/jsm/loaders/GLTFLoader';
+import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
+import { GLTFLoader, type GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { Logger } from '../../../logger';
 import { AvatarModelConfig, GestureMappingKeys } from '../../webavatar.dto';
 import { RpmAnimation } from './contants';

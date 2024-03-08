@@ -1,15 +1,15 @@
 import EventEmitter2, { ListenerFn } from 'eventemitter2';
-import { emitter } from '..';
+import { emitter } from '../events';
 import { AvatarAudioPlaybackStatus } from '../avatar';
 import { ChatMessage, UiButtonSession } from '../dto/ui.dto';
 import { EventListenerTracker } from '../events';
 import { Logger } from '../logger';
-import { UIContentDto } from '@sermas/api-client/openapi';
+import { UIContentDto } from '@sermas/api-client';
 import { DialogueActor } from 'dto/dialogue.dto';
 import {
   DialogueMessageDto,
   SessionChangedDto,
-} from '@sermas/api-client/asyncapi';
+} from '@sermas/api-client';
 import { SessionStatus } from 'dto/session.dto';
 
 export class UI {

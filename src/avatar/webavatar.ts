@@ -1,9 +1,9 @@
 import * as THREE from 'three';
 import { Clock } from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
-import Stats from 'three/examples/jsm/libs/stats.module';
-import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader';
-import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import Stats from 'three/examples/jsm/libs/stats.module.js';
+import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
+import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
 import type { HolisticV1Results } from '../detection/video/mediapipe/v1/holistic/holistic.dto';
 import { sendStatus } from '../events';
@@ -20,6 +20,12 @@ import {
 } from './webavatar.defaults';
 import { WebAvatarHandler } from './webavatar.handler';
 import { WebAvatarXR } from './xr';
+
+// exports
+export {
+  DefaultAvatarConfig,
+  DefaultReadyPlayerMeAvatarConfig,
+} from './webavatar.defaults';
 
 const logger = new Logger('webavatar.api');
 

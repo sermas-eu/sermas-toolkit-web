@@ -1,4 +1,4 @@
-import { UIContentDto } from '@sermas/api-client/openapi';
+import { UIContentDto } from '@sermas/api-client';
 import { DialogueActor } from './dialogue.dto';
 import { SessionStatus } from './session.dto';
 

@@ -1,2 +1,3 @@
 export { addGlobal } from './global';
-export { Logger } from './logger';
+export { Logger, logger } from './logger';
+export { FpsMonitor, type PerformanceEvent } from './fps'

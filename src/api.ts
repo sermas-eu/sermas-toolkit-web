@@ -9,7 +9,7 @@ import {
   UIModelMapBlendShapesRequestDto,
   UIModelMapBlendShapesResponseDto,
   UserInteractionIntentionDto,
-} from '@sermas/api-client/openapi';
+} from '@sermas/api-client';
 import {
   Axios,
   AxiosError,
@@ -21,7 +21,7 @@ import { AgentStatus, UserReferenceSource } from 'dto/session.dto';
 import { AuthToken } from './auth';
 import { DEFAULT_AVATAR_LANGUAGE } from './constants';
 import type { SendAudioQueryParamsDto } from './dto/api.dto';
-import { Logger } from './logger.js';
+import { Logger } from './logger';
 
 export interface ApiClientOptions {
   token?: string;

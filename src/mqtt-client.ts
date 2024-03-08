@@ -93,7 +93,7 @@ export class MqttClient {
     this.mqttClient?.subscribe(topics, (e) => {
       if (e) {
         this.logger.warn(
-          `failed subscription to ${JSON.stringify(topics)}: ${e.cause}`,
+          `failed subscription to ${JSON.stringify(topics)}: ${e.stack}`,
         );
       }
     });
@@ -221,7 +221,7 @@ export class MqttClient {
       this.logger.warn('close');
     });
     mqttClient.on('error', (e) => {
-      this.logger.error(`mqtt client connection error: ${e.cause}`);
+      this.logger.error(`mqtt client connection error: ${e.stack}`);
     });
   }
 }

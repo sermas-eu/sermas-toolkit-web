@@ -2,15 +2,31 @@
   "name": "@sermas/toolkit",
   "version": "1.0.0-alpha6",
   "description": "Sermas Toolkit Web",
-  "main": "index.js",
-  "types": "index.d.ts",
+  "main": "./index.js",
+  "module": "./index.mjs",
+  "types": "./index.d.ts",
+  "exports": {
+    ".": "./index.mjs",
+    "./utils": "./utils.mjs",
+    "./detection": "./detection/index.mjs",
+    "./detection/video/human/human.worker": "./detection/video/human/human.worker.mjs",
+    "./detection/video/mediapipe/v2/face-landmarker": "./detection/video/mediapipe/v2/face-landmarker.mjs",
+    "./events": "./events/index.mjs",
+    "./dto": "./dto/index.mjs",
+    "./ui": "./ui/index.mjs",
+    "./avatar": "./avatar/index.mjs",
+    "./events/*": "./events/index.mjs",
+    "./settings/*": "./settings/*",
+    "./ui/*": "./ui/*",
+    "./package.json": "./package.json"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/sermas-organization/sermas-toolkit-web.git"
   },
   "scripts": {
-    "build": "npm run clean && tsc --build tsconfig.json && cp package.json ./dist && cp vite.config.* ./dist",
-    "build:watch": "npm run clean && tsc -w",
+    "build": "npm run clean && tsup ./src && cp package.json ./dist",
+    "build:watch": "npm run clean && tsup --watch",
     "clean": "rm -rf ./dist"
   },
   "author": "",
@@ -26,10 +42,12 @@
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-prettier": "^5.1.3",
     "prettier": "^3.2.5",
+    "tsup": "^8.0.2",
     "typescript": "^5.2.2"
   },
   "dependencies": {
     "@lookingglass/webxr": "^0.4.0",
+    "@lookingglass/webxr-polyfill": "^0.1.1",
     "@mediapipe/drawing_utils": "^0.3.1675466124",
     "@mediapipe/holistic": "^0.5.1675471629",
     "@mediapipe/tasks-audio": "^0.10.7",
