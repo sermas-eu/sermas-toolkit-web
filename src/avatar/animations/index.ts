@@ -65,10 +65,7 @@ export class WebavatarAnimation extends AnimationBase {
   }
 
   animate(delta: number): void {
-    getTypedKeys<AnimationGroup>(this.mixer).forEach((group) => {
-      if (this.mixer[group]) this.mixer[group].update(delta);
-    });
-
+    getTypedKeys<AnimationGroup>(this.mixer).forEach((group) => this.mixer[group]?.update(delta));
     this.blendShapes.animate(delta);
   }
 
@@ -84,12 +81,15 @@ export class WebavatarAnimation extends AnimationBase {
     this.onAnimationFinished = this.onAnimationFinished.bind(this);
     this.processModel();
 
-    getTypedKeys<AnimationGroup>(
-      this.avatar.getConfig().animations?.masks,
-    ).forEach((group) => {
-      this.mixer[group] = new THREE.AnimationMixer(model);
-      this.mixer[group].addEventListener('finished', this.onAnimationFinished);
-    });
+    // getTypedKeys<AnimationGroup>(
+    //   this.avatar.getConfig().animations?.masks,
+    // ).forEach((group) => {
+    //   this.mixer[group] = new THREE.AnimationMixer(model);
+    //   this.mixer[group].addEventListener('finished', this.onAnimationFinished);
+    // });
+
+    this.mixer['gesture'] = new THREE.AnimationMixer(model);
+    this.mixer['gesture'].addEventListener('finished', this.onAnimationFinished);
 
     await this.loadAnimations();
     await this.blendShapes.init();
@@ -112,7 +112,7 @@ export class WebavatarAnimation extends AnimationBase {
 
   async destroy() {
     getTypedKeys<AnimationGroup>(this.mixer).forEach((group) =>
-      this.mixer[group].removeEventListener(
+      this.mixer[group]?.removeEventListener(
         'finished',
         this.onAnimationFinished,
       ),

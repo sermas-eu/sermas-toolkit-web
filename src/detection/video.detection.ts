@@ -145,13 +145,21 @@ export class VideoDetection extends EventEmitter2 {
 
     if (this.skipDetection()) return;
 
+    let frame: ImageBitmap
+    try {
+      frame = await createImageBitmap(video);
+    } catch(e: any) {
+      this.logger.warn(`Failed createImageBitmap: ${e.message}`)
+      return
+    }
+
+    if (!frame) return;
+
     this.detectors.forEach(async (detector) => {
       try {
-        const frame = await createImageBitmap(video);
-        if (!frame) return;
         detector.process(frame);
       } catch (e: any) {
-        this.logger.warn(`Failed createImageBitmap: ${e.message} `);
+        this.logger.warn(`Failed to process frame: ${e.message} `);
       }
     });
   }

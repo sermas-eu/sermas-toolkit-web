@@ -18,7 +18,8 @@ export default {
         "jest": true
     },
     "ignorePatterns": [
-        ".eslintrc.js"
+        ".eslintrc.js",
+        ".eslintrc.mjs"
     ],
     "rules": {
         "@typescript-eslint/interface-name-prefix": "off",

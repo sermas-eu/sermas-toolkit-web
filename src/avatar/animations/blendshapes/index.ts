@@ -18,7 +18,6 @@ export class BlendShapeAnimation extends AnimationBase {
   private gui: GUI;
 
   animate(delta: number): void {
-    delta;
     //
   }
 

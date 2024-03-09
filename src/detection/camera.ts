@@ -73,14 +73,19 @@ export class CameraHandler {
 
     // track frame change
     let lastTime = -1;
-    const onAnimationFrame = () => {
+    const onAnimationFrame = (currentTime = 0) => {
       if (this.stopped) return;
-      const currentTime = video.currentTime;
       if (currentTime !== lastTime) {
         lastTime = currentTime;
         this.config.onFrame(this.config.video);
       }
-      requestAnimationFrame(onAnimationFrame);
+      // https://developer.mozilla.org/en-US/docs/Web/API/HTMLVideoElement/requestVideoFrameCallback
+      if ("requestVideoFrameCallback" in HTMLVideoElement.prototype) {
+        this.config.video.requestVideoFrameCallback(onAnimationFrame)
+      }
+      else {
+        requestAnimationFrame(onAnimationFrame);
+      }
     };
 
     onAnimationFrame();
