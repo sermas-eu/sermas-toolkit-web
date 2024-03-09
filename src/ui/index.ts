@@ -118,7 +118,7 @@ export class UI {
 
     const actor = ev.actor as DialogueActor;
     this.appendContent(actor, {
-      contentType: UIContentDto.contentType.DIALOGUE_MESSAGE,
+      contentType: 'dialogue-message',
       content: ev,
       appId: ev.appId,
       chunkId: ev.chunkId,

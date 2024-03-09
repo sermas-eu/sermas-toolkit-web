@@ -298,7 +298,7 @@ export class SermasToolkit {
     await this.api.sendAgentHeartBeat({
       appId: this.options.appId,
       moduleId: this.options.moduleId,
-      status: AgentHeartBeatEventDto.status.READY,
+      status: 'ready',
       sessionId: this.sessionId,
     });
 

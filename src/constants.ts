@@ -11,8 +11,8 @@ export const UI_INTERACTION_TOPIC = 'ui/interaction';
 
 
 export const DefaultModel: RepositoryAvatarModelDto = {
-    modelType: RepositoryAvatarModelDto.modelType.READYPLAYERME,
-    gender: RepositoryAvatarModelDto.gender.F,
+    modelType: 'readyplayerme',
+    gender: 'F',
     modelPath: 'models/default',
   };
   

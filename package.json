@@ -10,7 +10,7 @@
     "./utils": "./utils.mjs",
     "./detection": "./detection/index.mjs",
     "./detection/video/human/human.worker": "./detection/video/human/human.worker.mjs",
-    "./detection/video/mediapipe/v2/face-landmarker": "./detection/video/mediapipe/v2/face-landmarker.mjs",
+    "./detection/video/mediapipe/v2/face-landmarker": "./detection/video/mediapipe/v2/face-landmarker/index.mjs",
     "./events": "./events/index.mjs",
     "./dto": "./dto/index.mjs",
     "./ui": "./ui/index.mjs",
@@ -25,8 +25,8 @@
     "url": "https://github.com/sermas-organization/sermas-toolkit-web.git"
   },
   "scripts": {
-    "build": "npm run clean && tsup ./src && cp package.json ./dist",
-    "build:watch": "npm run clean && tsup --watch",
+    "build": "npm run clean && tsup && cp package.json ./dist",
+    "build:watch": "npm run clean && tsup --watch --onSuccess 'cp package.json ./dist && rm -r ../../frontend/kiosk/node_modules/@sermas/toolkit && cp -r dist/ ../../frontend/kiosk/node_modules/@sermas/toolkit'",
     "clean": "rm -rf ./dist"
   },
   "author": "",

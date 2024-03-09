@@ -86,8 +86,13 @@ export class AudioDetection extends EventEmitter2 {
   }
 
   async startVAD(stream?: MediaStream) {
-    const vadModule = await import('@ricky0123/vad-web/dist/index');
+    this.logger.debug(`Loading VAD`)
+
+    const vadModuleLoader = await import('@ricky0123/vad-web/dist/index');
+    const vadModule = vadModuleLoader.default || vadModuleLoader
+
     try {
+
       const onSpeech = async (
         op: 'started' | 'stopped',
         audio?: Float32Array,

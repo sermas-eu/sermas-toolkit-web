@@ -1,4 +1,4 @@
-import {
+import type {
   AgentHeartBeatEventDto,
   AuthJwtUser,
   DialogueUserMessageDto,
@@ -278,10 +278,7 @@ export class ApiClient {
       source,
       sessionId,
       probability: 1,
-      interactionType:
-        interactionType === 'start'
-          ? UserInteractionIntentionDto.interactionType.START
-          : UserInteractionIntentionDto.interactionType.STOP,
+      interactionType,
     };
 
     return await this.post<void>('detection/interaction', payload);
