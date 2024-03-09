@@ -159,14 +159,14 @@ export class WebAvatarHandler {
   }
 
   playAudio() {
-    logger.debug('play speech chunk');
 
     if (!this.audioQueue.length) return;
 
     const raw = this.audioQueue
       .sort((a, b) => (+a.chunkId > +b.chunkId ? 1 : -1))
       .splice(0, 1)[0];
-
+    
+    logger.debug(`play speech chunk chunkId=${raw.chunkId}`);
     this.lipsync?.startFromAudioFile(raw.buffer as Uint8Array);
   }
 

@@ -13,6 +13,7 @@ const MAX_VISEME_REPEAT = 30;
 interface LastViseme {
   viseme: VisemeType;
   count: number;
+  index: number;
 }
 
 export class LipSync extends EventEmitter2 {
@@ -22,12 +23,19 @@ export class LipSync extends EventEmitter2 {
 
   private FFT_SIZE = 2048;
   private samplingFrequency = 48000;
-
   private dataArray: Uint8Array;
-  private lastViseme: LastViseme = {
-    viseme: 'neutral',
-    count: 0,
-  };
+
+  private lastVowelIndex: number = 0;
+  private lastDelta: number = 0;
+
+  private vowels: VisemeType[] = [
+    'neutral',
+    'a',
+    'e',
+    'i',
+    'o',
+    'u',
+  ]
 
   private calibratedVowels: {
     a: number[];
@@ -152,57 +160,66 @@ export class LipSync extends EventEmitter2 {
   }
 
   updateExpression(deltaTime: number) {
+
+    // const res = this.process();
+    // if (!res) {
+    //   // this.emit('viseme', neutral)
+    //   return;
+    // }
+
+    // const { a, e, i, o, u } = res;
+
+    // const visemes: LipSyncMapping[] = [
+    //   { key: 'a', value: a },
+    //   { key: 'e', value: e },
+    //   { key: 'i', value: i },
+    //   { key: 'o', value: o },
+    //   { key: 'u', value: u },
+    // ];
+    // const sorted = visemes.sort((a, b) => (a.value < b.value ? 1 : -1));
+    // const current = sorted[0] && sorted[0].value > 0 ? sorted[0] : neutral;
+
+    // const isSameViseme = current.key === this.lastViseme.viseme;
+    // if (isSameViseme) {
+    //   this.lastViseme.count++;
+
+    //   if (this.lastViseme.count > MAX_VISEME_REPEAT) {
+
+    //     this.emit('viseme', neutral);
+    //     this.lastViseme = {
+    //       viseme: neutral.key,
+    //       count: 0,
+    //     };
+
+    //     return;
+    //   }
+    // }
+
     if (!this.meter) return;
 
     const volume = this.meter.volume;
 
-    if (volume < 0.01) {
+    if (volume < 0.06) {
+      this.lastVowelIndex = 0
+      this.lastDelta = deltaTime
       this.emit('viseme', neutral);
       return;
     }
 
-    const res = this.process();
-    if (!res) {
-      // this.emit('viseme', neutral)
-      return;
+    if (deltaTime - this.lastDelta < 70) {
+      return
     }
 
-    const { a, e, i, o, u } = res;
-
-    const visemes: LipSyncMapping[] = [
-      { key: 'a', value: a },
-      { key: 'e', value: e },
-      { key: 'i', value: i },
-      { key: 'o', value: o },
-      { key: 'u', value: u },
-    ];
-    const sorted = visemes.sort((a, b) => (a.value < b.value ? 1 : -1));
-
-    const current = sorted[0] && sorted[0].value > 0 ? sorted[0] : neutral;
-
-    const isSameViseme = current.key === this.lastViseme.viseme;
-    if (isSameViseme) {
-      this.lastViseme.count++;
-
-      if (this.lastViseme.count < MAX_VISEME_REPEAT) {
-        return;
-      }
-
-      this.emit('viseme', neutral);
-      this.lastViseme = {
-        viseme: neutral.key,
-        count: 0,
-      };
-
-      return;
+    let index = this.lastVowelIndex + 1
+    if (index === this.vowels.length) {
+      index = 0
     }
 
-    this.lastViseme = {
-      viseme: current.key,
-      count: 0,
-    };
+    this.lastDelta = deltaTime
+    this.lastVowelIndex = index
 
-    this.emit('viseme', current);
+    // console.log(this.lastViseme.viseme, this.lastViseme.count, diffTime)
+    this.emit('viseme', { key: this.vowels[this.lastVowelIndex], value: 1 });
   }
 
   getBinIndex(minFreq: number, maxFreq: number) {
@@ -218,9 +235,13 @@ export class LipSync extends EventEmitter2 {
     for (const vowel in this.calibratedVowels) {
       const [minFreq, maxFreq] = this.calibratedVowels[vowel];
       const { minFreqIndex, maxFreqIndex } = this.getBinIndex(minFreq, maxFreq);
+      console.log(vowel, minFreqIndex, maxFreqIndex)
       const vowelIntensity = this.dataArray
         .slice(minFreqIndex, maxFreqIndex + 1)
         .reduce((sum, value) => sum + value, 0);
+
+      console.log(vowel, this.dataArray.slice(minFreqIndex, maxFreqIndex + 1))
+
       this.detectedVowels[vowel] = vowelIntensity;
     }
     return { ...this.detectedVowels };
