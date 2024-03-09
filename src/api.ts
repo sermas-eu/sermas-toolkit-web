@@ -16,8 +16,8 @@ import {
   isAxiosError,
   type AxiosRequestConfig,
 } from 'axios';
-import { InteractionType } from 'dto/detection.dto';
-import { AgentStatus, UserReferenceSource } from 'dto/session.dto';
+import { InteractionType } from './dto/detection.dto';
+import { AgentStatus, UserReferenceSource } from './dto/session.dto';
 import { AuthToken } from './auth';
 import { DEFAULT_AVATAR_LANGUAGE } from './constants';
 import type { SendAudioQueryParamsDto } from './dto/api.dto';

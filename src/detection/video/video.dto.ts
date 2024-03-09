@@ -35,7 +35,7 @@ export class VideoDetectorConfig implements Record<string, any> {
   render?: boolean;
 }
 
-export type WorkerLoader = () => Promise<any | undefined>;
+export type WorkerLoader = () => Worker | Promise<any | undefined>;
 
 export abstract class VideoDetector<
   C extends VideoDetectorConfig = VideoDetectorConfig,

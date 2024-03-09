@@ -20,12 +20,18 @@ export class HumanDetector extends BaseDetector<
       this.logger.error(`Missing workerLoader() function`);
       return null;
     }
-    const Module = await this.workerLoader();
+
+    const p = this.workerLoader()
+    const isPromise = typeof p === 'object' && typeof (p as any).then === 'function'
+
+    if (!isPromise) return p as Worker
+
+    const Module = await p;
     if (!Module) {
       this.logger.error(`Module is not set from workerLoader() function`);
       return null;
     }
-    return new Module.default() as Worker;
+    return new Module.default() as Worker
   }
 
   async init(): Promise<void> {

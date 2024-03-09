@@ -1,9 +1,5 @@
-import { SessionChangedDto } from '@sermas/api-client';
-import {
-  AgentHeartBeatEventDto,
-  PlatformAppDto,
-} from '@sermas/api-client';
-import { InteractionType } from 'dto/detection.dto';
+import { PlatformAppDto, SessionChangedDto } from '@sermas/api-client';
+import { InteractionType } from './dto/detection.dto';
 import EventEmitter2, { ListenerFn } from 'eventemitter2';
 import { v4 as uuidv4 } from 'uuid';
 import { ApiClient } from './api';
@@ -19,7 +15,7 @@ import { Settings } from './settings';
 // exports 
 // export * from './dto';
 export * from '@sermas/api-client';
-export * from './constants'
+export * from './constants';
 // export * as avatar from './avatar';
 // export * as detection from './detection';
 // export { Logger, logger } from './logger';

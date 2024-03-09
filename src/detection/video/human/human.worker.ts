@@ -12,7 +12,7 @@ import {
   type Config as HumanConfig,
   type Emotion as HumanEmotion,
 } from '@vladmandic/human';
-import {
+import type {
   UserCharacterizationDto,
   UserEmotionValue,
 } from '@sermas/api-client';
@@ -32,7 +32,7 @@ interface HumanExpressionValue {
   emotion: HumanEmotion;
 }
 
-export class HumanWorker extends BaseDetectorWorker {
+class HumanWorker extends BaseDetectorWorker {
   private readonly logger = new Logger(`${HumanWorker.name}.worker`);
 
   private human: Human | undefined;
