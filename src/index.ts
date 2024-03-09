@@ -1,4 +1,4 @@
-import { PlatformAppDto, SessionChangedDto } from '@sermas/api-client';
+import type { PlatformAppDto, SessionChangedDto } from '@sermas/api-client';
 import { InteractionType } from './dto/detection.dto';
 import EventEmitter2, { ListenerFn } from 'eventemitter2';
 import { v4 as uuidv4 } from 'uuid';
