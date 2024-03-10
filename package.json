@@ -24,8 +24,8 @@
     "url": "https://github.com/sermas-organization/sermas-toolkit-web.git"
   },
   "scripts": {
-    "build": "npm run clean && tsup && cp package.json ./dist",
-    "build:watch": "npm run clean && tsup --watch --onSuccess 'cp package.json ./dist && rm -r ../../frontend/kiosk/node_modules/@sermas/toolkit && cp -r dist/ ../../frontend/kiosk/node_modules/@sermas/toolkit'",
+    "build": "npm run clean && tsup && cp ./package.json ./svelte.config.mjs ./vite.config.ts ./dist/",
+    "build:watch": "npm run clean && tsup --watch",
     "clean": "rm -rf ./dist"
   },
   "author": "",
