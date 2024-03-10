@@ -74,12 +74,8 @@ export class UI {
   }
 
   addHistory(message: ChatMessage) {
-    // change max history if mobile
-    const maxHistory = this.detectMob() ? 3 : 15;
-    this.history = [...this.history, message];
-    if (history.length > maxHistory) {
-      this.history = this.history.splice(-maxHistory);
-    }
+    this.history = this.history || []
+    this.history.push(message)
     this.setHistory(this.history);
   }
 
@@ -172,13 +168,18 @@ export class UI {
     // }
 
     // this.logger.debug(`Append message from ${actor} ${JSON.stringify(ev.content)}`)
-    this.history[this.history.length - 1].messages.push(ev);
+
+    const lastIndex = this.history.length - 1
+    this.history[lastIndex].messages.push(ev);
     // this.history[this.history.length - 1].messages.sort(sortFn);
-    this.history[this.history.length - 1].messages.sort((a, b) => {
-      const aChunckId = a.content.chunckId || 0;
-      const bChunckId = b.content.chunckId || 0;
-      return +aChunckId < +bChunckId ? 1 : -1;
+    this.history[lastIndex].messages.sort((a, b) => {
+      const aChunckId = a.content.chunckId || performance.now();
+      const bChunckId = b.content.chunckId || performance.now();
+      return +aChunckId >= +bChunckId ? 1 : -1;
     });
+
+    this.logger.log(this.history[lastIndex])
+
     this.setHistory(this.history);
   }
 

@@ -22,8 +22,8 @@ export class LipSync extends EventEmitter2 {
   private stopped = false;
 
   private FFT_SIZE = 2048;
-  private samplingFrequency = 48000;
-  private dataArray: Uint8Array;
+  // private samplingFrequency = 48000;
+  // private dataArray: Uint8Array;
 
   private lastVowelIndex: number = 0;
   private lastDelta: number = 0;
@@ -96,13 +96,13 @@ export class LipSync extends EventEmitter2 {
     );
 
     this.audioContext = new AudioContext();
-    this.userSpeechAnalyzer = this.audioContext.createAnalyser();
+    // this.userSpeechAnalyzer = this.audioContext.createAnalyser();
 
-    const bufferLength = this.userSpeechAnalyzer.frequencyBinCount;
-    this.dataArray = new Uint8Array(bufferLength);
+    // const bufferLength = this.userSpeechAnalyzer.frequencyBinCount;
+    // this.dataArray = new Uint8Array(bufferLength);
 
-    this.userSpeechAnalyzer.smoothingTimeConstant = 0.5;
-    this.userSpeechAnalyzer.fftSize = this.FFT_SIZE;
+    // this.userSpeechAnalyzer.smoothingTimeConstant = 0.5;
+    // this.userSpeechAnalyzer.fftSize = this.FFT_SIZE;
 
     if (this.mediaStreamSource) {
       this.mediaStreamSource.onended = () => {};
@@ -118,8 +118,9 @@ export class LipSync extends EventEmitter2 {
 
     this.mediaStreamSource.connect(this.meter.processor);
     this.mediaStreamSource.connect(this.audioContext.destination);
+
     // connect the output of mediaStreamSource to the input of userSpeechAnalyzer
-    this.mediaStreamSource.connect(this.userSpeechAnalyzer);
+    // this.mediaStreamSource.connect(this.userSpeechAnalyzer);
 
     this.mediaStreamSource.onended = () => {
       this.paused = true;
@@ -222,28 +223,28 @@ export class LipSync extends EventEmitter2 {
     this.emit('viseme', { key: this.vowels[this.lastVowelIndex], value: 1 });
   }
 
-  getBinIndex(minFreq: number, maxFreq: number) {
-    const binWidth = this.samplingFrequency / (this.FFT_SIZE / 2);
-    const minFreqIndex = Math.floor(minFreq / binWidth);
-    const maxFreqIndex = Math.floor(maxFreq / binWidth);
-    return { minFreqIndex, maxFreqIndex };
-  }
+  // getBinIndex(minFreq: number, maxFreq: number) {
+  //   const binWidth = this.samplingFrequency / (this.FFT_SIZE / 2);
+  //   const minFreqIndex = Math.floor(minFreq / binWidth);
+  //   const maxFreqIndex = Math.floor(maxFreq / binWidth);
+  //   return { minFreqIndex, maxFreqIndex };
+  // }
 
-  process() {
-    if (!this.userSpeechAnalyzer) return;
-    this.userSpeechAnalyzer?.getByteFrequencyData(this.dataArray);
-    for (const vowel in this.calibratedVowels) {
-      const [minFreq, maxFreq] = this.calibratedVowels[vowel];
-      const { minFreqIndex, maxFreqIndex } = this.getBinIndex(minFreq, maxFreq);
-      console.log(vowel, minFreqIndex, maxFreqIndex)
-      const vowelIntensity = this.dataArray
-        .slice(minFreqIndex, maxFreqIndex + 1)
-        .reduce((sum, value) => sum + value, 0);
+  // process() {
+  //   if (!this.userSpeechAnalyzer) return;
+  //   this.userSpeechAnalyzer?.getByteFrequencyData(this.dataArray);
+  //   for (const vowel in this.calibratedVowels) {
+  //     const [minFreq, maxFreq] = this.calibratedVowels[vowel];
+  //     const { minFreqIndex, maxFreqIndex } = this.getBinIndex(minFreq, maxFreq);
+  //     console.log(vowel, minFreqIndex, maxFreqIndex)
+  //     const vowelIntensity = this.dataArray
+  //       .slice(minFreqIndex, maxFreqIndex + 1)
+  //       .reduce((sum, value) => sum + value, 0);
 
-      console.log(vowel, this.dataArray.slice(minFreqIndex, maxFreqIndex + 1))
+  //     console.log(vowel, this.dataArray.slice(minFreqIndex, maxFreqIndex + 1))
 
-      this.detectedVowels[vowel] = vowelIntensity;
-    }
-    return { ...this.detectedVowels };
-  }
+  //     this.detectedVowels[vowel] = vowelIntensity;
+  //   }
+  //   return { ...this.detectedVowels };
+  // }
 }

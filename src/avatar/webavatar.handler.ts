@@ -36,11 +36,13 @@ export class WebAvatarHandler {
   private lastSet: { time: number; emotion: string };
 
   private audioQueue: AudioQueue[] = [];
+
   private messagesQueue: {
     [chunkId: string]: { [time: string]: Uint8Array[] };
   } = {};
 
   private lipsync?: LipSync;
+  private isPlaying = false
 
   // register callbacks to init/destroy. Bind `this` as function context
   callbacks: Record<string, ListenerFn> = {
@@ -68,6 +70,7 @@ export class WebAvatarHandler {
   }
 
   startSpeech() {
+
     logger.debug('playing speech started');
 
     const ev: AvatarAudioPlaybackStatus = { status: 'started' };
@@ -77,6 +80,7 @@ export class WebAvatarHandler {
   }
 
   stopSpeech() {
+    
     logger.debug('playing speech ended');
 
     const ev: AvatarAudioPlaybackStatus = { status: 'ended' };
@@ -155,10 +159,17 @@ export class WebAvatarHandler {
       logger.debug(`lypsync is paused`);
       return;
     }
-    this.playAudio();
+
+    setTimeout(() => this.playAudio(), 0)
   }
 
   playAudio() {
+
+    if (this.isPlaying) {
+      logger.debug(`already playing`)
+      return
+    }
+    this.isPlaying = true
 
     if (!this.audioQueue.length) return;
 
@@ -171,6 +182,7 @@ export class WebAvatarHandler {
   }
 
   onDialogueMessage(ev: DialogueMessageDto) {
+
     if (ev.actor === 'user') return;
     if (!ev.text) {
       // empty text comes when the user speech is not recognizable
@@ -210,6 +222,8 @@ export class WebAvatarHandler {
 
     this.lipsync.on('end', () => {
       this.avatar.getBlendShapes()?.setViseme('neutral');
+
+      this.isPlaying = false
 
       if (this.audioQueue.length) {
         this.playAudio();

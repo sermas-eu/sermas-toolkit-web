@@ -2,7 +2,6 @@
 const apiProxy = process.env.API_PROXY || 'http://traefik'
 const mqttProxy = process.env.MQTT_PROXY || 'http://mqtt:1884'
 
-// const nodeModulesBasePath = '../sermas-toolkit/'
 const nodeModulesBasePath = './'
 
 const copyFiles = [
