@@ -178,7 +178,7 @@ export class UI {
       return +aChunckId >= +bChunckId ? 1 : -1;
     });
 
-    this.logger.log(this.history[lastIndex])
+    // this.logger.log(this.history[lastIndex])
 
     this.setHistory(this.history);
   }

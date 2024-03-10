@@ -362,7 +362,7 @@ export class WebavatarAnimation extends AnimationBase {
       return;
     }
 
-    // logger.log(`Play ${group} ${anim.name}`);
+    logger.log(`Play ${group} ${anim.name}`);
 
     const animationRunning: AnimationHandler[] = [];
     const animations = this.getAnimations(group);
