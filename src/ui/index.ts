@@ -6,10 +6,7 @@ import { EventListenerTracker } from '../events';
 import { Logger } from '../logger';
 import { UIContentDto } from '@sermas/api-client';
 import { DialogueActor } from 'dto/dialogue.dto';
-import {
-  DialogueMessageDto,
-  SessionChangedDto,
-} from '@sermas/api-client';
+import { DialogueMessageDto, SessionChangedDto } from '@sermas/api-client';
 import { SessionStatus } from 'dto/session.dto';
 
 export class UI {
@@ -74,8 +71,8 @@ export class UI {
   }
 
   addHistory(message: ChatMessage) {
-    this.history = this.history || []
-    this.history.push(message)
+    this.history = this.history || [];
+    this.history.push(message);
     this.setHistory(this.history);
   }
 
@@ -169,16 +166,18 @@ export class UI {
 
     // this.logger.debug(`Append message from ${actor} ${JSON.stringify(ev.content)}`)
 
-    const lastIndex = this.history.length - 1
+    const lastIndex = this.history.length - 1;
     this.history[lastIndex].messages.push(ev);
     // this.history[this.history.length - 1].messages.sort(sortFn);
-    this.history[lastIndex].messages.sort((a, b) => {
-      const aChunckId = a.content.chunckId || performance.now();
-      const bChunckId = b.content.chunckId || performance.now();
-      return +aChunckId >= +bChunckId ? 1 : -1;
-    });
+    this.history[lastIndex].messages = this.history[lastIndex].messages.sort(
+      (a, b) => {
+        const aChunckId = a.chunkId || Date.now();
+        const bChunckId = b.chunkId || Date.now();
+        return +aChunckId > +bChunckId ? 1 : -1;
+      },
+    );
 
-    // this.logger.log(this.history[lastIndex])
+    this.logger.log(this.history[lastIndex]);
 
     this.setHistory(this.history);
   }
