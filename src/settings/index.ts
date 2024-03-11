@@ -47,7 +47,7 @@ export class Settings {
     return appSettingsDto;
   }
 
-  getDefaults() : AppSettings {
+  getDefaults(): AppSettings {
     return {
       ...this.defaults,
     };
@@ -55,30 +55,34 @@ export class Settings {
 
   private saveLocalStorage(settings: AppSettings) {
     if (typeof localStorage === 'undefined') return;
-    localStorage.setItem(
-      `sermas.settings`,
-      JSON.stringify({
-        enableAudio: settings.enableAudio,
-        enableMic: settings.enableMic,
-        devMode: settings.devMode,
-      }),
-    );
+
+    const cfg = {
+      enableAudio: settings.enableAudio,
+      enableMic: settings.enableMic,
+      devMode: settings.devMode,
+    };
+
+    localStorage.setItem(`sermas.settings`, JSON.stringify(cfg));
   }
 
-  private loadLocalStorage(): Partial<AppSettings> | undefined {
-    if (typeof localStorage === 'undefined') return;
+  private loadLocalStorage(): Partial<AppSettings> | false | undefined {
+    if (typeof localStorage === 'undefined') return undefined;
     try {
       const raw = localStorage.getItem(`sermas.settings`);
-      if (!raw) return;
+      if (!raw) return false;
       return JSON.parse(raw) as Partial<AppSettings>;
     } catch (e: any) {
       logger.error(`Failed loading local storage: ${e.message}`);
+      return false;
     }
   }
 
   init() {
-    if (this.loadLocalStorage() === undefined) {
+    const storage = this.loadLocalStorage();
+    if (storage === false) {
       this.saveLocalStorage(this.settings);
+    } else {
+      this.settings = { ...this.settings, ...(storage || {}) };
     }
   }
 

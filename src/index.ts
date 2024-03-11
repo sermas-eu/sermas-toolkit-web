@@ -12,7 +12,7 @@ import { Logger } from './logger';
 import { MqttClient } from './mqtt-client';
 import { Settings } from './settings';
 
-// exports 
+// exports
 // export * from './dto';
 export * from '@sermas/api-client';
 export * from './constants';
@@ -221,7 +221,7 @@ export class SermasToolkit {
     if (ev.operation === 'updated') {
       if (ev.record.closedAt) {
         // on session close, generate new sessionId and propagate to APIs
-        this.logger.log(`Creating new session id`);
+        this.logger.log(`Session closed, creating new session id`);
         this.createSessionId();
       }
     }

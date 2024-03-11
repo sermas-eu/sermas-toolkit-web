@@ -14,6 +14,7 @@ export type GestureMappingKeys =
 type Subset<T extends U, U> = U;
 
 export interface AvatarAudioPlaybackStatus {
+  chunkId?: string;
   status: 'started' | 'ended';
 }
 
@@ -94,4 +95,9 @@ export class AvatarModelConfig {
       ground?: string;
     };
   };
+}
+
+export interface AudioQueue {
+  chunkId: string;
+  buffer: Uint8Array;
 }

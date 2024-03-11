@@ -3,14 +3,13 @@ import {
   MqttMessageEvent,
   UserCharacterizationEventSource,
 } from '../dto';
-import {
-  emitter,
-} from '../events';
+import { emitter } from '../events';
 
 import { HolisticV1Results } from '../detection';
 import { Logger } from '../utils';
 
 import {
+  AudioQueue,
   AvatarAudioPlaybackStatus,
   AvatarFaceBlendShape,
   AvatarModel,
@@ -27,11 +26,6 @@ import { VisemeType } from './animations/blendshapes/lib/viseme';
 
 const logger = new Logger('webavatar.handler');
 
-interface AudioQueue {
-  chunkId: string;
-  buffer: Uint8Array;
-}
-
 export class WebAvatarHandler {
   private lastSet: { time: number; emotion: string };
 
@@ -42,7 +36,7 @@ export class WebAvatarHandler {
   } = {};
 
   private lipsync?: LipSync;
-  private isPlaying = false
+  private isPlaying = false;
 
   // register callbacks to init/destroy. Bind `this` as function context
   callbacks: Record<string, ListenerFn> = {
@@ -69,21 +63,19 @@ export class WebAvatarHandler {
     //this.stopSpeech();
   }
 
-  startSpeech() {
-
+  startSpeech(chunkId?: string) {
     logger.debug('playing speech started');
 
-    const ev: AvatarAudioPlaybackStatus = { status: 'started' };
+    const ev: AvatarAudioPlaybackStatus = { status: 'started', chunkId };
     emitter.emit('avatar.speech', ev);
 
     this.avatar.getAnimation()?.playGestureTalking();
   }
 
-  stopSpeech() {
-    
+  stopSpeech(chunkId?: string) {
     logger.debug('playing speech ended');
 
-    const ev: AvatarAudioPlaybackStatus = { status: 'ended' };
+    const ev: AvatarAudioPlaybackStatus = { status: 'ended', chunkId };
     emitter.emit('avatar.speech', ev);
 
     this.avatar.getAnimation()?.playGestureIdle();
@@ -160,29 +152,27 @@ export class WebAvatarHandler {
       return;
     }
 
-    setTimeout(() => this.playAudio(), 0)
+    setTimeout(() => this.playAudio(), 0);
   }
 
   playAudio() {
-
     if (this.isPlaying) {
-      logger.debug(`already playing`)
-      return
+      logger.debug(`already playing`);
+      return;
     }
-    this.isPlaying = true
+    this.isPlaying = true;
 
     if (!this.audioQueue.length) return;
 
     const raw = this.audioQueue
       .sort((a, b) => (+a.chunkId > +b.chunkId ? 1 : -1))
       .splice(0, 1)[0];
-    
+
     logger.debug(`play speech chunk chunkId=${raw.chunkId}`);
     this.lipsync?.startFromAudioFile(raw.buffer as Uint8Array);
   }
 
   onDialogueMessage(ev: DialogueMessageDto) {
-
     if (ev.actor === 'user') return;
     if (!ev.text) {
       // empty text comes when the user speech is not recognizable
@@ -223,7 +213,7 @@ export class WebAvatarHandler {
     this.lipsync.on('end', () => {
       this.avatar.getBlendShapes()?.setViseme('neutral');
 
-      this.isPlaying = false
+      this.isPlaying = false;
 
       if (this.audioQueue.length) {
         this.playAudio();

@@ -65,12 +65,14 @@ export class WebavatarAnimation extends AnimationBase {
   }
 
   animate(delta: number): void {
-    getTypedKeys<AnimationGroup>(this.mixer).forEach((group) => this.mixer[group]?.update(delta));
+    getTypedKeys<AnimationGroup>(this.mixer).forEach((group) =>
+      this.mixer[group]?.update(delta),
+    );
     this.blendShapes.animate(delta);
   }
 
   async init() {
-    const config = this.avatar.getConfig();
+    // const config = this.avatar.getConfig();
     const model = this.avatar.getModel();
 
     if (!model) return;
@@ -89,7 +91,10 @@ export class WebavatarAnimation extends AnimationBase {
     // });
 
     this.mixer['gesture'] = new THREE.AnimationMixer(model);
-    this.mixer['gesture'].addEventListener('finished', this.onAnimationFinished);
+    this.mixer['gesture'].addEventListener(
+      'finished',
+      this.onAnimationFinished,
+    );
 
     await this.loadAnimations();
     await this.blendShapes.init();
