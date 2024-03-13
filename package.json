@@ -3,16 +3,27 @@
   "version": "1.0.0-alpha.20",
   "description": "Sermas Toolkit Web",
   "type": "commonjs",
-  "main": "cjs/index.js",
+  "main": "index.js",
   "exports": {
-    "require": "./cjs/index.js"
+    ".": "./index.js",
+    "./utils": "./utils/index.js",
+    "./detection": "./detection/index.js",
+    "./detectors/human.worker": "./detection/video/human/human.worker.js",
+    "./detectors/face-landmarker": "./detection/video/mediapipe/v2/face-landmarker/index.js",
+    "./events": "./events/index.js",
+    "./dto": "./dto/index.js",
+    "./ui": "./ui/index.js",
+    "./avatar": "./avatar/index.js",
+    "./settings/*": "./settings/*",
+    "./ui/*": "./ui/*",
+    "./package.json": "./package.json"
   },
   "repository": {
     "type": "git",
     "url": "https://github.com/sermas-organization/sermas-toolkit-web.git"
   },
   "scripts": {
-    "build:tsc:cjs": "tsc --module commonjs --moduleResolution node --outDir dist/cjs && echo '{\"type\": \"commonjs\"}' > dist/cjs/package.json",
+    "build:tsc:cjs": "tsc --module commonjs --moduleResolution node --outDir dist",
     "build:tsc:mjs": "tsc --module es2020 --outDir dist/esm && cp package.esm.json dist/esm/package.json",
     "build": "npm run clean && npm run build:tsc:cjs && npm run build:tsc:mjs && cp ./package.json ./svelte.config.mjs ./vite.config.ts README.md ./dist/",
     "build:watch": "npm run clean && tsup --watch",
