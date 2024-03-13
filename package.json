@@ -2,7 +2,7 @@
   "name": "@sermas/toolkit",
   "version": "1.0.0-alpha.20",
   "description": "Sermas Toolkit Web",
-  "type": "commonjs",
+  "type": "module",
   "main": "index.js",
   "exports": {
     ".": "./index.js",
