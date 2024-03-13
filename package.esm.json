@@ -1,0 +1,18 @@
+{
+  "type": "module",
+  "module": "./index.js",
+  "exports": {
+    ".": "./index.js",
+    "./utils": "./utils/index.js",
+    "./detection": "./detection/index.js",
+    "./detectors/human.worker": "./detection/video/human/human.worker.js",
+    "./detectors/face-landmarker": "./detection/video/mediapipe/v2/face-landmarker/index.js",
+    "./events": "./events/index.js",
+    "./dto": "./dto/index.js",
+    "./ui": "./ui/index.js",
+    "./avatar": "./avatar/index.js",
+    "./settings/*": "./settings/*",
+    "./ui/*": "./ui/*",
+    "./package.json": "../package.json"
+  }
+}

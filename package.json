@@ -13,7 +13,9 @@
     "url": "https://github.com/sermas-organization/sermas-toolkit-web.git"
   },
   "scripts": {
-    "build": "npm run clean && tsup && cp ./package.json ./svelte.config.mjs ./vite.config.ts README.md ./dist/",
+    "build:tsc:cjs": "tsc --module commonjs --moduleResolution node --outDir dist/cjs && echo '{\"type\": \"commonjs\"}' > dist/cjs/package.json",
+    "build:tsc:mjs": "tsc --module es2020 --outDir dist/esm && cp package.esm.json dist/esm/package.json",
+    "build": "npm run clean && npm run build:tsc:cjs && npm run build:tsc:mjs && cp ./package.json ./svelte.config.mjs ./vite.config.ts README.md ./dist/",
     "build:watch": "npm run clean && tsup --watch",
     "clean": "rm -rf ./dist"
   },
