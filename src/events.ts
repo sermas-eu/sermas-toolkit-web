@@ -1,4 +1,4 @@
-import type { UiStatus } from '../dto/events.dto';
+import type { UiStatus } from './dto/events.dto';
 import EventEmitter2, { ListenerFn } from 'eventemitter2';
 
 export const emitter = new EventEmitter2();

@@ -1,8 +1,8 @@
 import { AppSettingsDto } from '@sermas/api-client';
-import { emitter } from '../events';
-import { DEFAULT_AVATAR_LANGUAGE } from '../constants';
-import { AppSettings } from '../dto/settings.dto';
-import { logger } from '../logger';
+import { emitter } from './events';
+import { DEFAULT_AVATAR_LANGUAGE } from './constants';
+import { AppSettings } from './dto/settings.dto';
+import { logger } from './logger';
 
 export class Settings {
   private settings: AppSettings;

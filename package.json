@@ -6,16 +6,15 @@
   "main": "index.js",
   "exports": {
     ".": "./index.js",
-    "./utils": "./utils/index.js",
+    "./utils": "./utils.js",
     "./detection": "./detection/index.js",
     "./detectors/human.worker": "./detection/video/human/human.worker.js",
     "./detectors/face-landmarker": "./detection/video/mediapipe/v2/face-landmarker/index.js",
-    "./events": "./events/index.js",
-    "./dto": "./dto/index.js",
-    "./ui": "./ui/index.js",
+    "./events": "./events.js",
+    "./dto": "./dto.js",
     "./avatar": "./avatar/index.js",
-    "./settings/*": "./settings/*",
-    "./ui/*": "./ui/*",
+    "./settings": "./settings.js",
+    "./ui": "./ui.js",
     "./package.json": "./package.json"
   },
   "repository": {
