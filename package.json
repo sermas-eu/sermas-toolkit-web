@@ -2,22 +2,11 @@
   "name": "@sermas/toolkit",
   "version": "1.0.0-alpha.19",
   "description": "Sermas Toolkit Web",
-  "main": "./index.js",
-  "module": "./index.mjs",
-  "types": "./index.d.ts",
+  "type": "module",
+  "main": "cjs/index.js",
   "exports": {
-    ".": "./index.mjs",
-    "./utils": "./utils.mjs",
-    "./detection": "./detection/index.mjs",
-    "./detectors/human.worker": "./detection/video/human/human.worker.mjs",
-    "./detectors/face-landmarker": "./detection/video/mediapipe/v2/face-landmarker/index.mjs",
-    "./events": "./events/index.mjs",
-    "./dto": "./dto/index.mjs",
-    "./ui": "./ui/index.mjs",
-    "./avatar": "./avatar/index.mjs",
-    "./settings/*": "./settings/*",
-    "./ui/*": "./ui/*",
-    "./package.json": "./package.json"
+    "require": "./cjs/index.js",
+    "import": "./esm/index.js"
   },
   "repository": {
     "type": "git",
