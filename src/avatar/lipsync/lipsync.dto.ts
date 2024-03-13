@@ -1,4 +1,4 @@
-import { VisemeType } from '../animations/blendshapes/lib/viseme';
+import { VisemeType } from '../animations/blendshapes/lib/viseme/index.js';
 
 export interface LipSyncMapping {
   key: VisemeType;

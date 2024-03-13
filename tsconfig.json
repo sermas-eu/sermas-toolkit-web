@@ -18,6 +18,7 @@
     ],
     "target": "ESNext",
     "moduleResolution": "Node",
+    "module": "ESNext",
     "ignoreDeprecations": "5.0",
     "baseUrl": "./src",
     "paths": {},

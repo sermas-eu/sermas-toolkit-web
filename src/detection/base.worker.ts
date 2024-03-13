@@ -1,7 +1,7 @@
 /// <reference lib="webworker" />
 
-import { WorkerMessage, WorkerMessageType } from './detection.dto';
-import { VideoDetectorConfig } from './video/video.dto';
+import { WorkerMessage, WorkerMessageType } from './detection.dto.js';
+import { VideoDetectorConfig } from './video/video.dto.js';
 
 export abstract class DetectorWorker {
   abstract init(config: VideoDetectorConfig): Promise<void>;

@@ -1,6 +1,6 @@
-import { Logger } from '../../../logger';
+import { Logger } from '../../../logger.js';
 import * as THREE from 'three';
-import type { HolisticV1Results } from '../../../detection/video/mediapipe/v1/holistic/holistic.dto';
+import type { HolisticV1Results } from '../../../detection/video/mediapipe/v1/holistic/holistic.dto.js';
 import {
   BOT,
   FLEFT,
@@ -33,7 +33,7 @@ import {
   TOP,
   VISTHRESH,
   WRIST,
-} from './constants';
+} from './constants.js';
 
 export class Animator {
   private logger = new Logger('Animator');

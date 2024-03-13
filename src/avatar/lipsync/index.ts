@@ -1,10 +1,10 @@
 // credits to https://github.com/webaverse-studios/CharacterCreator/blob/stable/src/library/lipsync.js
 
 import EventEmitter2 from 'eventemitter2';
-import { VisemeType } from '../animations/blendshapes/lib/viseme';
-import { AudioMeter } from './audiometer';
-import { LipSyncMapping, neutral } from './lipsync.dto';
-import { Logger } from '../../logger';
+import { Logger } from '../../logger.js';
+import { VisemeType } from '../animations/blendshapes/lib/viseme/index.js';
+import { AudioMeter } from './audiometer.js';
+import { neutral } from './lipsync.dto.js';
 
 const logger = new Logger('webavatar.lipsync');
 
@@ -28,14 +28,7 @@ export class LipSync extends EventEmitter2 {
   private lastVowelIndex: number = 0;
   private lastDelta: number = 0;
 
-  private vowels: VisemeType[] = [
-    'neutral',
-    'a',
-    'e',
-    'i',
-    'o',
-    'u',
-  ]
+  private vowels: VisemeType[] = ['neutral', 'a', 'e', 'i', 'o', 'u'];
 
   private calibratedVowels: {
     a: number[];
@@ -161,7 +154,6 @@ export class LipSync extends EventEmitter2 {
   }
 
   updateExpression(deltaTime: number) {
-
     // const res = this.process();
     // if (!res) {
     //   // this.emit('viseme', neutral)
@@ -201,23 +193,23 @@ export class LipSync extends EventEmitter2 {
     const volume = this.meter.volume;
 
     if (volume < 0.06) {
-      this.lastVowelIndex = 0
-      this.lastDelta = deltaTime
+      this.lastVowelIndex = 0;
+      this.lastDelta = deltaTime;
       this.emit('viseme', neutral);
       return;
     }
 
     if (deltaTime - this.lastDelta < 70) {
-      return
+      return;
     }
 
-    let index = this.lastVowelIndex + 1
+    let index = this.lastVowelIndex + 1;
     if (index === this.vowels.length) {
-      index = 0
+      index = 0;
     }
 
-    this.lastDelta = deltaTime
-    this.lastVowelIndex = index
+    this.lastDelta = deltaTime;
+    this.lastVowelIndex = index;
 
     // console.log(this.lastViseme.viseme, this.lastViseme.count, diffTime)
     this.emit('viseme', { key: this.vowels[this.lastVowelIndex], value: 1 });

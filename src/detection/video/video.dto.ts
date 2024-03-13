@@ -1,7 +1,7 @@
 // import { DrawingUtils } from "@mediapipe/tasks-vision"
 
 import EventEmitter2 from 'eventemitter2';
-import { CameraHandlerConfig } from '../camera';
+import { CameraHandlerConfig } from '../camera.js';
 
 type AtLeast<T, K extends keyof T> = Partial<T> & Pick<T, K>;
 

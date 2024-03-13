@@ -1,10 +1,10 @@
-import { AvatarFaceBlendShape } from '../../../avatar/webavatar.dto';
+import { AvatarFaceBlendShape } from '../../../avatar/webavatar.dto.js';
 import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js';
-import { Logger } from '../../../logger';
-import { AnimationBase } from '../animation.base';
+import { Logger } from '../../../logger.js';
+import { AnimationBase } from '../animation.base.js';
 
-import blendShapes, { EmotionBlendShape } from './lib';
-import { VisemeType } from './lib/viseme';
+import blendShapes, { EmotionBlendShape } from './lib/index.js';
+import { VisemeType } from './lib/viseme/index.js';
 
 const logger = new Logger('webavatar.animation.blendShapes');
 

@@ -1,9 +1,9 @@
 import EventEmitter2, { ListenerFn } from 'eventemitter2';
-import { emitter } from './events';
-import { AvatarAudioPlaybackStatus } from './avatar';
-import { ChatMessage, UiButtonSession } from './dto/ui.dto';
-import { EventListenerTracker } from './events';
-import { Logger } from './logger';
+import { emitter } from './events.js';
+import { AvatarAudioPlaybackStatus } from './avatar/index.js';
+import { ChatMessage, UiButtonSession } from './dto/ui.dto.js';
+import { EventListenerTracker } from './events.js';
+import { Logger } from './logger.js';
 import { UIContentDto } from '@sermas/api-client';
 import { DialogueActor } from 'dto/dialogue.dto';
 import { DialogueMessageDto, SessionChangedDto } from '@sermas/api-client';

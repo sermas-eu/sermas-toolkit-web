@@ -1,5 +1,5 @@
 import Keycloak from 'keycloak-js';
-import { Logger, logger } from './logger';
+import { Logger, logger } from './logger.js';
 import { AuthJwtUser, JwtTokenDto } from '@sermas/api-client';
 
 export interface AuthClientOptions {

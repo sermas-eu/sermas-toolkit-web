@@ -1,9 +1,9 @@
-import a from './viseme_A.json';
-import e from './viseme_R.json';
-import i from './viseme_I.json';
-import o from './viseme_O.json';
-import u from './viseme_U.json';
-import neutral from './viseme_NEUTRAL.json';
+import a from './viseme_A.json' assert { type: 'json' };
+import e from './viseme_R.json' assert { type: 'json' };
+import i from './viseme_I.json' assert { type: 'json' };
+import o from './viseme_O.json' assert { type: 'json' };
+import u from './viseme_U.json' assert { type: 'json' };
+import neutral from './viseme_NEUTRAL.json' assert { type: 'json' };
 
 export type VisemeType = 'a' | 'e' | 'i' | 'o' | 'u' | 'neutral';
 

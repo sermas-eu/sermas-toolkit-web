@@ -1,6 +1,6 @@
-import { Logger } from '../../logger';
-import { type WorkerMessage } from '../detection.dto';
-import { VideoDetector, VideoDetectorConfig } from './video.dto';
+import { Logger } from '../../logger.js';
+import { type WorkerMessage } from '../detection.dto.js';
+import { VideoDetector, VideoDetectorConfig } from './video.dto.js';
 
 export abstract class BaseDetector<
   C extends VideoDetectorConfig,

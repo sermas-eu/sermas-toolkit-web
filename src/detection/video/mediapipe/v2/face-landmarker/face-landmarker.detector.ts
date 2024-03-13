@@ -1,9 +1,9 @@
 import {
   FaceLandmarkDetectorConfig,
   FaceLandmarkDetectorResult,
-} from './face-landmarker.dto';
-import { BaseDetector } from '../../../base.detector';
-import { VideoDetectorType } from '../../../video.dto';
+} from './face-landmarker.dto.js';
+import { BaseDetector } from '../../../base.detector.js';
+import { VideoDetectorType } from '../../../video.dto.js';
 import { FilesetResolver } from '@mediapipe/tasks-audio';
 import { FaceLandmarker, DrawingUtils } from '@mediapipe/tasks-vision';
 

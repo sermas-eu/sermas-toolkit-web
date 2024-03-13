@@ -1,8 +1,8 @@
 
 import {Human} from '@vladmandic/human';
-import { BaseDetector } from '../base.detector';
-import { type VideoDetectorType } from '../video.dto';
-import { type HumanDetectionResult, HumanDetectorConfig } from './human.dto';
+import { BaseDetector } from '../base.detector.js';
+import { type VideoDetectorType } from '../video.dto.js';
+import { type HumanDetectionResult, HumanDetectorConfig } from './human.dto.js';
 
 export class HumanDetector extends BaseDetector<
   HumanDetectorConfig,

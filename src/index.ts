@@ -1,26 +1,26 @@
 import type { PlatformAppDto, SessionChangedDto } from '@sermas/api-client';
-import { InteractionType } from './dto/detection.dto';
+import { InteractionType } from './dto/detection.dto.js';
 import EventEmitter2, { ListenerFn } from 'eventemitter2';
 import { v4 as uuidv4 } from 'uuid';
-import { ApiClient } from './api';
-import { AuthClient } from './auth';
-import { ErrorEventDto, ErrorReason } from './dto/errors.dto';
-import { UiButtonSession } from './dto/ui.dto';
-import { EventListenerTracker, emitter } from './events';
-import { FpsMonitor } from './fps';
-import { Logger } from './logger';
-import { MqttClient } from './mqtt-client';
-import { Settings } from './settings';
+import { ApiClient } from './api.js';
+import { AuthClient } from './auth.js';
+import { ErrorEventDto, ErrorReason } from './dto/errors.dto.js';
+import { UiButtonSession } from './dto/ui.dto.js';
+import { EventListenerTracker, emitter } from './events.js';
+import { FpsMonitor } from './fps.js';
+import { Logger } from './logger.js';
+import { MqttClient } from './mqtt-client.js';
+import { Settings } from './settings.js';
 
 // exports
-// export * from './dto';
+// export * from './dto.js';
 export * from '@sermas/api-client';
-export * from './constants';
-// export * as avatar from './avatar';
-// export * as detection from './detection';
-// export { Logger, logger } from './logger';
-// export { UI } from './ui';
-// export * as util from './utils';
+export * from './constants.js';
+// export * as avatar from './avatar.js';
+// export * as detection from './detection.js';
+// export { Logger, logger } from './logger.js';
+// export { UI } from './ui.js';
+// export * as util from './utils.js';
 
 export type Env = 'local' | 'dev' | 'staging' | 'prod';
 const defaultEnv: Env = 'prod';

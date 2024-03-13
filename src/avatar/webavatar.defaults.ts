@@ -1,4 +1,4 @@
-import { AvatarModelConfig } from './webavatar.dto';
+import { AvatarModelConfig } from './webavatar.dto.js';
 
 export const DefaultAvatarConfig: Partial<AvatarModelConfig> = {
   domId: 'web-avatar',

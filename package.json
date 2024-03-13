@@ -22,7 +22,7 @@
     "url": "https://github.com/sermas-organization/sermas-toolkit-web.git"
   },
   "scripts": {
-    "build": "npm run clean && tsc --module es2020 --outDir dist && cp ./package.json ./svelte.config.mjs ./vite.config.ts README.md ./dist/",
+    "build": "npm run clean && tsc --module esnext --outDir dist && cp ./package.json ./svelte.config.mjs ./vite.config.ts README.md ./dist/",
     "clean": "rm -rf ./dist"
   },
   "author": "",

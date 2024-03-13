@@ -2,11 +2,11 @@ import {
   Emotion,
   MqttMessageEvent,
   UserCharacterizationEventSource,
-} from '../dto';
-import { emitter } from '../events';
+} from '../dto.js';
+import { emitter } from '../events.js';
 
-import { HolisticV1Results } from '../detection';
-import { Logger } from '../utils';
+import { HolisticV1Results } from '../detection/index.js';
+import { Logger } from '../utils.js';
 
 import {
   AudioQueue,
@@ -14,7 +14,7 @@ import {
   AvatarFaceBlendShape,
   AvatarModel,
   LipSync,
-} from '.';
+} from './index.js';
 
 import {
   DialogueMessageDto,
@@ -22,7 +22,7 @@ import {
   UserCharacterizationEventDto,
 } from '@sermas/api-client';
 import { ListenerFn } from 'eventemitter2';
-import { VisemeType } from './animations/blendshapes/lib/viseme';
+import { VisemeType } from './animations/blendshapes/lib/viseme/index.js';
 
 const logger = new Logger('webavatar.handler');
 

@@ -1,10 +1,10 @@
 import * as THREE from 'three';
-import { AvatarModel } from '../webavatar';
-import { createPlaneMarker } from './planeMarker';
-import { HitTestHandler } from './hitTest';
-import { logger } from '../../logger';
-import { emitter } from '../../events';
-import { CameraConfig } from '../webavatar.dto';
+import { AvatarModel } from '../webavatar.js';
+import { createPlaneMarker } from './planeMarker.js';
+import { HitTestHandler } from './hitTest.js';
+import { logger } from '../../logger.js';
+import { emitter } from '../../events.js';
+import { CameraConfig } from '../webavatar.dto.js';
 
 export class WebAvatarXR {
   private enabled = false;

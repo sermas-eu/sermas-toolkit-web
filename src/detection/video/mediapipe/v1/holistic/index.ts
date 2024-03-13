@@ -1,2 +1,2 @@
-export * from './holistic.dto';
-export { HolisticDetector } from './holistic.detector';
+export * from './holistic.dto.js';
+export { HolisticDetector } from './holistic.detector.js';

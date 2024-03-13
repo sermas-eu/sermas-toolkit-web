@@ -1,5 +1,5 @@
 import type { Results } from '@mediapipe/holistic';
-import { VideoDetectorConfig } from '../../../video.dto';
+import { VideoDetectorConfig } from '../../../video.dto.js';
 
 export class HolisticDetectorConfig extends VideoDetectorConfig {
   //

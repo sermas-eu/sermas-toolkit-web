@@ -1,8 +1,8 @@
 import mqtt from 'mqtt';
 import { v4 as uuidv4 } from 'uuid';
-import type { MqttMessageEvent } from './dto/events.dto';
-import { emitter } from './events';
-import { Logger } from './logger';
+import type { MqttMessageEvent } from './dto.js';
+import { emitter } from './events.js';
+import { Logger } from './logger.js';
 
 export interface MqttClientOptions {
   url: string;

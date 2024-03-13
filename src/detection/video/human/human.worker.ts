@@ -1,11 +1,11 @@
 /// <reference lib="webworker" />
 
-import { Logger } from '../../../logger';
-import { type HumanDetectionResult, HumanDetectorConfig } from './human.dto';
+import { Logger } from '../../../logger.js';
+import { type HumanDetectionResult, HumanDetectorConfig } from './human.dto.js';
 import {
   BaseDetectorWorker,
   messageHandler,
-} from '../../../detection/base.worker';
+} from '../../../detection/base.worker.js';
 import type { FaceResult } from '@vladmandic/human';
 import {
   Human,

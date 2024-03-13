@@ -16,12 +16,11 @@ import {
   isAxiosError,
   type AxiosRequestConfig,
 } from 'axios';
-import { InteractionType } from './dto/detection.dto';
-import { AgentStatus, UserReferenceSource } from './dto/session.dto';
-import { AuthToken } from './auth';
-import { DEFAULT_AVATAR_LANGUAGE } from './constants';
-import type { SendAudioQueryParamsDto } from './dto/api.dto';
-import { Logger } from './logger';
+import { AuthToken } from './auth.js';
+import { DEFAULT_AVATAR_LANGUAGE } from './constants.js';
+import type { SendAudioQueryParamsDto } from './dto.js';
+import { AgentStatus, InteractionType, UserReferenceSource } from './dto.js';
+import { Logger } from './logger.js';
 
 export interface ApiClientOptions {
   token?: string;

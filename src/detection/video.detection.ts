@@ -1,13 +1,13 @@
 // import { DrawingUtils } from "@mediapipe/tasks-vision";
-import { Logger } from '../logger';
+import { Logger } from '../logger.js';
 import EventEmitter2 from 'eventemitter2';
-import { CameraHandler, CameraHandlerConfig } from './camera';
+import { CameraHandler, CameraHandlerConfig } from './camera.js';
 import type {
   VideoDetectionConfig,
   VideoDetector,
   VideoDetectorConfig,
   VideoDetectorType,
-} from './video/video.dto';
+} from './video/video.dto.js';
 
 export class VideoDetection extends EventEmitter2 {
   private logger = new Logger(VideoDetection.name);

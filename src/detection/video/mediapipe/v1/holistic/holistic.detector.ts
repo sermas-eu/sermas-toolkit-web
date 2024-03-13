@@ -1,10 +1,10 @@
 import type { Data } from '@mediapipe/drawing_utils';
-import { BaseDetector } from '../../../base.detector';
-import type { HolisticDetectorConfig, HolisticV1Results } from './holistic.dto';
+import { BaseDetector } from '../../../base.detector.js';
+import type { HolisticDetectorConfig, HolisticV1Results } from './holistic.dto.js';
 
 import type { Holistic, Results } from '@mediapipe/holistic';
 import pkg from '@mediapipe/holistic';
-import type { VideoDetectorType } from '../../../video.dto';
+import type { VideoDetectorType } from '../../../video.dto.js';
 
 const {
   FACEMESH_FACE_OVAL,

@@ -1,4 +1,4 @@
-import { AvatarModel } from '../webavatar';
+import { AvatarModel } from '../webavatar.js';
 
 export abstract class AnimationBase {
   protected readonly filterMeshRegExp: RegExp | string | undefined = undefined;

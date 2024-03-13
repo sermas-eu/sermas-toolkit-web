@@ -5,27 +5,27 @@ import Stats from 'three/examples/jsm/libs/stats.module.js';
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
 import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
-import type { HolisticV1Results } from '../detection/video/mediapipe/v1/holistic/holistic.dto';
-import { sendStatus } from '../events';
-import { Logger } from '../logger';
+import type { HolisticV1Results } from '../detection/video/mediapipe/v1/holistic/holistic.dto.js';
+import { sendStatus } from '../events.js';
+import { Logger } from '../logger.js';
 
-import { WebavatarAnimation } from './animations';
-import type { AvatarModelConfig, CameraConfig } from './webavatar.dto';
+import { WebavatarAnimation } from './animations/index.js';
+import type { AvatarModelConfig, CameraConfig } from './webavatar.dto.js';
 
-import { SermasToolkit } from '..';
-import { TextureLoader2 } from './loader/TextureLoader2';
+import { SermasToolkit } from '../index.js';
+import { TextureLoader2 } from './loader/TextureLoader2.js';
 import {
   DefaultAvatarConfig,
   DefaultReadyPlayerMeAvatarConfig,
-} from './webavatar.defaults';
-import { WebAvatarHandler } from './webavatar.handler';
-import { WebAvatarXR } from './xr';
+} from './webavatar.defaults.js';
+import { WebAvatarHandler } from './webavatar.handler.js';
+import { WebAvatarXR } from './xr/index.js';
 
 // exports
 export {
   DefaultAvatarConfig,
   DefaultReadyPlayerMeAvatarConfig,
-} from './webavatar.defaults';
+} from './webavatar.defaults.js';
 
 const logger = new Logger('webavatar.api');
 

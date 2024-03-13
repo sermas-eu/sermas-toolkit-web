@@ -1,8 +1,8 @@
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
 import { GLTFLoader, type GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { Logger } from '../../../logger';
-import { AvatarModelConfig, GestureMappingKeys } from '../../webavatar.dto';
-import { RpmAnimation } from './contants';
+import { Logger } from '../../../logger.js';
+import { AvatarModelConfig, GestureMappingKeys } from '../../webavatar.dto.js';
+import { RpmAnimation } from './contants.js';
 
 export class AnimationsLoader {
   private logger = new Logger('AnimationsLoader');

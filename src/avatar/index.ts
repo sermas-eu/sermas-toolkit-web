@@ -1,3 +1,3 @@
-export { LipSync } from './lipsync';
-export * from './webavatar.dto';
-export * from './webavatar';
+export { LipSync } from './lipsync/index.js';
+export * from './webavatar.dto.js';
+export * from './webavatar.js';

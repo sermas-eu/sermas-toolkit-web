@@ -1,11 +1,11 @@
 import type { AudioClassifier } from '@mediapipe/tasks-audio';
 import type { MicVAD } from '@ricky0123/vad-web/dist/real-time-vad';
 import EventEmitter2 from 'eventemitter2';
-import { emitter } from '../events';
-import { Logger } from '../logger';
-import { AudioClassificationValue } from './audio/audio.detection.dto';
-import { createAudioClassifier } from './audio/mediapipe/audio.classifier';
-import classes from './audio/mediapipe/classes.json';
+import { emitter } from '../events.js';
+import { Logger } from '../logger.js';
+import { AudioClassificationValue } from './audio/audio.detection.dto.js';
+import { createAudioClassifier } from './audio/mediapipe/audio.classifier.js';
+import classes from './audio/mediapipe/classes.json' assert { type: 'json' };
 
 const VAD_SAMPLE_RATE = 16000;
 const SPEECH_CLASSIFIER_THRESHOLD = 0.5;
@@ -86,13 +86,12 @@ export class AudioDetection extends EventEmitter2 {
   }
 
   async startVAD(stream?: MediaStream) {
-    this.logger.debug(`Loading VAD`)
+    this.logger.debug(`Loading VAD`);
 
     const vadModuleLoader = await import('@ricky0123/vad-web/dist/index');
-    const vadModule = vadModuleLoader.default || vadModuleLoader
+    const vadModule = vadModuleLoader.default || vadModuleLoader;
 
     try {
-
       const onSpeech = async (
         op: 'started' | 'stopped',
         audio?: Float32Array,
@@ -275,10 +274,7 @@ export class AudioDetection extends EventEmitter2 {
 
     if (!this.hasMediaSupport()) {
       this.logger.error('mic not supported');
-      this.emit(
-        'error',
-        new Error('Microphone not supported'),
-      );
+      this.emit('error', new Error('Microphone not supported'));
       return undefined;
     }
 

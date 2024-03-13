@@ -1,11 +1,11 @@
-export * from './detection.dto';
+export * from './detection.dto.js';
 
-export * from './video.detection';
-export * from './video/video.dto';
+export * from './video.detection.js';
+export * from './video/video.dto.js';
 
-export * from './video/human';
-export * from './video/mediapipe/v1/holistic';
-export * from './video/mediapipe/v2/face-landmarker';
+export * from './video/human/index.js';
+export * from './video/mediapipe/v1/holistic/index.js';
+export * from './video/mediapipe/v2/face-landmarker/index.js';
 
-export * from './audio/audio.detection.dto';
-export * from './audio.detection';
+export * from './audio/audio.detection.dto.js';
+export * from './audio.detection.js';

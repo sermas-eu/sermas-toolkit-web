@@ -1,18 +1,18 @@
 import * as THREE from 'three';
-import { HolisticV1Results } from '../../detection';
-import { Logger } from '../../logger';
-import { getTypedKeys } from '../util';
-import { AvatarModel } from '../webavatar';
+import { HolisticV1Results } from '../../detection/index.js';
+import { Logger } from '../../logger.js';
+import { getTypedKeys } from '../util.js';
+import { AvatarModel } from '../webavatar.js';
 import {
   AnimationGroup,
   AnimationHandler,
   AnimationLabel,
   GestureMappingKeys,
-} from '../webavatar.dto';
-import { AnimationBase } from './animation.base';
-import { Animator } from './animator';
-import { BlendShapeAnimation } from './blendshapes';
-import { AnimationsLoader } from './loader';
+} from '../webavatar.dto.js';
+import { AnimationBase } from './animation.base.js';
+import { Animator } from './animator/index.js';
+import { BlendShapeAnimation } from './blendshapes/index.js';
+import { AnimationsLoader } from './loader/index.js';
 
 const logger = new Logger('webavatar.animation');
 

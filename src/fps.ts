@@ -1,5 +1,5 @@
 import EventEmitter2 from 'eventemitter2';
-import { Logger } from './logger';
+import { Logger } from './logger.js';
 
 export type PerformanceStatus = 'degraded' | 'restored' | 'normal';
 
