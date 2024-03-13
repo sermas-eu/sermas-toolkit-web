@@ -2,11 +2,10 @@
   "name": "@sermas/toolkit",
   "version": "1.0.0-alpha.19",
   "description": "Sermas Toolkit Web",
-  "type": "module",
+  "type": "commonjs",
   "main": "cjs/index.js",
   "exports": {
-    "require": "./cjs/index.js",
-    "import": "./esm/index.js"
+    "require": "./cjs/index.js"
   },
   "repository": {
     "type": "git",
