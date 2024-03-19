@@ -281,6 +281,7 @@ export class AvatarModel {
     this.renderer = new THREE.WebGLRenderer({
       antialias: true,
       alpha: false,
+      logarithmicDepthBuffer: true,
       // powerPreference: 'high-performance',
     });
     this.renderer.setPixelRatio(window.devicePixelRatio);
