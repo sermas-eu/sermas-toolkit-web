@@ -16,6 +16,7 @@ export class MqttClient {
 
   private appId?: string;
   private sessionId?: string;
+  private userId?: string;
   private moduleId?: string;
 
   private topics: string[] = [];
@@ -30,6 +31,13 @@ export class MqttClient {
     this.unsubscribeTopics();
     this.topics = topics;
     this.subscribeTopics();
+  }
+
+  setUserId(userId?: string) {
+    if (this.userId !== userId) {
+      this.userId = userId;
+      this.resubscribe();
+    }
   }
 
   setAppId(appId: string | undefined) {
@@ -105,7 +113,9 @@ export class MqttClient {
       return;
     }
 
-    data.appId = this.options.appId;
+    if (this.userId) data.userId = this.userId;
+    if (this.sessionId) data.sessionId = this.sessionId;
+    data.appId = this.appId;
     data.source = this.options.moduleId;
 
     try {
@@ -128,6 +138,7 @@ export class MqttClient {
       let topic = topicTemplate;
       if (this.appId) topic = topic.replace(':appId', this.appId);
       if (this.sessionId) topic = topic.replace(':sessionId', this.sessionId);
+      if (this.userId) topic = topic.replace(':userId', this.userId);
       topic = topic.replace(/(:.+)$/g, '+');
       return topic;
     });

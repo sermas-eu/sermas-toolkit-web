@@ -1,9 +1,9 @@
 import type { PlatformAppDto, SessionChangedDto } from '@sermas/api-client';
-import { InteractionType } from './dto/detection.dto.js';
 import EventEmitter2, { ListenerFn } from 'eventemitter2';
 import { v4 as uuidv4 } from 'uuid';
 import { ApiClient } from './api.js';
 import { AuthClient } from './auth.js';
+import { InteractionType } from './dto/detection.dto.js';
 import { ErrorEventDto, ErrorReason } from './dto/errors.dto.js';
 import { UiButtonSession } from './dto/ui.dto.js';
 import { EventListenerTracker, emitter } from './events.js';
@@ -84,6 +84,7 @@ export class SermasToolkit {
 
   private token?: string | null;
 
+  private userId?: string;
   private sessionId?: string;
   private app?: PlatformAppDto;
   private readonly baseUrl: string;
@@ -166,6 +167,15 @@ export class SermasToolkit {
     return sessionId;
   }
 
+  getUserId() {
+    return this.userId;
+  }
+
+  setUserId(userId?: string) {
+    this.userId = userId;
+    this.emit('user.changed', userId);
+  }
+
   async loadApp(appId?: string) {
     const app = await this.api.getApp(appId || this.options.appId);
     this.app = app ? app : undefined;
@@ -213,7 +223,7 @@ export class SermasToolkit {
     this.getApi().sendForceStop();
   }
 
-  onSessionChange(ev: SessionChangedDto) {
+  onSessionChanged(ev: SessionChangedDto) {
     this.logger.debug(
       `session event ${ev.operation} sessionId=${ev.record.sessionId}`,
     );
@@ -239,6 +249,12 @@ export class SermasToolkit {
     );
   }
 
+  onUserChanged(userId?: string) {
+    this.logger.debug(`userId=${userId}`);
+    this.api.setUserId(userId);
+    this.broker.setUserId(userId);
+  }
+
   async destroy() {
     await this.fpsMonitor.destroy();
 
@@ -246,7 +262,8 @@ export class SermasToolkit {
     this.off('app', this.onApp);
     this.off('ui.button.session', this.onUiButtonSession);
     this.off('avatar.speech.stop', this.onAvatarSpeechStop);
-    this.off('session.session', this.onSessionChange);
+    this.off('session.session', this.onSessionChanged);
+    this.off('user.changed', this.onUserChanged);
 
     // clear all registered event listeners
     this.listeners.clear();
@@ -259,14 +276,16 @@ export class SermasToolkit {
     this.onSession = this.onSession.bind(this);
     this.onUiButtonSession = this.onUiButtonSession.bind(this);
     this.onAvatarSpeechStop = this.onAvatarSpeechStop.bind(this);
-    this.onSessionChange = this.onSessionChange.bind(this);
+    this.onSessionChanged = this.onSessionChanged.bind(this);
+    this.onUserChanged = this.onUserChanged.bind(this);
 
     // internal events handler
     this.on('session', this.onSession);
     this.on('app', this.onApp);
     this.on('ui.button.session', this.onUiButtonSession);
     this.on('avatar.speech.stop', this.onAvatarSpeechStop);
-    this.on('session.session', this.onSessionChange);
+    this.on('session.session', this.onSessionChanged);
+    this.on('user.changed', this.onUserChanged);
 
     this.logger.debug(`appId=${this.options.appId}`);
 

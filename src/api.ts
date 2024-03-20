@@ -32,16 +32,21 @@ export class ApiClient {
   private readonly logger = new Logger('api');
 
   private appId?: string;
+  private userId?: string;
   private sessionId?: string;
 
   private client?: Axios;
   private readonly auth: AuthToken = new AuthToken();
 
-  setAppId(appId: string | undefined) {
+  setUserId(userId?: string) {
+    this.userId = userId;
+  }
+
+  setAppId(appId?: string) {
     this.appId = appId;
   }
 
-  setSessionId(sessionId: string | undefined) {
+  setSessionId(sessionId?: string) {
     this.sessionId = sessionId;
   }
 
@@ -124,6 +129,10 @@ export class ApiClient {
     config?: AxiosRequestConfig,
   ): Promise<T | null> {
     try {
+      if (!data.appId && this.appId) data.appId = this.appId;
+      if (!data.userId && this.userId) data.userId = this.userId;
+      if (!data.sessionId && this.sessionId) data.sessionId = this.sessionId;
+
       const res = await this.getClient().post(url, data, config);
       return res.data as T;
     } catch (e: any) {
