@@ -249,10 +249,21 @@ export class SermasToolkit {
     );
   }
 
-  onUserChanged(userId?: string) {
+  async onUserChanged(userId?: string) {
     this.logger.debug(`userId=${userId}`);
     this.api.setUserId(userId);
     this.broker.setUserId(userId);
+
+    if (userId && this.getSessionId()) {
+      const session = await this.api.getSession(this.getSessionId());
+
+      if (session && !session.userId) {
+        session.userId = this.userId;
+        await this.api.updateSession(session);
+      }
+
+      // if (session?.sessionId) this.setSessionId(session?.sessionId);
+    }
   }
 
   async destroy() {
@@ -315,6 +326,7 @@ export class SermasToolkit {
       moduleId: this.options.moduleId,
       status: 'ready',
       sessionId: this.sessionId,
+      userId: this.userId,
     });
 
     await this.fpsMonitor.init();

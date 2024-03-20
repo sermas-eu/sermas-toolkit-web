@@ -6,6 +6,7 @@ import type {
   LoginRequestDto,
   LoginResponseDto,
   PlatformAppDto,
+  SessionDto,
   UIModelMapBlendShapesRequestDto,
   UIModelMapBlendShapesResponseDto,
   UserInteractionIntentionDto,
@@ -134,6 +135,30 @@ export class ApiClient {
       if (!data.sessionId && this.sessionId) data.sessionId = this.sessionId;
 
       const res = await this.getClient().post(url, data, config);
+      return res.data as T;
+    } catch (e: any) {
+      if (isAxiosError(e)) {
+        const err = e as AxiosError;
+        this.logger.error(
+          `Request failed ${err.code} ${err.status} ${err.response?.data}`,
+        );
+      } else this.logger.error(`Request failed ${e?.message}`);
+    }
+
+    return null;
+  }
+
+  async put<T = any>(
+    url: string,
+    data: any,
+    config?: AxiosRequestConfig,
+  ): Promise<T | null> {
+    try {
+      if (!data.appId && this.appId) data.appId = this.appId;
+      if (!data.userId && this.userId) data.userId = this.userId;
+      if (!data.sessionId && this.sessionId) data.sessionId = this.sessionId;
+
+      const res = await this.getClient().put(url, data, config);
       return res.data as T;
     } catch (e: any) {
       if (isAxiosError(e)) {
@@ -326,5 +351,22 @@ export class ApiClient {
       return null;
     }
     return await this.get<Buffer>(`ui/asset/${appId}`, { params: { path } });
+  }
+
+  async getUserSession(appId?: string) {
+    appId = appId || this.requireAppId();
+    if (!appId) {
+      this.logger.warn('getApp: no appId available');
+      return null;
+    }
+    return await this.get<SessionDto>(`session/user/${appId}`);
+  }
+
+  getSession(sessionId?: string) {
+    return this.get<SessionDto>(`session/${sessionId}`);
+  }
+
+  updateSession(session: SessionDto) {
+    return this.put(`session`, session);
   }
 }

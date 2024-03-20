@@ -155,20 +155,8 @@ export class UI {
       }
     }
 
-    // const sortFn = (a, b) => {
-    //     const da = new Date(a.ts)
-    //     const db = new Date(b.ts)
-    //     console.log (da, db)
-    //     if (da > db) return 1
-    //     if (da < db) return -1
-    //     return 0
-    // }
-
-    // this.logger.debug(`Append message from ${actor} ${JSON.stringify(ev.content)}`)
-
     const lastIndex = this.history.length - 1;
     this.history[lastIndex].messages.push(ev);
-    // this.history[this.history.length - 1].messages.sort(sortFn);
     this.history[lastIndex].messages = this.history[lastIndex].messages.sort(
       (a, b) => {
         const aChunckId = a.chunkId || Date.now();
@@ -176,8 +164,6 @@ export class UI {
         return +aChunckId > +bChunckId ? 1 : -1;
       },
     );
-
-    this.logger.log(this.history[lastIndex]);
 
     this.setHistory(this.history);
   }
