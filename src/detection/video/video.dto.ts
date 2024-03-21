@@ -11,7 +11,11 @@ type AtLeast<T, K extends keyof T> = Partial<T> & Pick<T, K>;
  * eg. VideoDetection.on('faceApi', (res) => {})
  */
 
-export type VideoDetectorType = 'human' | 'holistic_v1' | 'faceLandmark'; //| 'handLandmark'
+export type VideoDetectorType =
+  | 'human'
+  | 'holistic_v1'
+  | 'faceLandmark'
+  | 'qrcode';
 
 export interface VideoDetectionConfig extends Record<string, any> {
   camera: AtLeast<CameraHandlerConfig, 'width' | 'height' | 'video'>;
