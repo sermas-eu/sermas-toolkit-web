@@ -17,17 +17,17 @@ export class UserAuth {
     return this.currentUser?.token?.access_token;
   }
 
-  private saveUser(user: UserLoginResponseDto) {
+  private setUser(user: UserLoginResponseDto) {
     if (typeof localStorage === 'undefined') return;
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(user));
   }
 
-  private clearUser() {
+  private removeUser() {
     if (typeof localStorage === 'undefined') return;
     localStorage.removeItem(LOCAL_STORAGE_KEY);
   }
 
-  private loadUser(): UserLoginResponseDto | undefined {
+  private getUser(): UserLoginResponseDto | undefined {
     if (typeof localStorage === 'undefined') return;
     const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
     if (!raw) return;
@@ -39,39 +39,46 @@ export class UserAuth {
   }
 
   async isLoginRequired(): Promise<boolean> {
+    const appRequiresLogin = await this.appRequiresLogin();
+    if (!appRequiresLogin) return false;
+
+    const user = await this.loadUser();
+    if (!user) return true;
+
+    return false;
+  }
+
+  async appRequiresLogin() {
     const app = await this.toolkit.getApp();
     if (!app) return false;
 
     if (!app?.settings?.login) return false;
 
-    const isValid = await this.tokenIsValid();
-    if (!isValid) return true;
-
-    return false;
+    return true;
   }
 
-  private async tokenIsValid() {
-    const currentUser = await this.loadUser();
-    if (!currentUser) return false;
-
-    this.currentUser = currentUser;
-    this.toolkit.setUserId(this.currentUser.user.sub);
+  async loadUser() {
+    const currentUser = await this.getUser();
+    if (!currentUser) return undefined;
 
     // Check if token is expired
     const tokenExp = currentUser.user?.exp;
     const now = Math.floor(Date.now() / 1000);
     if (tokenExp < now) {
       await this.logout();
-      return false;
+      return undefined;
     }
 
-    return true;
+    this.currentUser = currentUser;
+    this.toolkit.setUserId(this.currentUser.user.sub);
+
+    return currentUser;
   }
 
   async logout() {
     this.currentUser = undefined;
     this.toolkit.setUserId(undefined);
-    await this.clearUser();
+    await this.removeUser();
   }
 
   async login(params: {
@@ -93,7 +100,7 @@ export class UserAuth {
       user,
     };
 
-    await this.saveUser(this.currentUser);
+    await this.setUser(this.currentUser);
     this.toolkit.setUserId(this.currentUser.user.sub);
     return this.currentUser;
   }

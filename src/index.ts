@@ -320,10 +320,12 @@ export class SermasToolkit {
     // load user credentials if available.
     // check if login is required
     // load previous session if credentials are available
-    const loginRequired = await this.userAuth.isLoginRequired();
-    if (loginRequired) {
+    const appRequiresLogin = await this.userAuth.appRequiresLogin();
+    if (appRequiresLogin) {
       this.logger.debug(`Login requred for app ${this.getAppId()}`);
-      const currentUser = this.getCurrentUser();
+
+      const currentUser = await this.userAuth.loadUser();
+
       if (currentUser) {
         // load last session
         const session = await this.api.getUserSession(
@@ -332,9 +334,9 @@ export class SermasToolkit {
         );
         if (session) {
           this.logger.debug(
-            `loaded existing session sessionId=${this.sessionId}`,
+            `loaded existing session sessionId=${session.sessionId}`,
           );
-          this.setSessionId(session?.sessionId);
+          this.setSessionId(session.sessionId);
         }
       }
     }
