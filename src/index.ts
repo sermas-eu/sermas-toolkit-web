@@ -11,16 +11,12 @@ import { FpsMonitor } from './fps.js';
 import { Logger } from './logger.js';
 import { MqttClient } from './mqtt-client.js';
 import { Settings } from './settings.js';
+import { UserAuth } from './user-auth.js';
 
 // exports
-// export * from './dto.js';
 export * from '@sermas/api-client';
 export * from './constants.js';
-// export * as avatar from './avatar.js';
-// export * as detection from './detection.js';
-// export { Logger, logger } from './logger.js';
-// export { UI } from './ui.js';
-// export * as util from './utils.js';
+export { type UserAuth } from './user-auth.js';
 
 export type Env = 'local' | 'dev' | 'staging' | 'prod';
 const defaultEnv: Env = 'prod';
@@ -81,6 +77,7 @@ export class SermasToolkit {
   private readonly api: ApiClient;
   private readonly auth: AuthClient;
   private readonly broker: MqttClient;
+  private readonly userAuth: UserAuth;
 
   private token?: string | null;
 
@@ -133,6 +130,16 @@ export class SermasToolkit {
       appId,
       moduleId,
     });
+
+    this.userAuth = new UserAuth(this);
+  }
+
+  getCurrentUser() {
+    return this.userAuth.getCurrentUser();
+  }
+
+  getUserAuth(): UserAuth {
+    return this.userAuth;
   }
 
   getSettings() {
@@ -178,7 +185,7 @@ export class SermasToolkit {
 
   async loadApp(appId?: string) {
     const app = await this.api.getApp(appId || this.options.appId);
-    this.app = app ? app : undefined;
+    this.app = app || undefined;
     this.emitter.emit('app', app);
   }
 
@@ -261,8 +268,6 @@ export class SermasToolkit {
         session.userId = this.userId;
         await this.api.updateSession(session);
       }
-
-      // if (session?.sessionId) this.setSessionId(session?.sessionId);
     }
   }
 
@@ -278,6 +283,9 @@ export class SermasToolkit {
 
     // clear all registered event listeners
     this.listeners.clear();
+
+    this.userId = undefined;
+    this.sessionId = undefined;
   }
 
   async init(token?: string | null) {
@@ -300,16 +308,42 @@ export class SermasToolkit {
 
     this.logger.debug(`appId=${this.options.appId}`);
 
-    this.createSessionId();
-    this.logger.debug(`sessionId=${this.sessionId}`);
-
     if (token) {
       this.logger.debug('Using provided token');
       this.auth.setToken(token);
       this.api.setToken(token);
     }
 
+    // load current app
     await this.loadApp(this.options.appId);
+
+    // load user credentials if available.
+    // check if login is required
+    // load previous session if credentials are available
+    const loginRequired = await this.userAuth.isLoginRequired();
+    if (loginRequired) {
+      this.logger.debug(`Login requred for app ${this.getAppId()}`);
+      const currentUser = this.getCurrentUser();
+      if (currentUser) {
+        // load last session
+        const session = await this.api.getUserSession(
+          this.getAppId(),
+          this.userAuth.getToken(),
+        );
+        if (session) {
+          this.logger.debug(
+            `loaded existing session sessionId=${this.sessionId}`,
+          );
+          this.setSessionId(session?.sessionId);
+        }
+      }
+    }
+
+    // create a new session if one does not already exists
+    if (!this.getSessionId()) {
+      this.createSessionId();
+      this.logger.debug(`created new session sessionId=${this.sessionId}`);
+    }
 
     if (token) {
       const topics = await this.api.listTopics(this.options.moduleId);

@@ -353,13 +353,22 @@ export class ApiClient {
     return await this.get<Buffer>(`ui/asset/${appId}`, { params: { path } });
   }
 
-  async getUserSession(appId?: string) {
+  async getUserSession(appId?: string, token?: string) {
     appId = appId || this.requireAppId();
     if (!appId) {
       this.logger.warn('getApp: no appId available');
       return null;
     }
-    return await this.get<SessionDto>(`session/user/${appId}`);
+    return await this.get<SessionDto>(
+      `session/user/${appId}`,
+      !token
+        ? undefined
+        : {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+    );
   }
 
   getSession(sessionId?: string) {
