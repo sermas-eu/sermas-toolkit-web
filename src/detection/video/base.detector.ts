@@ -12,6 +12,8 @@ export abstract class BaseDetector<
 
   private worker: Worker | undefined;
 
+  protected canvas: HTMLCanvasElement;
+
   async destroy() {
     this.stopped = true;
     this.postMessage({ type: 'destroy', data: null });
@@ -23,8 +25,9 @@ export abstract class BaseDetector<
     }
   }
 
-  async init() {
+  async init(canvas?: HTMLCanvasElement) {
     await this.loadWorker();
+    if (canvas) this.canvas = canvas;
     this.postMessage({ type: 'init', data: this.config });
     this.stopped = false;
   }
@@ -61,8 +64,21 @@ export abstract class BaseDetector<
     return false;
   }
 
-  async process(frame: ImageBitmap) {
+  async createImageBitmap(
+    video: HTMLVideoElement | HTMLCanvasElement | OffscreenCanvas,
+  ) {
+    try {
+      return await createImageBitmap(video);
+    } catch (e: any) {
+      this.logger.warn(`Failed createImageBitmap: ${e.message}`);
+      return;
+    }
+  }
+
+  async process() {
     if (this.stopped) return;
+    const frame = await this.createImageBitmap(this.canvas);
+    if (!frame) return;
     this.postMessage({ type: 'process', data: frame }, [frame]);
   }
 }

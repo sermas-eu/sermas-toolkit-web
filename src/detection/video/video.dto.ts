@@ -57,9 +57,9 @@ export abstract class VideoDetector<
   abstract getType(): VideoDetectorType;
   abstract getWorker(): Promise<Worker | null>;
 
-  abstract init(): void | Promise<void>;
+  abstract init(canvas?: HTMLCanvasElement): void | Promise<void>;
   abstract destroy(): void | Promise<void>;
   abstract render(canvas: HTMLCanvasElement, result: T): void | Promise<void>;
 
-  abstract process(frame: ImageBitmap): void | Promise<void>;
+  abstract process(): void | Promise<void>;
 }

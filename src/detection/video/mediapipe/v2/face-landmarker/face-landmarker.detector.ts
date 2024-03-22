@@ -1,11 +1,11 @@
+import { FilesetResolver } from '@mediapipe/tasks-audio';
+import { DrawingUtils, FaceLandmarker } from '@mediapipe/tasks-vision';
+import { BaseDetector } from '../../../base.detector.js';
+import { VideoDetectorType } from '../../../video.dto.js';
 import {
   FaceLandmarkDetectorConfig,
   FaceLandmarkDetectorResult,
 } from './face-landmarker.dto.js';
-import { BaseDetector } from '../../../base.detector.js';
-import { VideoDetectorType } from '../../../video.dto.js';
-import { FilesetResolver } from '@mediapipe/tasks-audio';
-import { FaceLandmarker, DrawingUtils } from '@mediapipe/tasks-vision';
 
 export class FaceLandmarkDetector extends BaseDetector<
   FaceLandmarkDetectorConfig,
@@ -16,7 +16,6 @@ export class FaceLandmarkDetector extends BaseDetector<
   protected ready = false;
 
   protected faceLandmarker: FaceLandmarker;
-  protected canvas: HTMLCanvasElement;
 
   protected loading = false;
   protected drawingUtils: DrawingUtils;
@@ -95,7 +94,8 @@ export class FaceLandmarkDetector extends BaseDetector<
     }
   }
 
-  async init() {
+  async init(canvas?: HTMLCanvasElement) {
+    super.init(canvas);
     this.logger.debug(`Loading detector ${this.getType()}`);
 
     const vision = await FilesetResolver.forVisionTasks(
@@ -115,24 +115,12 @@ export class FaceLandmarkDetector extends BaseDetector<
     this.logger.debug(`Loaded detector`);
   }
 
-  getCanvas(frame: ImageBitmap): HTMLCanvasElement {
-    if (!this.canvas) {
-      this.canvas = document.createElement('canvas');
-      this.canvas.width = frame.width;
-      this.canvas.height = frame.height;
-    }
-
-    this.canvas.getContext('bitmaprenderer')?.transferFromImageBitmap(frame);
-
-    return this.canvas;
-  }
-
-  async process(frame: ImageBitmap) {
+  async process() {
     if (!this.ready) return;
     if (!this.faceLandmarker) return;
 
     try {
-      const results = this.faceLandmarker.detect(this.getCanvas(frame));
+      const results = this.faceLandmarker.detect(this.canvas);
       this.emit('process', results);
     } catch (e: any) {
       this.logger.error(`Error executing inference, ${e.stack}`);

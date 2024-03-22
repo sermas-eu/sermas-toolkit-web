@@ -9,7 +9,6 @@ export class QrcodeDetector extends BaseDetector<
 > {
   protected config: Partial<QrcodeDetectorConfig> = {};
   protected ready = false;
-  protected canvas: HTMLCanvasElement;
   protected loading = false;
 
   private scanImageData: (
@@ -26,43 +25,65 @@ export class QrcodeDetector extends BaseDetector<
   }
 
   async render(canvas: HTMLCanvasElement, results: QrcodeDetectorResult) {
-    const canvasCtx = canvas.getContext('2d');
-    if (!canvasCtx) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
     if (this.loading) return;
 
-    console.log(results);
+    const color = 'darkorange';
+
+    results.forEach((item) => {
+      const text = item.decode();
+
+      ctx.font = '12pt sans-serif';
+      const textPoint = 1;
+      ctx.fillStyle = color;
+      ctx.fillText(
+        text,
+        item.points[textPoint].x + 5,
+        item.points[textPoint].y - 24,
+      );
+
+      item.points.forEach((point, lastPoint) => {
+        ctx.beginPath();
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2;
+
+        ctx.moveTo(item.points[lastPoint].x, item.points[lastPoint].y);
+
+        let nextPoint = lastPoint + 1;
+        if (nextPoint === item.points.length) nextPoint = 0;
+
+        ctx.lineTo(item.points[nextPoint].x, item.points[nextPoint].y);
+
+        ctx.stroke();
+      });
+    });
   }
 
-  async init() {
+  async init(canvas: HTMLCanvasElement) {
+    super.init(canvas);
     this.logger.debug(`Loading detector ${this.getType()}`);
     // todo
     const m = await import('@undecaf/zbar-wasm');
     this.scanImageData = m.scanImageData;
     this.ready = true;
-    this.logger.debug(`Loaded detector`);
+    this.logger.debug(`Loaded qrcode detector`);
   }
 
-  getCanvas(frame: ImageBitmap) {
-    if (!this.canvas) {
-      this.canvas = document.createElement('canvas');
-      this.canvas.width = frame.width;
-      this.canvas.height = frame.height;
-    }
-
-    this.canvas.getContext('bitmaprenderer')?.transferFromImageBitmap(frame);
-
-    return this.canvas;
-  }
-
-  async process(frame: ImageBitmap) {
+  async process() {
     if (!this.ready) return;
 
     try {
-      const imageData = this.getCanvas(frame)
+      if (!this.canvas) return;
+
+      const imageData = this.canvas
         .getContext('2d')
-        ?.getImageData(0, 0, frame.width, frame.height);
+        ?.getImageData(0, 0, this.canvas.width, this.canvas.height);
+
       if (!imageData) return;
       const results = await this.scanImageData(imageData);
+
+      if (!results.length) return;
       this.emit('process', results);
     } catch (e: any) {
       this.logger.error(`Error executing inference, ${e.stack}`);

@@ -1,8 +1,7 @@
-
-import {Human} from '@vladmandic/human';
+import { Human } from '@vladmandic/human';
 import { BaseDetector } from '../base.detector.js';
 import { type VideoDetectorType } from '../video.dto.js';
-import { type HumanDetectionResult, HumanDetectorConfig } from './human.dto.js';
+import { HumanDetectorConfig, type HumanDetectionResult } from './human.dto.js';
 
 export class HumanDetector extends BaseDetector<
   HumanDetectorConfig,
@@ -21,21 +20,22 @@ export class HumanDetector extends BaseDetector<
       return null;
     }
 
-    const p = this.workerLoader()
-    const isPromise = typeof p === 'object' && typeof (p as any).then === 'function'
+    const p = this.workerLoader();
+    const isPromise =
+      typeof p === 'object' && typeof (p as any).then === 'function';
 
-    if (!isPromise) return p as Worker
+    if (!isPromise) return p as Worker;
 
     const Module = await p;
     if (!Module) {
       this.logger.error(`Module is not set from workerLoader() function`);
       return null;
     }
-    return new Module.default() as Worker
+    return new Module.default() as Worker;
   }
 
-  async init(): Promise<void> {
-    super.init();
+  async init(canvas?: HTMLCanvasElement): Promise<void> {
+    super.init(canvas);
   }
 
   async render(canvas: HTMLCanvasElement, result: HumanDetectionResult) {

@@ -1,6 +1,9 @@
 import type { Data } from '@mediapipe/drawing_utils';
 import { BaseDetector } from '../../../base.detector.js';
-import type { HolisticDetectorConfig, HolisticV1Results } from './holistic.dto.js';
+import type {
+  HolisticDetectorConfig,
+  HolisticV1Results,
+} from './holistic.dto.js';
 
 import type { Holistic, Results } from '@mediapipe/holistic';
 import pkg from '@mediapipe/holistic';
@@ -158,7 +161,8 @@ export class HolisticDetector extends BaseDetector<
     canvasCtx.restore();
   }
 
-  async init() {
+  async init(canvas?: HTMLCanvasElement) {
+    super.init(canvas);
     this.logger.debug(`Loading detector`);
 
     const holistic: Holistic = new pkg.Holistic({
@@ -202,13 +206,13 @@ export class HolisticDetector extends BaseDetector<
     return this.canvas;
   }
 
-  async process(frame: ImageBitmap) {
+  async process() {
     if (!this.ready) return;
     if (!this.holistic) return;
 
     try {
       this.holistic.send({
-        image: this.getCanvas(frame),
+        image: this.canvas,
       });
     } catch (e: any) {
       this.logger.error(`Error executing inference, ${e.stack}`);

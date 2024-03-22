@@ -1,6 +1,6 @@
 // import { DrawingUtils } from "@mediapipe/tasks-vision";
-import { Logger } from '../logger.js';
 import EventEmitter2 from 'eventemitter2';
+import { Logger } from '../logger.js';
 import { CameraHandler, CameraHandlerConfig } from './camera.js';
 import type {
   VideoDetectionConfig,
@@ -9,20 +9,27 @@ import type {
   VideoDetectorType,
 } from './video/video.dto.js';
 
+type RenderCache = {
+  fn: CallableFunction;
+  ts: Date;
+};
+
 export class VideoDetection extends EventEmitter2 {
   private logger = new Logger(VideoDetection.name);
 
   private readonly camera = new CameraHandler();
 
+  private renderingInterval: NodeJS.Timeout;
   private config: VideoDetectionConfig;
 
   private detectors: VideoDetector[] = [];
-  private resultCache: Record<string, CallableFunction> = {};
+  private resultCache: Record<string, RenderCache> = {};
   private rendering = false;
 
   private lastDetection = performance.now();
 
   private canvas: HTMLCanvasElement | undefined;
+  private dataCanvas: HTMLCanvasElement;
 
   public toggleRender(render?: boolean) {
     this.config = this.config || {};
@@ -45,21 +52,23 @@ export class VideoDetection extends EventEmitter2 {
 
   async add(instance: VideoDetector<VideoDetectorConfig>) {
     await this.remove(instance.getType());
-
     this.detectors.push(instance);
 
-    await instance.init();
+    this.ensureDataCanvas();
+    await instance.init(this.dataCanvas);
 
     instance.on('process', (ev: any) => {
       this.emit(`${instance.getType()}`, ev);
 
       // cache results for rendering
-      if (this.config.render) {
-        this.resultCache[instance.getType()] = () => {
+      if (!this.config.render) return;
+      this.resultCache[instance.getType()] = {
+        fn: () => {
           if (this.config.render && this.canvas)
             instance.render(this.canvas, ev);
-        };
-      }
+        },
+        ts: new Date(),
+      };
     });
   }
 
@@ -73,19 +82,24 @@ export class VideoDetection extends EventEmitter2 {
     const renderLoop = () => {
       if (!this.config.render) {
         this.rendering = false;
+        this.resultCache = {};
         this.logger.debug(`Detector rendering disabled`);
         return;
       }
 
       //render all avail results
       this.clearCanvas();
-      Object.values(this.resultCache).forEach((renderer) => renderer());
+      Object.values(this.resultCache).forEach((renderer) => renderer.fn());
+
+      Object.entries(this.resultCache).forEach(([key, renderer]) => {
+        if (Date.now() - renderer.ts.getTime() < 2000) return;
+        delete this.resultCache[key];
+      });
 
       this.rendering = true;
-      requestAnimationFrame(renderLoop);
     };
 
-    renderLoop();
+    this.renderingInterval = setInterval(renderLoop, 250);
   }
 
   checkCanvas() {
@@ -140,28 +154,34 @@ export class VideoDetection extends EventEmitter2 {
       ?.clearRect(0, 0, this.canvas.width, this.canvas.height);
   }
 
+  ensureDataCanvas() {
+    if (this.dataCanvas) return;
+    this.dataCanvas = document.createElement('canvas');
+    this.dataCanvas.getContext('2d', { willReadFrequently: true });
+    this.dataCanvas.width = this.config.camera.width;
+    this.dataCanvas.height = this.config.camera.height;
+  }
+
   private async onFrame(video: HTMLVideoElement) {
     this.checkCanvas();
 
     if (this.skipDetection()) return;
 
-    let frame: ImageBitmap
-    try {
-      frame = await createImageBitmap(video);
-    } catch(e: any) {
-      this.logger.warn(`Failed createImageBitmap: ${e.message}`)
-      return
-    }
+    // populate the canvas
+    this.ensureDataCanvas();
+    this.dataCanvas.getContext('2d')?.drawImage(video, 0, 0);
 
-    if (!frame) return;
-
-    this.detectors.forEach(async (detector) => {
+    for (const detector of this.detectors) {
       try {
-        detector.process(frame);
+        await detector.process();
       } catch (e: any) {
         this.logger.warn(`Failed to process frame: ${e.message} `);
       }
-    });
+    }
+
+    this.dataCanvas
+      .getContext('2d')
+      ?.clearRect(0, 0, this.dataCanvas.width, this.dataCanvas.height);
   }
 
   async destroy() {
@@ -171,5 +191,7 @@ export class VideoDetection extends EventEmitter2 {
     this.detectors = [];
 
     await this.camera?.destroy();
+
+    if (this.renderingInterval) clearInterval(this.renderingInterval);
   }
 }
