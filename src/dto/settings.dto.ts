@@ -1,7 +1,4 @@
-import type {
-  AppPromptDto,
-  AppSettingsDto,
-} from '@sermas/api-client';
+import type { AppPromptDto, AppSettingsDto } from '@sermas/api-client';
 
 export class AppSettings implements AppSettingsDto {
   enableTestFaces: boolean;
@@ -19,6 +16,7 @@ export class AppSettings implements AppSettingsDto {
   rpmUrl: string;
   rpmGender: string;
   detectorHuman: boolean;
+  qrcode: boolean;
   detectorFaceLandmarker: boolean;
   avatar: string;
   background: string;

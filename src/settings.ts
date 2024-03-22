@@ -30,6 +30,7 @@ export class Settings {
     enableVideoDetection: true,
     detectorHuman: true,
     detectorFaceLandmarker: false,
+    qrcode: true,
   };
 
   constructor() {
