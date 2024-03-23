@@ -1,6 +1,7 @@
 // import { DrawingUtils } from "@mediapipe/tasks-vision"
 
 import EventEmitter2 from 'eventemitter2';
+import { SermasToolkit } from 'index.js';
 import { CameraHandlerConfig } from '../camera.js';
 
 type AtLeast<T, K extends keyof T> = Partial<T> & Pick<T, K>;
@@ -37,6 +38,7 @@ export class DetectionRenderingContext {
 
 export class VideoDetectorConfig implements Record<string, any> {
   render?: boolean;
+  detectionThreshold?: number;
 }
 
 export type WorkerLoader = () => Worker | Promise<any | undefined>;
@@ -53,6 +55,12 @@ export abstract class VideoDetector<
     this.config = config || ({} as C);
     this.workerLoader = workerLoader;
   }
+
+  getConfig() {
+    return this.config;
+  }
+
+  async publish?(ev: any, toolkit?: SermasToolkit): Promise<void>;
 
   abstract getType(): VideoDetectorType;
   abstract getWorker(): Promise<Worker | null>;

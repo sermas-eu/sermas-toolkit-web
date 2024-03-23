@@ -1,4 +1,9 @@
 import type { ZBarScanner, ZBarSymbol } from '@undecaf/zbar-wasm';
+import {
+  XRMARKER_DETECTION,
+  XRMarkerDto,
+  type SermasToolkit,
+} from '../../../index.js';
 import { BaseDetector } from '../base.detector.js';
 import { VideoDetectorType } from '../video.dto.js';
 import { QrcodeDetectorConfig, QrcodeDetectorResult } from './qrcode.dto.js';
@@ -94,5 +99,23 @@ export class QrcodeDetector extends BaseDetector<
     this.ready = false;
     // todo
     await super.destroy();
+  }
+
+  async publish(
+    ev: QrcodeDetectorResult,
+    toolkit: SermasToolkit,
+  ): Promise<void> {
+    for (const qrcode of ev) {
+      const marker: XRMarkerDto = {
+        appId: toolkit.getAppId(),
+        payload: qrcode.decode(),
+        userId: toolkit.getUserId(),
+      };
+
+      this.logger.debug(`Send QRCODE payload=${marker.payload}`);
+      toolkit
+        .getBroker()
+        .publish(XRMARKER_DETECTION.replace(':appId', marker.appId), marker);
+    }
   }
 }

@@ -2,6 +2,11 @@ import type { AudioClassifier } from '@mediapipe/tasks-audio';
 import type { MicVAD } from '@ricky0123/vad-web/dist/real-time-vad';
 import EventEmitter2 from 'eventemitter2';
 import { emitter } from '../events.js';
+import {
+  AUDIO_CLASSIFICATION_TOPIC,
+  AudioClassificationEventDto,
+  SermasToolkit,
+} from '../index.js';
 import { Logger } from '../logger.js';
 import { AudioClassificationValue } from './audio/audio.detection.dto.js';
 import { createAudioClassifier } from './audio/mediapipe/audio.classifier.js';
@@ -26,6 +31,10 @@ export class AudioDetection extends EventEmitter2 {
   private vad?: MicVAD;
   private classifier?: AudioClassifier;
   private mediaRecorder?: MediaRecorder;
+
+  constructor(private readonly toolkit?: SermasToolkit) {
+    super();
+  }
 
   async stop() {
     if (this.mediaRecorder) {
@@ -296,5 +305,17 @@ export class AudioDetection extends EventEmitter2 {
     }
 
     return this.stream;
+  }
+
+  async publish(detections: AudioClassificationValue[]) {
+    if (!this.toolkit) return;
+    const payload: AudioClassificationEventDto = {
+      appId: this.toolkit.getAppId(),
+      source: 'avatar',
+      sessionId: this.toolkit.getSessionId(),
+      ts: new Date().toString(),
+      detections,
+    };
+    this.toolkit.getBroker().publish(AUDIO_CLASSIFICATION_TOPIC, payload);
   }
 }

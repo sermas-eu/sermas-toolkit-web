@@ -3,6 +3,7 @@ import EventEmitter2, { ListenerFn } from 'eventemitter2';
 import { v4 as uuidv4 } from 'uuid';
 import { ApiClient } from './api.js';
 import { AuthClient } from './auth.js';
+import { AudioDetection, VideoDetection } from './detection/index.js';
 import { InteractionType } from './dto/detection.dto.js';
 import { ErrorEventDto, ErrorReason } from './dto/errors.dto.js';
 import { UiButtonSession } from './dto/ui.dto.js';
@@ -86,6 +87,9 @@ export class SermasToolkit {
   private app?: PlatformAppDto;
   private readonly baseUrl: string;
 
+  private videoDetection?: VideoDetection;
+  private audioDetection?: AudioDetection;
+
   constructor(private readonly options: SermasToolkitOptions) {
     this.fpsMonitor = new FpsMonitor(this.emitter);
 
@@ -132,6 +136,16 @@ export class SermasToolkit {
     });
 
     this.userAuth = new UserAuth(this);
+  }
+
+  getAudioDetection() {
+    if (!this.audioDetection) this.audioDetection = new AudioDetection(this);
+    return this.audioDetection!;
+  }
+
+  getVideoDetection() {
+    if (!this.videoDetection) this.videoDetection = new VideoDetection(this);
+    return this.videoDetection!;
   }
 
   getCurrentUser() {

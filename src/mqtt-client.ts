@@ -14,6 +14,11 @@ export class MqttClient {
   private readonly logger: Logger;
   private mqttClient: mqtt.MqttClient | undefined;
 
+  private events: { pub: string[]; sub: string[] } = {
+    pub: [],
+    sub: [],
+  };
+
   private appId?: string;
   private sessionId?: string;
   private userId?: string;
@@ -25,6 +30,16 @@ export class MqttClient {
     this.appId = this.options.appId;
     this.moduleId = this.options.moduleId;
     this.logger = new Logger(`broker <${this.moduleId}>`);
+  }
+
+  private addACLEvent(type: 'pub' | 'sub', ev: string) {
+    if (this.events[type].includes(ev)) return;
+    this.logger.debug(`EVT ${type} ${ev}`);
+    this.events[type].push(ev);
+  }
+
+  getACLEvents() {
+    return this.events;
   }
 
   setTopics(topics: string[]) {
@@ -113,8 +128,9 @@ export class MqttClient {
       return;
     }
 
-    if (this.userId) data.userId = this.userId;
-    if (this.sessionId) data.sessionId = this.sessionId;
+    if (this.userId && data.userId === undefined) data.userId = this.userId;
+    if (this.sessionId && data.sessionId === undefined)
+      data.sessionId = this.sessionId;
     data.appId = this.appId;
     data.source = this.options.moduleId;
 
@@ -123,6 +139,8 @@ export class MqttClient {
         this.logger.debug(`Cannot send, not connected`);
         return;
       }
+      const [resource, scope] = topic.split('/');
+      this.addACLEvent('pub', `${resource}.${scope}`);
       this.mqttClient.publish(
         `app/${this.options.appId}/${topic}`,
         json ? JSON.stringify(data) : data,
@@ -182,6 +200,7 @@ export class MqttClient {
 
       // emitter.emit('mqtt.message', ev)
       emitter.emit(`${resource}.${scope}`, ev.payload, ev);
+      this.addACLEvent('sub', `${resource}.${scope}`);
       // this.logger.debug(`received mqtt event ${resource}.${scope} `, ev.payload)
     } catch (e: any) {
       this.logger.warn(`failed to parse mqtt message: ${e.message}`);

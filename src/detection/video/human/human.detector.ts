@@ -1,4 +1,5 @@
 import { Human } from '@vladmandic/human';
+import { SermasToolkit, USER_CHARACTERIZATION_TOPIC } from '../../../index.js';
 import { BaseDetector } from '../base.detector.js';
 import { type VideoDetectorType } from '../video.dto.js';
 import { HumanDetectorConfig, type HumanDetectionResult } from './human.dto.js';
@@ -50,5 +51,15 @@ export class HumanDetector extends BaseDetector<
     if (!this.human) return;
 
     this.human.draw.all(canvas, result.detections, { roundRect: 0 });
+  }
+
+  async publish(ev: HumanDetectionResult, toolkit: SermasToolkit) {
+    const data = {
+      appId: toolkit.getAppId(),
+      detections: [ev],
+      sessionId: toolkit.getSessionId(),
+    };
+
+    toolkit.getBroker().publish(USER_CHARACTERIZATION_TOPIC, data);
   }
 }

@@ -1,5 +1,6 @@
 // import { DrawingUtils } from "@mediapipe/tasks-vision";
 import EventEmitter2 from 'eventemitter2';
+import { SermasToolkit } from 'index.js';
 import { Logger } from '../logger.js';
 import { CameraHandler, CameraHandlerConfig } from './camera.js';
 import type {
@@ -26,10 +27,19 @@ export class VideoDetection extends EventEmitter2 {
   private resultCache: Record<string, RenderCache> = {};
   private rendering = false;
 
-  private lastDetection = performance.now();
+  private lastDetection: Record<VideoDetectorType, number> = {
+    faceLandmark: performance.now(),
+    holistic_v1: performance.now(),
+    human: performance.now(),
+    qrcode: performance.now(),
+  };
 
   private canvas: HTMLCanvasElement | undefined;
   private dataCanvas: HTMLCanvasElement;
+
+  constructor(private readonly toolkit?: SermasToolkit) {
+    super();
+  }
 
   public toggleRender(render?: boolean) {
     this.config = this.config || {};
@@ -57,8 +67,14 @@ export class VideoDetection extends EventEmitter2 {
     this.ensureDataCanvas();
     await instance.init(this.dataCanvas);
 
-    instance.on('process', (ev: any) => {
+    instance.on('process', async (ev: any) => {
       this.emit(`${instance.getType()}`, ev);
+
+      if (instance.publish && this.toolkit) {
+        try {
+          await instance.publish(ev, this.toolkit);
+        } catch {}
+      }
 
       // cache results for rendering
       if (!this.config.render) return;
@@ -128,22 +144,22 @@ export class VideoDetection extends EventEmitter2 {
     this.emit('init');
   }
 
-  skipDetection(): boolean {
-    if (
-      this.config.detectionThreshold === undefined ||
-      this.config.detectionThreshold === 0
-    ) {
+  skipDetection(detector: VideoDetector): boolean {
+    const detectionThreshold =
+      detector.getConfig()?.detectionThreshold ||
+      this.config.detectionThreshold;
+
+    if (detectionThreshold === undefined || detectionThreshold === 0) {
       return false;
     }
 
-    const detectionThreshold = this.config.detectionThreshold;
-    const diff = performance.now() - this.lastDetection;
+    const diff = performance.now() - this.lastDetection[detector.getType()];
 
     if (diff < detectionThreshold) {
       return true;
     }
 
-    this.lastDetection = performance.now();
+    this.lastDetection[detector.getType()] = performance.now();
     return false;
   }
 
@@ -165,14 +181,13 @@ export class VideoDetection extends EventEmitter2 {
   private async onFrame(video: HTMLVideoElement) {
     this.checkCanvas();
 
-    if (this.skipDetection()) return;
-
     // populate the canvas
     this.ensureDataCanvas();
     this.dataCanvas.getContext('2d')?.drawImage(video, 0, 0);
 
     for (const detector of this.detectors) {
       try {
+        if (this.skipDetection(detector)) continue;
         await detector.process();
       } catch (e: any) {
         this.logger.warn(`Failed to process frame: ${e.message} `);
