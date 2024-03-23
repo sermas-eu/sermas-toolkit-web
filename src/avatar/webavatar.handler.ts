@@ -60,7 +60,7 @@ export class WebAvatarHandler {
 
   onForceStop() {
     this.audioQueue = [];
-    //this.stopSpeech();
+    this.lipsync?.stopAudio();
   }
 
   startSpeech(chunkId?: string) {
@@ -152,7 +152,7 @@ export class WebAvatarHandler {
       return;
     }
 
-    setTimeout(() => this.playAudio(), 0);
+    setTimeout(() => this.playAudio(), 10);
   }
 
   playAudio() {

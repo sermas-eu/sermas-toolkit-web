@@ -8,20 +8,20 @@ import { neutral } from './lipsync.dto.js';
 
 const logger = new Logger('webavatar.lipsync');
 
-const MAX_VISEME_REPEAT = 30;
+// const MAX_VISEME_REPEAT = 30;
 
-interface LastViseme {
-  viseme: VisemeType;
-  count: number;
-  index: number;
-}
+// interface LastViseme {
+//   viseme: VisemeType;
+//   count: number;
+//   index: number;
+// }
 
 export class LipSync extends EventEmitter2 {
   private audioEnabled = true;
   public paused = true;
   private stopped = false;
 
-  private FFT_SIZE = 2048;
+  // private FFT_SIZE = 2048;
   // private samplingFrequency = 48000;
   // private dataArray: Uint8Array;
 
@@ -30,34 +30,34 @@ export class LipSync extends EventEmitter2 {
 
   private vowels: VisemeType[] = ['neutral', 'a', 'e', 'i', 'o', 'u'];
 
-  private calibratedVowels: {
-    a: number[];
-    e: number[];
-    i: number[];
-    o: number[];
-    u: number[];
-  } = {
-    // Frequencies vowels
-    a: [726.5625, 960.9375],
-    e: [164.0625, 398.4375],
-    i: [140.625, 375],
-    o: [164.0625, 398.4375],
-    u: [140.625, 375],
-  };
+  // private calibratedVowels: {
+  //   a: number[];
+  //   e: number[];
+  //   i: number[];
+  //   o: number[];
+  //   u: number[];
+  // } = {
+  //   // Frequencies vowels
+  //   a: [726.5625, 960.9375],
+  //   e: [164.0625, 398.4375],
+  //   i: [140.625, 375],
+  //   o: [164.0625, 398.4375],
+  //   u: [140.625, 375],
+  // };
 
-  private detectedVowels: {
-    a: number;
-    e: number;
-    i: number;
-    o: number;
-    u: number;
-  } = {
-    a: 0,
-    e: 0,
-    i: 0,
-    o: 0,
-    u: 0,
-  };
+  // private detectedVowels: {
+  //   a: number;
+  //   e: number;
+  //   i: number;
+  //   o: number;
+  //   u: number;
+  // } = {
+  //   a: 0,
+  //   e: 0,
+  //   i: 0,
+  //   o: 0,
+  //   u: 0,
+  // };
 
   private audioContext?: AudioContext;
   private mediaStreamSource?: AudioBufferSourceNode;
@@ -78,6 +78,12 @@ export class LipSync extends EventEmitter2 {
   toggleAudio(enabled?: boolean) {
     this.audioEnabled = enabled === undefined ? !this.audioEnabled : enabled;
     logger.log(`Set audio enabled=${this.audioEnabled}`);
+  }
+
+  async stopAudio() {
+    this.mediaStreamSource?.stop();
+    if (this.mediaStreamSource?.onended)
+      this.mediaStreamSource?.onended({} as Event);
   }
 
   async startFromAudioFile(raw: Uint8Array) {
