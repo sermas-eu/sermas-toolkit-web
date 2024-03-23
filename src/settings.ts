@@ -60,7 +60,7 @@ export class Settings {
     const cfg = {
       enableAudio: settings.enableAudio,
       enableMic: settings.enableMic,
-      devMode: settings.devMode,
+      devMode: settings.devMode === true ? true : false,
     };
 
     localStorage.setItem(`sermas.settings`, JSON.stringify(cfg));
