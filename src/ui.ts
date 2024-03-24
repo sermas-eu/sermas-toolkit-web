@@ -161,7 +161,7 @@ export class UI {
       (a, b) => {
         const aChunckId = a.chunkId || Date.now();
         const bChunckId = b.chunkId || Date.now();
-        return +aChunckId > +bChunckId ? 1 : -1;
+        return +aChunckId >= +bChunckId ? 1 : -1;
       },
     );
 
