@@ -1,13 +1,13 @@
 import type { PlatformAppDto, SessionChangedDto } from '@sermas/api-client';
+import EventEmitter2, { ListenerFn } from 'eventemitter2';
+import { v4 as uuidv4 } from 'uuid';
+import { ApiClient } from './api.js';
+import { AuthClient } from './auth.js';
 import {
   AvatarModel,
   AvatarModelConfig,
   createWebAvatar,
 } from './avatar/index.js';
-import EventEmitter2, { ListenerFn } from 'eventemitter2';
-import { v4 as uuidv4 } from 'uuid';
-import { ApiClient } from './api.js';
-import { AuthClient } from './auth.js';
 import { AudioDetection, VideoDetection } from './detection/index.js';
 import { InteractionType } from './dto/detection.dto.js';
 import { ErrorEventDto, ErrorReason } from './dto/errors.dto.js';
@@ -97,6 +97,8 @@ export class SermasToolkit {
 
   private heartbitInterval: NodeJS.Timeout;
 
+  private avatar?: AvatarModel;
+
   constructor(private readonly options: SermasToolkitOptions) {
     this.fpsMonitor = new FpsMonitor(this.emitter);
 
@@ -145,8 +147,9 @@ export class SermasToolkit {
     this.userAuth = new UserAuth(this);
   }
 
-  createWebAvatar(avatarConfig: AvatarModelConfig): Promise<AvatarModel> {
-    return createWebAvatar(avatarConfig, this);
+  async createWebAvatar(avatarConfig: AvatarModelConfig): Promise<AvatarModel> {
+    this.avatar = await createWebAvatar(avatarConfig, this);
+    return this.avatar;
   }
 
   getAudioDetection() {
@@ -312,6 +315,11 @@ export class SermasToolkit {
     this.userId = undefined;
     this.sessionId = undefined;
 
+    if (this.avatar) {
+      this.removeAllListeners('avatar.status');
+      await this.avatar?.destroy();
+    }
+
     if (this.heartbitInterval) clearInterval(this.heartbitInterval);
   }
 
@@ -386,7 +394,14 @@ export class SermasToolkit {
 
     await this.fpsMonitor.init();
 
-    await this.sendHeartBit();
+    if (this.avatar) {
+      this.on('avatar.status', async (status: 'ready' | 'removed') => {
+        if (status !== 'ready') return;
+        await this.sendHeartBit();
+      });
+    } else {
+      await this.sendHeartBit();
+    }
     // this.heartbitInterval = setInterval(() => this.sendHeartBit(), 10 * 1000);
 
     this.emit('ready', this);

@@ -54,7 +54,7 @@ export class AvatarModel {
   private handler: WebAvatarHandler | undefined;
   private readonly xr: WebAvatarXR;
 
-  private toolkit: SermasToolkit;
+  private toolkit?: SermasToolkit;
   private background: THREE.Texture;
 
   constructor(private readonly config: AvatarModelConfig) {
@@ -133,7 +133,7 @@ export class AvatarModel {
     };
   }
 
-  async init(toolkit: SermasToolkit): Promise<AvatarModel> {
+  async init(toolkit?: SermasToolkit): Promise<AvatarModel> {
     logger.debug('initializing avatar model');
 
     this.toolkit = toolkit;
@@ -205,6 +205,8 @@ export class AvatarModel {
     this.renderer.setAnimationLoop(this.animate);
 
     logger.debug('avatar initialized');
+
+    this.toolkit?.emit('avatar.status', 'ready');
 
     return this;
   }
@@ -307,10 +309,14 @@ export class AvatarModel {
     // Load the background texture
     const loader = new TextureLoader2();
 
-    const { url, withCredentials, headers } =
-      this.toolkit.getAssetRequestParams(path);
-    if (withCredentials) loader.setWithCredentials(withCredentials);
-    if (headers) loader.setRequestHeader(headers);
+    let url = path;
+    if (this.toolkit) {
+      const params = this.toolkit?.getAssetRequestParams(path);
+      if (params.withCredentials)
+        loader.setWithCredentials(params.withCredentials);
+      if (params.headers) loader.setRequestHeader(params.headers);
+      url = params.url;
+    }
 
     const image = await loader.load(url);
     this.scene.background = image;
@@ -368,10 +374,14 @@ export class AvatarModel {
   ): Promise<THREE.Group> {
     const loader = type === 'fbx' ? new FBXLoader() : new GLTFLoader();
 
-    const { url, withCredentials, headers } =
-      this.toolkit.getAssetRequestParams(path);
-    if (withCredentials) loader.setWithCredentials(withCredentials);
-    if (headers) loader.setRequestHeader(headers);
+    let url = path;
+    if (this.toolkit) {
+      const params = this.toolkit?.getAssetRequestParams(path);
+      if (params.withCredentials)
+        loader.setWithCredentials(params.withCredentials);
+      if (params.headers) loader.setRequestHeader(params.headers);
+      url = params.url;
+    }
 
     logger.log(`loading ${type} from ${url}`);
     const model = await loader.loadAsync(
@@ -489,6 +499,7 @@ export class AvatarModel {
     await this.xr?.destroy();
 
     logger.debug('avatar destroyed');
+    this.toolkit?.emit('avatar.status', 'removed');
   }
 
   animate(timestamp?: number, frame?: XRFrame) {
