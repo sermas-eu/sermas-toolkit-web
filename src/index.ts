@@ -1,4 +1,9 @@
 import type { PlatformAppDto, SessionChangedDto } from '@sermas/api-client';
+import {
+  AvatarModel,
+  AvatarModelConfig,
+  createWebAvatar,
+} from './avatar/index.js';
 import EventEmitter2, { ListenerFn } from 'eventemitter2';
 import { v4 as uuidv4 } from 'uuid';
 import { ApiClient } from './api.js';
@@ -90,6 +95,8 @@ export class SermasToolkit {
   private videoDetection?: VideoDetection;
   private audioDetection?: AudioDetection;
 
+  private heartbitInterval: NodeJS.Timeout;
+
   constructor(private readonly options: SermasToolkitOptions) {
     this.fpsMonitor = new FpsMonitor(this.emitter);
 
@@ -136,6 +143,10 @@ export class SermasToolkit {
     });
 
     this.userAuth = new UserAuth(this);
+  }
+
+  createWebAvatar(avatarConfig: AvatarModelConfig): Promise<AvatarModel> {
+    return createWebAvatar(avatarConfig, this);
   }
 
   getAudioDetection() {
@@ -300,6 +311,8 @@ export class SermasToolkit {
 
     this.userId = undefined;
     this.sessionId = undefined;
+
+    if (this.heartbitInterval) clearInterval(this.heartbitInterval);
   }
 
   async init(token?: string | null) {
@@ -371,6 +384,15 @@ export class SermasToolkit {
       await this.broker.connect(token);
     }
 
+    await this.fpsMonitor.init();
+
+    await this.sendHeartBit();
+    // this.heartbitInterval = setInterval(() => this.sendHeartBit(), 10 * 1000);
+
+    this.emit('ready', this);
+  }
+
+  private async sendHeartBit() {
     await this.api.sendAgentHeartBeat({
       appId: this.options.appId,
       moduleId: this.options.moduleId,
@@ -378,10 +400,6 @@ export class SermasToolkit {
       sessionId: this.sessionId,
       userId: this.userId,
     });
-
-    await this.fpsMonitor.init();
-
-    this.emit('ready', this);
   }
 
   emit(event: string, ...args: any[]): void {

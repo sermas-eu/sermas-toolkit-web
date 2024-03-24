@@ -1,5 +1,8 @@
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
-import { GLTFLoader, type GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import {
+  GLTFLoader,
+  type GLTF,
+} from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { Logger } from '../../../logger.js';
 import { AvatarModelConfig, GestureMappingKeys } from '../../webavatar.dto.js';
 import { RpmAnimation } from './contants.js';
@@ -78,7 +81,7 @@ export class AnimationsLoader {
     //   loader.setDRACOLoader( dracoLoader );
     // }
 
-    // this.logger.debug(`loading ${type} from ${path}`)
+    // this.logger.debug(`loading ${type} from ${path}`);
     const model = await loader.loadAsync(path);
 
     // handle gltf/glb
@@ -112,11 +115,14 @@ export class AnimationsLoader {
   async loadAnimations() {
     // this.logger.debug('Loading animations')
     const genderPath = this.config.gender == 'M' ? 'masculine' : 'feminine';
+
+    // const baseUrl = `${window.location.protocol}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
+
     for (const [key, value] of Object.entries(this.mapping)) {
       await Promise.all(
         value.map(async (a, idx) => {
           const ext = 'glb';
-          const path = `https://${window.location.hostname}/animations/${genderPath}/${ext}/${a}.${ext}`;
+          const path = `/animations/${genderPath}/${ext}/${a}.${ext}`;
 
           try {
             this.logger.debug(`Loading animation ${a}`);
