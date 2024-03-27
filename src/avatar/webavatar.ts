@@ -10,7 +10,11 @@ import { sendStatus } from '../events.js';
 import { Logger } from '../logger.js';
 
 import { WebavatarAnimation } from './animations/index.js';
-import type { AvatarModelConfig, CameraConfig } from './webavatar.dto.js';
+import type {
+  AvatarModelConfig,
+  CameraConfig,
+  DetectionPosition,
+} from './webavatar.dto.js';
 
 import { SermasToolkit } from '../index.js';
 import { TextureLoader2 } from './loader/TextureLoader2.js';
@@ -157,6 +161,8 @@ export class AvatarModel {
     const model = await this.loadModel(modelPath, format);
     // model.scale.setScalar(200);
 
+    console.log(model);
+
     this.initializeCamera(model);
 
     if (this.filterMeshRegExp) {
@@ -207,6 +213,16 @@ export class AvatarModel {
     logger.debug('avatar initialized');
 
     this.toolkit?.emit('avatar.status', 'ready');
+
+    this.toolkit?.on('detection.characterization', (ev) => {
+      if (ev.detections.length && ev.detections[0].detections.face.length) {
+        const box = ev.detections[0].detections.face[0].boxRaw;
+        this.animation?.moveEyes({
+          x: -((box[2] + box[0]) / 2 - 0.5),
+          y: -((box[3] + box[1]) / 2 - 0.5),
+        } as DetectionPosition);
+      }
+    });
 
     return this;
   }

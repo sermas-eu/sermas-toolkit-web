@@ -8,6 +8,7 @@ import {
   AnimationHandler,
   AnimationLabel,
   GestureMappingKeys,
+  DetectionPosition,
 } from '../webavatar.dto.js';
 import { AnimationBase } from './animation.base.js';
 import { Animator } from './animator/index.js';
@@ -60,6 +61,11 @@ export class WebavatarAnimation extends AnimationBase {
     this.blendShapes = new BlendShapeAnimation(this.avatar);
   }
 
+  moveEyes(position: DetectionPosition) {
+    this.getAnimator()?.moveEyes(position);
+    this.blendShapes.moveEyes(position);
+  }
+
   getBlendShapes() {
     return this.blendShapes;
   }
@@ -108,6 +114,7 @@ export class WebavatarAnimation extends AnimationBase {
       this.animator = new Animator(
         model,
         this.avatar.getScene(),
+        this.avatar.getCamera(),
         this.avatar.getConfig().modelType == 'readyplayerme',
       );
     }

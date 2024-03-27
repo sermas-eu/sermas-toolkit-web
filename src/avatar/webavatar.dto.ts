@@ -101,3 +101,8 @@ export interface AudioQueue {
   chunkId: string;
   buffer: Uint8Array;
 }
+
+export interface DetectionPosition {
+  x: number;
+  y: number;
+}
