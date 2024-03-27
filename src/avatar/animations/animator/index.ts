@@ -74,7 +74,6 @@ export class Animator {
   }
 
   lookAt(target: THREE.Vector3) {
-    console.log('set look at');
     this.bones.leftEye.lookAt(target);
     this.bones.rightEye.lookAt(target);
   }
