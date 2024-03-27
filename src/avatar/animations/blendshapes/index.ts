@@ -1,4 +1,7 @@
-import { AvatarFaceBlendShape } from '../../../avatar/webavatar.dto.js';
+import {
+  AvatarFaceBlendShape,
+  DetectionPosition,
+} from '../../../avatar/webavatar.dto.js';
 import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js';
 import { Logger } from '../../../logger.js';
 import { AnimationBase } from '../animation.base.js';
@@ -38,6 +41,70 @@ export class BlendShapeAnimation extends AnimationBase {
   getEmotion(name: EmotionBlendShape): Array<AvatarFaceBlendShape> {
     // logger.debug(`Getting blendshapes for face ${name}`);
     return blendShapes.emotion[name] || blendShapes.emotion.neutral;
+  }
+
+  moveEyes(position: DetectionPosition) {
+    const down = position.y;
+    const left = position.x;
+
+    const downLeft: AvatarFaceBlendShape = {
+      index: 23,
+      score: down,
+      categoryName: 'eyeLookDownLeft',
+      displayName: '',
+    };
+    const downRight: AvatarFaceBlendShape = {
+      index: 24,
+      score: down,
+      categoryName: 'eyeLookDownRight',
+      displayName: '',
+    };
+    // const upLeft: AvatarFaceBlendShape = {
+    //   index: 25,
+    //   score: down * 0.5,
+    //   categoryName: 'eyeLookUpLeft',
+    //   displayName: '',
+    // };
+    // const upRight: AvatarFaceBlendShape = {
+    //   index: 26,
+    //   score: down * 0.5,
+    //   categoryName: 'eyeLookUpRight',
+    //   displayName: '',
+    // };
+    const inLeft: AvatarFaceBlendShape = {
+      index: 27,
+      score: -left,
+      categoryName: 'eyeLookInLeft',
+      displayName: '',
+    };
+    const inRight: AvatarFaceBlendShape = {
+      index: 28,
+      score: left,
+      categoryName: 'eyeLookInRight',
+      displayName: '',
+    };
+    const outLeft: AvatarFaceBlendShape = {
+      index: 29,
+      score: -left,
+      categoryName: 'eyeLookOutLeft',
+      displayName: '',
+    };
+    const outRight: AvatarFaceBlendShape = {
+      index: 30,
+      score: left,
+      categoryName: 'eyeLookOutRight',
+      displayName: '',
+    };
+    this.setFaceBlendShapes([
+      downLeft,
+      downRight,
+      // upLeft,
+      // upRight,
+      inLeft,
+      inRight,
+      outLeft,
+      outRight,
+    ]);
   }
 
   blinkEyes() {
@@ -90,7 +157,10 @@ export class BlendShapeAnimation extends AnimationBase {
       if (!child.isMesh || !child.visible) return;
 
       if (child.morphTargetInfluences) {
-        // logger.debug(`Found blend shapes in mesh ${child.name}`, Object.keys(child.morphTargetDictionary))
+        // logger.debug(
+        //   `Found blend shapes in mesh ${child.name}`,
+        //   Object.keys(child.morphTargetDictionary),
+        // );
         this.foundBlendShapes.push(child);
       }
 

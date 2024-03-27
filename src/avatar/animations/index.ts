@@ -8,6 +8,7 @@ import {
   AnimationHandler,
   AnimationLabel,
   GestureMappingKeys,
+  DetectionPosition,
 } from '../webavatar.dto.js';
 import { AnimationBase } from './animation.base.js';
 import { Animator } from './animator/index.js';
@@ -53,11 +54,19 @@ export class WebavatarAnimation extends AnimationBase {
   };
 
   private mirrorModeEnabled = false;
+  private lookAtUser = false;
 
   constructor(avatar: AvatarModel) {
     super(avatar);
     this.animationLoader = new AnimationsLoader(this.avatar.getConfig());
     this.blendShapes = new BlendShapeAnimation(this.avatar);
+    this.getAnimator();
+  }
+
+  moveEyes(position: DetectionPosition) {
+    if (!this.lookAtUser) return;
+    this.getAnimator()?.moveEyes(position);
+    this.blendShapes.moveEyes(position);
   }
 
   getBlendShapes() {
@@ -108,6 +117,7 @@ export class WebavatarAnimation extends AnimationBase {
       this.animator = new Animator(
         model,
         this.avatar.getScene(),
+        this.avatar.getCamera(),
         this.avatar.getConfig().modelType == 'readyplayerme',
       );
     }
@@ -435,5 +445,9 @@ export class WebavatarAnimation extends AnimationBase {
 
   setAnimationEnabled(enabled: boolean) {
     this.animationEnabled = enabled;
+  }
+
+  setLookAtUser(enabled: boolean) {
+    this.lookAtUser = enabled;
   }
 }
