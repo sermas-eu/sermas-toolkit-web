@@ -46,7 +46,6 @@ export class BlendShapeAnimation extends AnimationBase {
   moveEyes(position: DetectionPosition) {
     const down = position.y;
     const left = position.x;
-    console.log(down, left);
 
     const downLeft: AvatarFaceBlendShape = {
       index: 23,

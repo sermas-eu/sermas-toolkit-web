@@ -74,6 +74,7 @@ export class Animator {
   }
 
   lookAt(target: THREE.Vector3) {
+    console.log('set look at');
     this.bones.leftEye.lookAt(target);
     this.bones.rightEye.lookAt(target);
   }
@@ -93,8 +94,7 @@ export class Animator {
     const center_x = 200;
     const center_y = 200;
     let dist = Math.sqrt(Math.pow(center_x - x, 2) + Math.pow(center_y - y, 2));
-    dist = this.pixelToPerc(dist);
-    dist = 5; //6 - 5 * dist;
+    dist = 10; //this.pixelToPerc(dist);
 
     const scale = 3;
     const target: THREE.Vector3 = new THREE.Vector3(

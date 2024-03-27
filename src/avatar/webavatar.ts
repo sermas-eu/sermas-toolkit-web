@@ -128,6 +128,10 @@ export class AvatarModel {
     this.animation?.setAnimationEnabled(enabled);
   }
 
+  setLookAtUser(enabled: boolean) {
+    this.animation?.setLookAtUser(enabled);
+  }
+
   getCameraConfig(): CameraConfig {
     const { x, y, z } = this.camera.position;
     const { x: rx, y: ry, z: rz } = this.camera.rotation;
@@ -160,8 +164,6 @@ export class AvatarModel {
 
     const model = await this.loadModel(modelPath, format);
     // model.scale.setScalar(200);
-
-    console.log(model);
 
     this.initializeCamera(model);
 

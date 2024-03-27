@@ -54,14 +54,17 @@ export class WebavatarAnimation extends AnimationBase {
   };
 
   private mirrorModeEnabled = false;
+  private lookAtUser = false;
 
   constructor(avatar: AvatarModel) {
     super(avatar);
     this.animationLoader = new AnimationsLoader(this.avatar.getConfig());
     this.blendShapes = new BlendShapeAnimation(this.avatar);
+    this.getAnimator();
   }
 
   moveEyes(position: DetectionPosition) {
+    if (!this.lookAtUser) return;
     this.getAnimator()?.moveEyes(position);
     this.blendShapes.moveEyes(position);
   }
@@ -442,5 +445,9 @@ export class WebavatarAnimation extends AnimationBase {
 
   setAnimationEnabled(enabled: boolean) {
     this.animationEnabled = enabled;
+  }
+
+  setLookAtUser(enabled: boolean) {
+    this.lookAtUser = enabled;
   }
 }
