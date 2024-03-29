@@ -46,6 +46,7 @@ export class WebAvatarHandler {
     'session.session': this.onSession,
     'avatar.face': this.setFace,
     'avatar.speech.stop': this.onForceStop,
+    'dialogue.stop': this.onForceStop,
     'detection.pose': this.setPose,
     'detection.audio': this.setListening,
   };
@@ -59,7 +60,7 @@ export class WebAvatarHandler {
   }
 
   onForceStop() {
-    this.audioQueue = [];
+    // this.audioQueue = [];
     this.lipsync?.stopAudio();
   }
 

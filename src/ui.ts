@@ -2,6 +2,7 @@ import {
   DialogueMessageDto,
   SessionChangedDto,
   UIContentDto,
+  sleep,
 } from '@sermas/api-client';
 import EventEmitter2, { ListenerFn } from 'eventemitter2';
 import { AvatarAudioPlaybackStatus } from './avatar/index.js';
@@ -127,20 +128,42 @@ export class UI {
     return this.history[0].messages[this.history[0].messages.length - 1];
   }
 
-  appendContent(actor: DialogueActor, ev: UIContentDto) {
-    ev.content.chunkId = ev.content.chunkId || Date.now() + performance.now();
+  async handleCleanScreen(ev: UIContentDto) {
+    if (ev.options && ev.options.stopSpeech) {
+      this.logger.debug(`Stop avatar speech`);
+      this.emitter.emit(`avatar.speech.stop`);
+    }
 
+    if (
+      ev.contentType === 'clear-screen' ||
+      (ev.options && ev.options.clearScreen)
+    ) {
+      this.logger.debug(`Clear screen`);
+      this.clearHistory();
+    }
+
+    await sleep(100);
+  }
+
+  async appendContent(actor: DialogueActor, ev: UIContentDto) {
+    if (ev.content)
+      ev.content.chunkId = ev.content.chunkId || Date.now() + performance.now();
+
+    this.logger.debug(`ev ${JSON.stringify(ev)}`);
     this.logger.debug(
-      `Got content actor=${actor} contentType=${ev.contentType} ${JSON.stringify(ev.content)}`,
+      `Got content actor=${actor} contentType=${ev.contentType}`,
     );
+
+    await this.handleCleanScreen(ev);
 
     if (ev.contentType == 'navigation') {
       this.emitter.emit('ui.tool.request', ev.content);
       return;
     }
 
-    if (ev.contentType === 'clear-screen') return this.clearHistory();
-    if (ev.options && ev.options.clearScreen) this.clearHistory();
+    if (ev.contentType === 'clear-screen') {
+      return;
+    }
 
     // append to same actor, create a new group otherwise
     if (
