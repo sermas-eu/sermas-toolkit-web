@@ -8,6 +8,7 @@ import {
   AvatarModelConfig,
   createWebAvatar,
 } from './avatar/index.js';
+import { DEFAULT_AVATAR_LANGUAGE } from './constants.js';
 import { AudioDetection, VideoDetection } from './detection/index.js';
 import { InteractionType } from './dto/detection.dto.js';
 import { ErrorEventDto, ErrorReason } from './dto/errors.dto.js';
@@ -454,5 +455,18 @@ export class SermasToolkit {
       withCredentials,
       headers,
     };
+  }
+
+  async getAvatarGender(): Promise<undefined | string> {
+    const app = await this.getApp();
+    const avatar = app?.settings?.avatar;
+    if (!avatar) return undefined;
+    if (!app.repository?.avatars || !app.repository?.avatars[avatar])
+      return undefined;
+    return app.repository.avatars[avatar]?.gender;
+  }
+
+  getAppLanguage() {
+    return this.settings.get().language || DEFAULT_AVATAR_LANGUAGE;
   }
 }

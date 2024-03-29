@@ -1,7 +1,6 @@
 import type {
   AgentHeartBeatEventDto,
   AuthJwtUser,
-  DialogueUserMessageDto,
   JwtTokenDto,
   LoginRequestDto,
   LoginResponseDto,
@@ -18,8 +17,6 @@ import {
   type AxiosRequestConfig,
 } from 'axios';
 import { AuthToken } from './auth.js';
-import { DEFAULT_AVATAR_LANGUAGE } from './constants.js';
-import type { SendAudioQueryParamsDto } from './dto.js';
 import { AgentStatus, InteractionType, UserReferenceSource } from './dto.js';
 import { Logger } from './logger.js';
 
@@ -225,14 +222,11 @@ export class ApiClient {
   async sendAudio(data: FormData, params?: SendAudioQueryParamsDto) {
     const appId = this.requireAppId();
     if (!appId) return null;
+
     const sessionId = this.requireSessionId();
     if (!sessionId) return null;
 
-    if (!params) params = {};
-
-    params.language = params.language || DEFAULT_AVATAR_LANGUAGE;
-    params.gender = params.gender || '';
-
+    params = params || {};
     const qs = Object.keys(params)
       .reduce((arr: string[], key) => {
         if (!params || !params[key]) return arr;
@@ -249,30 +243,15 @@ export class ApiClient {
     );
   }
 
-  async sendChatMessage(
-    data: DialogueUserMessageDto,
-    params?: SendAudioQueryParamsDto,
-  ) {
+  async sendChatMessage(data: DialogueUserMessageDto) {
     const appId = this.requireAppId();
     if (!appId) return null;
     const sessionId = this.requireSessionId();
     if (!sessionId) return null;
 
-    if (!params) params = {};
-
-    params.language = params.language || DEFAULT_AVATAR_LANGUAGE;
-    params.gender = params.gender || '';
-
-    const qs = Object.keys(params)
-      .reduce((arr: string[], key) => {
-        if (!params || !params[key]) return arr;
-        return [...arr, `${key}=${params[key]}`];
-      }, [])
-      .join('&');
-
     return (
       (await this.post<void>(
-        `dialogue/speech/chat/${appId}/${sessionId}?${qs}`,
+        `dialogue/speech/chat/${appId}/${sessionId}`,
         data,
       )) || []
     );

@@ -1,13 +1,16 @@
+import {
+  DialogueMessageDto,
+  SessionChangedDto,
+  UIContentDto,
+} from '@sermas/api-client';
 import EventEmitter2, { ListenerFn } from 'eventemitter2';
-import { emitter } from './events.js';
 import { AvatarAudioPlaybackStatus } from './avatar/index.js';
+import { DialogueActor } from './dto/dialogue.dto';
+import { SessionStatus } from './dto/session.dto';
 import { ChatMessage, UiButtonSession } from './dto/ui.dto.js';
-import { EventListenerTracker } from './events.js';
+import { EventListenerTracker, emitter } from './events.js';
 import { Logger } from './logger.js';
-import { UIContentDto } from '@sermas/api-client';
-import { DialogueActor } from 'dto/dialogue.dto';
-import { DialogueMessageDto, SessionChangedDto } from '@sermas/api-client';
-import { SessionStatus } from 'dto/session.dto';
+import { getChunkId } from './utils.js';
 
 export class UI {
   private readonly logger = new Logger('UI');
@@ -89,18 +92,6 @@ export class UI {
   }
 
   onUIContent(ev: UIContentDto) {
-    this.logger.debug(
-      `Got event contentType=${ev.contentType} ${JSON.stringify(ev.content)}`,
-    );
-
-    if (ev.contentType == 'navigation') {
-      this.emitter.emit('ui.tool.request', ev.content);
-      return;
-    }
-
-    if (ev.contentType === 'clear-screen') return this.clearHistory();
-    if (ev.options && ev.options.clearScreen) this.clearHistory();
-
     this.appendContent('agent', ev);
   }
 
@@ -109,8 +100,7 @@ export class UI {
       `Received chat message actor=${ev.actor} sessionId=${ev.sessionId} appId=${ev.appId}`,
     );
 
-    const actor = ev.actor as DialogueActor;
-    this.appendContent(actor, {
+    const content: UIContentDto = {
       contentType: 'dialogue-message',
       content: ev,
       appId: ev.appId,
@@ -118,7 +108,10 @@ export class UI {
       messageId: ev.messageId,
       metadata: {},
       options: {},
-    });
+    };
+
+    const actor = ev.actor as DialogueActor;
+    this.appendContent(actor, content);
   }
 
   private setHistory(history?: ChatMessage[]) {
@@ -135,6 +128,20 @@ export class UI {
   }
 
   appendContent(actor: DialogueActor, ev: UIContentDto) {
+    ev.content.chunkId = ev.content.chunkId || Date.now() + performance.now();
+
+    this.logger.debug(
+      `Got content actor=${actor} contentType=${ev.contentType} ${JSON.stringify(ev.content)}`,
+    );
+
+    if (ev.contentType == 'navigation') {
+      this.emitter.emit('ui.tool.request', ev.content);
+      return;
+    }
+
+    if (ev.contentType === 'clear-screen') return this.clearHistory();
+    if (ev.options && ev.options.clearScreen) this.clearHistory();
+
     // append to same actor
     if (
       !this.history.length ||
@@ -159,11 +166,15 @@ export class UI {
     this.history[lastIndex].messages.push(ev);
     this.history[lastIndex].messages = this.history[lastIndex].messages.sort(
       (a, b) => {
-        const aChunckId = a.chunkId || Date.now();
-        const bChunckId = b.chunkId || Date.now();
+        console.warn('UI a b', a.chunkId, b.chunkId);
+        const aChunckId = a.chunkId || getChunkId();
+        const bChunckId = b.chunkId || getChunkId();
+        console.warn('UI val1 val2', +aChunckId, +bChunckId);
         return +aChunckId >= +bChunckId ? 1 : -1;
       },
     );
+
+    console.warn(this.history[lastIndex].messages);
 
     this.setHistory(this.history);
   }

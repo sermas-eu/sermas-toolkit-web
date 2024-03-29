@@ -1,10 +1,12 @@
 import type { AudioClassifier } from '@mediapipe/tasks-audio';
 import type { MicVAD } from '@ricky0123/vad-web/dist/real-time-vad';
 import EventEmitter2 from 'eventemitter2';
+import { getChunkId } from '../utils.js';
 import { emitter } from '../events.js';
 import {
   AUDIO_CLASSIFICATION_TOPIC,
   AudioClassificationEventDto,
+  DialogueMessageDto,
   SermasToolkit,
 } from '../index.js';
 import { Logger } from '../logger.js';
@@ -116,7 +118,9 @@ export class AudioDetection extends EventEmitter2 {
         }
         this.logger.debug(`Speech detected`);
         const wav = vadModule.utils.encodeWAV(audio);
-        this.emit('speech', { op, audio, wav });
+        const ev = { op, audio, wav };
+        this.emit('speech', ev);
+        this.speechDetected(ev);
       };
 
       this.vad = await vadModule.MicVAD.new({
@@ -246,6 +250,7 @@ export class AudioDetection extends EventEmitter2 {
         `classification event ${JSON.stringify(classifications)}`,
       );
       this.emit('classification', classifications);
+      this.sendAudioClassification(classifications);
     }
 
     return matchSpeech;
@@ -307,7 +312,7 @@ export class AudioDetection extends EventEmitter2 {
     return this.stream;
   }
 
-  async publish(detections: AudioClassificationValue[]) {
+  sendAudioClassification(detections: AudioClassificationValue[]) {
     if (!this.toolkit) return;
     const payload: AudioClassificationEventDto = {
       appId: this.toolkit.getAppId(),
@@ -317,5 +322,58 @@ export class AudioDetection extends EventEmitter2 {
       detections,
     };
     this.toolkit.getBroker().publish(AUDIO_CLASSIFICATION_TOPIC, payload);
+  }
+
+  speechDetected(ev) {
+    if (!this.toolkit) return;
+    if (ev.wav) {
+      this.sendSpeechAudio('wav', ev.wav);
+    } else if (ev.audio) {
+      const sampleRate = this.getSampleRate() || 16000;
+      this.sendSpeechAudio('raw', ev.audio, sampleRate);
+    }
+  }
+
+  async sendSpeechAudio(
+    type: 'wav' | 'raw',
+    audio: Uint32Array | ArrayBuffer,
+    sampleRate?: number,
+  ) {
+    if (!this.toolkit) return;
+
+    this.pause();
+
+    this.logger.log(`Sending speech chunk type=${type}`);
+
+    const ev: DialogueMessageDto = {
+      appId: this.toolkit.getAppId(),
+      gender: await this.toolkit.getAvatarGender(),
+      actor: 'user',
+      language: this.toolkit.getAppLanguage(),
+      chunkId: getChunkId(),
+      text: '',
+      sessionId: this.toolkit.getSessionId(),
+      userId: this.toolkit.getUserId(),
+    };
+
+    const formData = new FormData();
+    const blob = new Blob([audio], {
+      type: type === 'raw' ? 'application/octet-stream' : 'audio/wav',
+    });
+    formData.append('file', blob, 'audio.wav');
+    for (const key in ev) {
+      formData.append(key, ev[key]);
+    }
+
+    try {
+      await this.toolkit.getApi().sendAudio(formData, {
+        sampleRate,
+      });
+      this.logger.debug(`Audio clip sent`);
+    } catch (err: any) {
+      this.logger.error(`Failed to send clip: ${err.stack}`);
+    } finally {
+      this.restore();
+    }
   }
 }
