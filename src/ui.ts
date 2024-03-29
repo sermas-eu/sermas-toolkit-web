@@ -142,7 +142,7 @@ export class UI {
     if (ev.contentType === 'clear-screen') return this.clearHistory();
     if (ev.options && ev.options.clearScreen) this.clearHistory();
 
-    // append to same actor
+    // append to same actor, create a new group otherwise
     if (
       !this.history.length ||
       this.history[this.history.length - 1].actor !== actor
@@ -166,15 +166,11 @@ export class UI {
     this.history[lastIndex].messages.push(ev);
     this.history[lastIndex].messages = this.history[lastIndex].messages.sort(
       (a, b) => {
-        console.warn('UI a b', a.chunkId, b.chunkId);
         const aChunckId = a.chunkId || getChunkId();
         const bChunckId = b.chunkId || getChunkId();
-        console.warn('UI val1 val2', +aChunckId, +bChunckId);
         return +aChunckId >= +bChunckId ? 1 : -1;
       },
     );
-
-    console.warn(this.history[lastIndex].messages);
 
     this.setHistory(this.history);
   }
