@@ -1,6 +1,7 @@
 import type {
   AgentHeartBeatEventDto,
   AuthJwtUser,
+  DialogueMessageDto,
   JwtTokenDto,
   LoginRequestDto,
   LoginResponseDto,
@@ -219,7 +220,7 @@ export class ApiClient {
     return await this.get<AuthJwtUser>(`auth/whoami`, { headers });
   }
 
-  async sendAudio(data: FormData, params?: SendAudioQueryParamsDto) {
+  async sendAudio(data: FormData, params?: { sampleRate?: number }) {
     const appId = this.requireAppId();
     if (!appId) return null;
 
@@ -243,7 +244,7 @@ export class ApiClient {
     );
   }
 
-  async sendChatMessage(data: DialogueUserMessageDto) {
+  async sendChatMessage(data: DialogueMessageDto) {
     const appId = this.requireAppId();
     if (!appId) return null;
     const sessionId = this.requireSessionId();
