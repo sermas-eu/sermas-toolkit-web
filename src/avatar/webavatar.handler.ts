@@ -59,8 +59,13 @@ export class WebAvatarHandler {
     this.lipsync?.toggleAudio(enabled);
   }
 
-  onForceStop() {
-    // this.audioQueue = [];
+  onForceStop(chunkId?: string) {
+    if (!chunkId) {
+      this.audioQueue = !chunkId
+        ? []
+        : this.audioQueue.filter((q) => q.chunkId > chunkId);
+    }
+
     this.lipsync?.stopAudio();
   }
 

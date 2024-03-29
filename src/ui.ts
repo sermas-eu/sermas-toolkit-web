@@ -131,7 +131,7 @@ export class UI {
   async handleCleanScreen(ev: UIContentDto) {
     if (ev.options && ev.options.stopSpeech) {
       this.logger.debug(`Stop avatar speech`);
-      this.emitter.emit(`avatar.speech.stop`);
+      this.emitter.emit(`avatar.speech.stop`, ev.chunkId || getChunkId());
     }
 
     if (
