@@ -1,6 +1,7 @@
 import { AvatarModelConfig } from './webavatar.dto.js';
 
-export const DefaultAvatarConfig: Partial<AvatarModelConfig> = {
+export const DefaultAvatarConfig: AvatarModelConfig = {
+  path: 'default/model',
   domId: 'web-avatar',
   camera: {
     position: {
@@ -39,7 +40,8 @@ export const DefaultAvatarConfig: Partial<AvatarModelConfig> = {
   },
 };
 
-export const DefaultReadyPlayerMeAvatarConfig: Partial<AvatarModelConfig> = {
+export const DefaultReadyPlayerMeAvatarConfig: AvatarModelConfig = {
+  path: '',
   domId: 'web-avatar',
   modelType: 'readyplayerme',
 };

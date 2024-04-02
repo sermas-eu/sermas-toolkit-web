@@ -8,7 +8,7 @@ import {
   AvatarModelConfig,
   createWebAvatar,
 } from './avatar/index.js';
-import { DEFAULT_AVATAR_LANGUAGE } from './constants.js';
+import { DEFAULT_AVATAR_LANGUAGE, DefaultBackground } from './constants.js';
 import { AudioDetection, VideoDetection } from './detection/index.js';
 import { InteractionType } from './dto/detection.dto.js';
 import { ErrorEventDto, ErrorReason } from './dto/errors.dto.js';
@@ -148,8 +148,15 @@ export class SermasToolkit {
     this.userAuth = new UserAuth(this);
   }
 
-  async createWebAvatar(avatarConfig: AvatarModelConfig): Promise<AvatarModel> {
-    this.avatar = await createWebAvatar(avatarConfig, this);
+  async createWebAvatar(
+    avatarConfig?: Partial<AvatarModelConfig>,
+  ): Promise<AvatarModel> {
+    avatarConfig = avatarConfig || (await this.getAvatarConfig());
+
+    this.avatar = await createWebAvatar(
+      avatarConfig as AvatarModelConfig,
+      this,
+    );
     return this.avatar;
   }
 
@@ -438,7 +445,7 @@ export class SermasToolkit {
   }
 
   getAssetRequestParams(path: string): AssetRequestParams {
-    const publicUrl = path.indexOf('https') > -1;
+    const publicUrl = path.startsWith('http');
 
     let url = path;
     let withCredentials = false;
@@ -457,13 +464,38 @@ export class SermasToolkit {
     };
   }
 
-  async getAvatarGender(): Promise<undefined | string> {
+  async getAvatarBackgroundPath(path?: string): Promise<string> {
+    // skip url
+    if (path?.startsWith('http')) return path;
+
     const app = await this.getApp();
-    const avatar = app?.settings?.avatar;
+    if (!app) return DefaultBackground.path;
+
+    path = path || app?.settings?.background;
+
+    const filtered = app.repository?.backgrounds?.filter(
+      (b) => b.id === path || b.path === path,
+    );
+
+    return filtered?.length ? filtered[0].path : DefaultBackground.path;
+  }
+
+  async getAvatarGender(avatarName?: string): Promise<undefined | string> {
+    const avatar = await this.getAvatarConfig(avatarName);
     if (!avatar) return undefined;
-    if (!app.repository?.avatars || !app.repository?.avatars[avatar])
+    return avatar.gender;
+  }
+
+  async getAvatarConfig(
+    avatar?: string,
+  ): Promise<AvatarModelConfig | undefined> {
+    const app = await this.getApp();
+    avatar = avatar || app?.settings?.avatar;
+    if (!avatar) return undefined;
+    if (!app?.repository?.avatars || !app?.repository?.avatars?.length)
       return undefined;
-    return app.repository.avatars[avatar]?.gender;
+    const filtered = app.repository.avatars.filter((a) => a.id === avatar);
+    return filtered && filtered.length ? filtered[0] : undefined;
   }
 
   getAppLanguage() {

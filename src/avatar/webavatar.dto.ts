@@ -81,7 +81,7 @@ export type AvatarModelType = 'readyplayerme' | 'custom';
 export class AvatarModelConfig {
   domId?: string;
   modelType?: AvatarModelType;
-  modelPath: string;
+  path: string;
   gender?: 'M' | 'F';
   animations?: AvatarModelConfigDefaults;
   camera?: CameraConfig;

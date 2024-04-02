@@ -151,13 +151,14 @@ export class AvatarModel {
     this.createScene();
 
     // load 3D model
-    const format = this.config.modelPath.match(/.fbx$/) ? 'fbx' : 'glb';
+    const format = this.config.path.match(/.fbx$/) ? 'fbx' : 'glb';
 
-    let modelPath = this.config.modelPath;
+    let modelPath = this.config.path;
     // ready player me path
     if (modelPath.indexOf('readyplayer') > -1) {
       if (modelPath.indexOf('morphTargets') === -1) {
-        modelPath = `${modelPath}&morphTargets=ARKit,Oculus%20Visemes%2032`;
+        const suffix = 'morphTargets=ARKit,Oculus%20Visemes%2032';
+        modelPath = `${modelPath}${modelPath.indexOf('?') === -1 ? '?' : '&'}${suffix}`;
         // modelPath = `${modelPath}`
       }
     }
@@ -329,13 +330,18 @@ export class AvatarModel {
 
     let url = path;
     if (this.toolkit) {
-      const params = this.toolkit?.getAssetRequestParams(path);
+      // resolve id or path
+      url = await this.toolkit?.getAvatarBackgroundPath(url);
+
+      const params = this.toolkit?.getAssetRequestParams(url);
       if (params.withCredentials)
         loader.setWithCredentials(params.withCredentials);
       if (params.headers) loader.setRequestHeader(params.headers);
+
       url = params.url;
     }
 
+    logger.debug(`Loading background from ${url}`);
     const image = await loader.load(url);
     this.scene.background = image;
     this.background = image;
