@@ -117,6 +117,7 @@ export class LipSync extends EventEmitter2 {
 
   updateExpression(deltaTime: number) {
     const volume = this.getVolume();
+
     if (volume < 10) {
       this.lastVowelIndex = 0;
       this.lastDelta = deltaTime;

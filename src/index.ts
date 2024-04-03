@@ -1,4 +1,8 @@
-import type { PlatformAppDto, SessionChangedDto } from '@sermas/api-client';
+import type {
+  PlatformAppDto,
+  RepositoryAssetTypes,
+  SessionChangedDto,
+} from '@sermas/api-client';
 import EventEmitter2, { ListenerFn } from 'eventemitter2';
 import { v4 as uuidv4 } from 'uuid';
 import { ApiClient } from './api.js';
@@ -19,7 +23,8 @@ import { Logger } from './logger.js';
 import { MqttClient } from './mqtt-client.js';
 import { Settings } from './settings.js';
 import { UserAuth } from './user-auth.js';
-
+export * from '@sermas/api-client';
+export * from './constants.js';
 // exports
 export * from '@sermas/api-client';
 export * from './constants.js';
@@ -44,12 +49,6 @@ const getEnv = (): Env => {
 
   return defaultEnv;
 };
-
-export interface AssetRequestParams {
-  url: string;
-  withCredentials?: boolean;
-  headers?: Record<string, any>;
-}
 
 export interface SermasToolkitOptions {
   url: string;
@@ -444,24 +443,25 @@ export class SermasToolkit {
     this.emitter.removeAllListeners(event);
   }
 
-  getAssetRequestParams(path: string): AssetRequestParams {
-    const publicUrl = path.startsWith('http');
-
-    let url = path;
-    let withCredentials = false;
-    let headers: Record<string, any> | undefined = undefined;
-
-    if (!publicUrl) {
-      withCredentials = true;
-      headers = { Authorization: `Bearer ${this.token}` };
-      url = `${this.baseUrl}/api/ui/asset/${this.getAppId()}?path=${path}`;
+  async configureLoader(
+    type: RepositoryAssetTypes,
+    id: string,
+    loader: {
+      setWithCredentials: (set: boolean) => any;
+      setRequestHeader: (headers: Record<string, any>) => any;
+    },
+  ): Promise<string | undefined> {
+    const config = await this.getAssetConfig(type, id);
+    if (!config) {
+      this.logger.warn(`Asset config ${type} ${id} not found`);
+      return undefined;
     }
 
-    return {
-      url,
-      withCredentials,
-      headers,
-    };
+    if (config.path.startsWith('http')) return config.path;
+
+    loader.setWithCredentials(true);
+    loader.setRequestHeader({ Authorization: `Bearer ${this.token}` });
+    return `${this.baseUrl}/api/ui/asset/${this.getAppId()}/${config.type}/${config.id}`;
   }
 
   async getAvatarBackgroundPath(path?: string): Promise<string> {
@@ -487,15 +487,25 @@ export class SermasToolkit {
   }
 
   async getAvatarConfig(
-    avatar?: string,
+    avatarId?: string,
   ): Promise<AvatarModelConfig | undefined> {
     const app = await this.getApp();
-    avatar = avatar || app?.settings?.avatar;
-    if (!avatar) return undefined;
-    if (!app?.repository?.avatars || !app?.repository?.avatars?.length)
-      return undefined;
-    const filtered = app.repository.avatars.filter((a) => a.id === avatar);
-    return filtered && filtered.length ? filtered[0] : undefined;
+    avatarId = avatarId || app?.settings?.avatar;
+    if (!avatarId) return undefined;
+    return await this.getAssetConfig<AvatarModelConfig>('avatars', avatarId);
+  }
+
+  async getAssetConfig<
+    T = { id: string; path: string; type: RepositoryAssetTypes },
+  >(type: RepositoryAssetTypes, id: string, defaultValue?: T) {
+    const app = await this.getApp();
+    if (!id || !app || !app.repository) return defaultValue;
+
+    const repo = app?.repository[type];
+    if (!repo) return defaultValue;
+
+    const filtered = repo?.filter((a) => a.id === id);
+    return filtered && filtered.length ? (filtered[0] as T) : defaultValue;
   }
 
   getAppLanguage() {

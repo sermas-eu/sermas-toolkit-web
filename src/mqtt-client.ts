@@ -199,11 +199,12 @@ export class MqttClient {
       };
 
       // emitter.emit('mqtt.message', ev)
-      emitter.emit(`${resource}.${scope}`, ev.payload, ev);
+      (() => emitter.emit(`${resource}.${scope}`, ev.payload, ev))();
       this.addACLEvent('sub', `${resource}.${scope}`);
       // this.logger.debug(`received mqtt event ${resource}.${scope} `, ev.payload)
     } catch (e: any) {
-      this.logger.warn(`failed to parse mqtt message: ${e.message}`);
+      this.logger.warn(`failed to handle mqtt message: ${e.message}`);
+      this.logger.warn(e);
     }
   }
 

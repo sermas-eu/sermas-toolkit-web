@@ -1,3 +1,4 @@
+import { RepositoryAvatarDto } from '@sermas/api-client';
 import * as THREE from 'three';
 
 export type GestureMappingKeys =
@@ -11,6 +12,7 @@ export type GestureMappingKeys =
   | 'gesture_show_left'
   | 'gesture_show_right';
 
+// eslint-disable-next-line
 type Subset<T extends U, U> = U;
 
 export interface AvatarAudioPlaybackStatus {
@@ -76,16 +78,9 @@ export interface AvatarModelConfigDefaults {
   };
 }
 
-export type AvatarModelType = 'readyplayerme' | 'custom';
-
-export class AvatarModelConfig {
+export interface AvatarModelConfig extends RepositoryAvatarDto {
   domId?: string;
-  modelType?: AvatarModelType;
-  path: string;
-  gender?: 'M' | 'F';
   animations?: AvatarModelConfigDefaults;
-  camera?: CameraConfig;
-  cameraMobile?: CameraConfig;
   showGui?: boolean;
   ui?: {
     backgroundColor?: string;

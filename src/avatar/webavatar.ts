@@ -5,8 +5,6 @@ import Stats from 'three/examples/jsm/libs/stats.module.js';
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
 import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
-import type { HolisticV1Results } from '../detection/video/mediapipe/v1/holistic/holistic.dto.js';
-import { sendStatus } from '../events.js';
 import { Logger } from '../logger.js';
 
 import { WebavatarAnimation } from './animations/index.js';
@@ -16,6 +14,8 @@ import type {
   DetectionPosition,
 } from './webavatar.dto.js';
 
+import { HolisticV1Results } from '../detection/index.js';
+import { sendStatus } from '../events.js';
 import { SermasToolkit } from '../index.js';
 import { TextureLoader2 } from './loader/TextureLoader2.js';
 import {
@@ -150,21 +150,11 @@ export class AvatarModel {
 
     this.createScene();
 
-    // load 3D model
-    const format = this.config.path.match(/.fbx$/) ? 'fbx' : 'glb';
-
-    let modelPath = this.config.path;
-    // ready player me path
-    if (modelPath.indexOf('readyplayer') > -1) {
-      if (modelPath.indexOf('morphTargets') === -1) {
-        const suffix = 'morphTargets=ARKit,Oculus%20Visemes%2032';
-        modelPath = `${modelPath}${modelPath.indexOf('?') === -1 ? '?' : '&'}${suffix}`;
-        // modelPath = `${modelPath}`
-      }
+    const model = await this.loadModel();
+    if (!model) {
+      logger.warn(`Failed to load avatar model`);
+      return this;
     }
-
-    const model = await this.loadModel(modelPath, format);
-    // model.scale.setScalar(200);
 
     this.initializeCamera(model);
 
@@ -217,17 +207,20 @@ export class AvatarModel {
 
     this.toolkit?.emit('avatar.status', 'ready');
 
-    this.toolkit?.on('detection.characterization', (ev) => {
-      if (ev.detections.length && ev.detections[0].detections.face.length) {
-        const box = ev.detections[0].detections.face[0].boxRaw;
-        this.animation?.moveEyes({
-          x: -((box[2] + box[0]) / 2 - 0.5),
-          y: -((box[3] + box[1]) / 2 - 0.5),
-        } as DetectionPosition);
-      }
-    });
+    this.handleEyesMotion.bind(this);
+    this.toolkit?.on('detection.characterization', this.handleEyesMotion);
 
     return this;
+  }
+
+  handleEyesMotion(ev: any) {
+    if (ev.detections?.length && ev.detections[0].detections?.face?.length) {
+      const box = ev.detections[0].detections.face[0].boxRaw;
+      this.animation?.moveEyes({
+        x: -((box[2] + box[0]) / 2 - 0.5),
+        y: -((box[3] + box[1]) / 2 - 0.5),
+      } as DetectionPosition);
+    }
   }
 
   async startLookingGlass() {
@@ -324,22 +317,16 @@ export class AvatarModel {
     }
   }
 
-  async setBackground(path: string) {
+  async setBackground(assetId: string) {
     // Load the background texture
     const loader = new TextureLoader2();
 
-    let url = path;
+    let url: string | undefined = assetId;
     if (this.toolkit) {
-      // resolve id or path
-      url = await this.toolkit?.getAvatarBackgroundPath(url);
-
-      const params = this.toolkit?.getAssetRequestParams(url);
-      if (params.withCredentials)
-        loader.setWithCredentials(params.withCredentials);
-      if (params.headers) loader.setRequestHeader(params.headers);
-
-      url = params.url;
+      url = await this.toolkit?.configureLoader('backgrounds', assetId, loader);
     }
+
+    if (!url) return;
 
     logger.debug(`Loading background from ${url}`);
     const image = await loader.load(url);
@@ -392,22 +379,37 @@ export class AvatarModel {
       );
   }
 
-  async loadModel(
-    path: string,
-    type: 'fbx' | 'glb' | 'glft' = 'fbx',
-  ): Promise<THREE.Group> {
-    const loader = type === 'fbx' ? new FBXLoader() : new GLTFLoader();
+  // load 3D model
+  async loadModel(): Promise<THREE.Group | undefined> {
+    const format = this.config.path.endsWith('.fbx') ? 'fbx' : 'glb';
+    const loader = format === 'fbx' ? new FBXLoader() : new GLTFLoader();
 
-    let url = path;
+    let url: string | undefined = this.config.path;
+
     if (this.toolkit) {
-      const params = this.toolkit?.getAssetRequestParams(path);
-      if (params.withCredentials)
-        loader.setWithCredentials(params.withCredentials);
-      if (params.headers) loader.setRequestHeader(params.headers);
-      url = params.url;
+      url = await this.toolkit.configureLoader(
+        'avatars',
+        this.config.id,
+        loader,
+      );
     }
 
-    logger.log(`loading ${type} from ${url}`);
+    // path is an URL
+    if (url && url.startsWith('http') && url.indexOf('readyplayer') > -1) {
+      // ready player me path
+      if (url.indexOf('morphTargets') === -1) {
+        const suffix = 'morphTargets=ARKit,Oculus%20Visemes%2032';
+        url = `${url}${url.indexOf('?') === -1 ? '?' : '&'}${suffix}`;
+      }
+      console.error('RPM', url);
+    }
+
+    if (!url) {
+      logger.warn(`Avatar url is empty`);
+      return undefined;
+    }
+
+    logger.log(`loading ${format} from ${url}`);
     const model = await loader.loadAsync(
       url,
       (ev: ProgressEvent<EventTarget>) =>
@@ -521,6 +523,8 @@ export class AvatarModel {
     await this.animation?.destroy();
     await this.handler?.destroy();
     await this.xr?.destroy();
+
+    this.toolkit?.off('detection.characterization', this.handleEyesMotion);
 
     logger.debug('avatar destroyed');
     this.toolkit?.emit('avatar.status', 'removed');
