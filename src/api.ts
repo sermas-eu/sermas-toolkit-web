@@ -6,6 +6,7 @@ import type {
   LoginRequestDto,
   LoginResponseDto,
   PlatformAppDto,
+  RepositoryConfigDto,
   SessionDto,
   UIModelMapBlendShapesRequestDto,
   UIModelMapBlendShapesResponseDto,
@@ -308,7 +309,7 @@ export class ApiClient {
       payload,
     );
     if (!res?.blendShapes) return {};
-    return res?.blendShapes;
+    return res?.blendShapes as Record<string, string>;
   }
 
   async getApp(appId?: string) {
@@ -349,6 +350,10 @@ export class ApiClient {
             },
           },
     );
+  }
+
+  async getRepositoryDefaults() {
+    return await this.get<RepositoryConfigDto>(`app/repository/defaults`);
   }
 
   getSession(sessionId?: string) {

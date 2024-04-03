@@ -1,6 +1,7 @@
 import type {
   PlatformAppDto,
   RepositoryAssetTypes,
+  RepositoryConfigDto,
   SessionChangedDto,
 } from '@sermas/api-client';
 import EventEmitter2, { ListenerFn } from 'eventemitter2';
@@ -98,6 +99,7 @@ export class SermasToolkit {
   private heartbitInterval: NodeJS.Timeout;
 
   private avatar?: AvatarModel;
+  private repositoryDefaults?: RepositoryConfigDto | undefined;
 
   constructor(private readonly options: SermasToolkitOptions) {
     this.fpsMonitor = new FpsMonitor(this.emitter);
@@ -450,11 +452,18 @@ export class SermasToolkit {
       setWithCredentials: (set: boolean) => any;
       setRequestHeader: (headers: Record<string, any>) => any;
     },
+    useDefaults = true,
   ): Promise<string | undefined> {
-    const config = await this.getAssetConfig(type, id);
+    let config = await this.getAssetConfig(type, id);
     if (!config) {
       this.logger.warn(`Asset config ${type} ${id} not found`);
-      return undefined;
+      if (!useDefaults) return undefined;
+      this.logger.debug(`using default asset for ${type} loader`);
+
+      const repositoryDefaults = await this.getRepositoryDefaults();
+      const repo = repositoryDefaults ? repositoryDefaults[type] : undefined;
+      if (!repo || !repo.length) return undefined;
+      config = repo[0];
     }
 
     if (config.path.startsWith('http')) return config.path;
@@ -510,5 +519,13 @@ export class SermasToolkit {
 
   getAppLanguage() {
     return this.settings.get().language || DEFAULT_AVATAR_LANGUAGE;
+  }
+
+  async getRepositoryDefaults() {
+    if (!this.repositoryDefaults) {
+      const repositoryDefaults = await this.api.getRepositoryDefaults();
+      this.repositoryDefaults = repositoryDefaults || undefined;
+    }
+    return this.repositoryDefaults;
   }
 }

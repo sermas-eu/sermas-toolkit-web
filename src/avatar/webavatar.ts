@@ -405,7 +405,7 @@ export class AvatarModel {
     }
 
     if (!url) {
-      logger.warn(`Avatar url is empty`);
+      logger.warn(`Avatar not available, using default`);
       return undefined;
     }
 

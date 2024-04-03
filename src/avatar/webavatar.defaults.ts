@@ -1,7 +1,13 @@
 import { AvatarModelConfig } from './webavatar.dto.js';
 
 export const DefaultAvatarConfig: AvatarModelConfig = {
-  path: 'default/model',
+  type: 'avatars',
+  id: 'default',
+  path: 'https://models.readyplayer.me/654cc759f1a79ed2ebab0207.glb',
+
+  gender: 'F',
+  modelType: 'readyplayerme',
+
   domId: 'web-avatar',
   camera: {
     position: {
@@ -41,7 +47,10 @@ export const DefaultAvatarConfig: AvatarModelConfig = {
 };
 
 export const DefaultReadyPlayerMeAvatarConfig: AvatarModelConfig = {
+  id: 'default',
+  type: 'avatars',
   path: '',
+  gender: 'F',
   domId: 'web-avatar',
   modelType: 'readyplayerme',
 };
