@@ -1,13 +1,14 @@
 import * as THREE from 'three';
-import { AvatarModel } from '../webavatar.js';
-import { createPlaneMarker } from './planeMarker.js';
-import { HitTestHandler } from './hitTest.js';
-import { logger } from '../../logger.js';
 import { emitter } from '../../events.js';
+import { logger } from '../../logger.js';
 import { CameraConfig } from '../webavatar.dto.js';
+import { AvatarModel } from '../webavatar.js';
+import { HitTestHandler } from './hitTest.js';
+import { createPlaneMarker } from './planeMarker.js';
 
 export class WebAvatarXR {
   private enabled = false;
+  private started = false;
 
   private planeMarker:
     | THREE.Mesh<THREE.RingGeometry, THREE.MeshBasicMaterial>
@@ -87,18 +88,25 @@ export class WebAvatarXR {
     return overlay;
   }
 
-  async init() {
+  async init() {}
+
+  async setup() {
     const supported = await this.isSupported();
     if (!supported) return;
 
-    this.overlayElement = this.createOverlay();
-    this.hitTestHandler = new HitTestHandler(this.avatar.getRenderer());
+    if (!this.overlayElement) this.overlayElement = this.createOverlay();
+    if (!this.hitTestHandler)
+      this.hitTestHandler = new HitTestHandler(this.avatar.getRenderer());
   }
 
   async start(): Promise<boolean> {
+    this.setup();
+
     const started = await this.startXRSession();
     if (!started) return false;
     this.setupArScene();
+
+    this.started = true;
 
     return true;
   }
@@ -108,6 +116,8 @@ export class WebAvatarXR {
 
     const supported = await this.isSupported();
     if (!supported) return false;
+
+    this.started = true;
 
     const xrSessionInit: XRSessionInit = {
       requiredFeatures: ['local', 'hit-test'],
@@ -155,6 +165,9 @@ export class WebAvatarXR {
   async stop() {
     emitter.emit('xr.session', 'stop');
 
+    if (!this.started) return;
+
+    this.started = false;
     this.enabled = false;
     this.resetOriginalScene();
 
@@ -244,6 +257,7 @@ export class WebAvatarXR {
     const model = this.avatar.getModel();
     const scene = this.avatar.getScene();
     const camera = this.avatar.getCamera();
+
     scene.remove(model);
 
     //delete planeMarker
@@ -261,7 +275,7 @@ export class WebAvatarXR {
     if (background) {
       scene.background = background;
     }
-    if (model) {
+    if (model && this.modelScale && this.modelPosition) {
       model.scale.set(this.modelScale.x, this.modelScale.y, this.modelScale.z);
       model.position.set(
         this.modelPosition.x,

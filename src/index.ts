@@ -499,7 +499,7 @@ export class SermasToolkit {
     avatarId?: string,
   ): Promise<AvatarModelConfig | undefined> {
     const app = await this.getApp();
-    avatarId = avatarId || app?.settings?.avatar;
+    avatarId = avatarId || this.settings.get().avatar || app?.settings?.avatar;
     if (!avatarId) return undefined;
     return await this.getAssetConfig<AvatarModelConfig>('avatars', avatarId);
   }

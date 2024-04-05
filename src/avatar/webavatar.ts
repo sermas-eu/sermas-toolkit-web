@@ -401,7 +401,6 @@ export class AvatarModel {
         const suffix = 'morphTargets=ARKit,Oculus%20Visemes%2032';
         url = `${url}${url.indexOf('?') === -1 ? '?' : '&'}${suffix}`;
       }
-      console.error('RPM', url);
     }
 
     if (!url) {

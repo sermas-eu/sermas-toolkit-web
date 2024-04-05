@@ -348,6 +348,7 @@ export class AudioDetection extends EventEmitter2 {
     const ev: DialogueMessageDto = {
       appId: this.toolkit.getAppId(),
       gender: await this.toolkit.getAvatarGender(),
+      avatar: (await this.toolkit.getAvatarConfig())?.id,
       actor: 'user',
       language: this.toolkit.getAppLanguage(),
       chunkId: getChunkId(),
