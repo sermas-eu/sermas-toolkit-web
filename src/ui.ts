@@ -146,7 +146,11 @@ export class UI {
   }
 
   async appendContent(actor: DialogueActor, ev: UIContentDto) {
-    if (ev.content)
+    if (
+      ev.content &&
+      typeof ev.content === 'object' &&
+      !(ev.content instanceof Array)
+    )
       ev.content.chunkId = ev.content.chunkId || Date.now() + performance.now();
 
     this.logger.debug(`ev ${JSON.stringify(ev)}`);
