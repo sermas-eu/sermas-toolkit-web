@@ -107,7 +107,9 @@ export class UI {
       appId: ev.appId,
       chunkId: ev.chunkId,
       messageId: ev.messageId,
-      metadata: {},
+      metadata: {
+        avatar: ev.avatar,
+      },
       options: {},
     };
 
