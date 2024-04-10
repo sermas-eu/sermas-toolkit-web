@@ -386,7 +386,7 @@ export class AvatarModel {
 
     let url: string | undefined = this.config.path;
 
-    if (this.toolkit) {
+    if (this.toolkit && this.config.id != 'rpm') {
       url = await this.toolkit.configureLoader(
         'avatars',
         this.config.id,
