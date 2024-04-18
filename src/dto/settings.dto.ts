@@ -24,4 +24,5 @@ export class AppSettings implements AppSettingsDto {
   llm: string;
   login: boolean;
   prompt?: AppPromptDto | undefined;
+  interactionStart?: string;
 }
