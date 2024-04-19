@@ -341,6 +341,15 @@ export class AudioDetection extends EventEmitter2 {
   ) {
     if (!this.toolkit) return;
 
+    if (!this.toolkit.getSessionId()) {
+      this.toolkit.emit('detection.intent', {
+        status: 'started',
+        source: 'speak',
+        trigger: '',
+      });
+      return;
+    }
+
     this.pause();
 
     this.logger.log(`Sending speech chunk type=${type}`);

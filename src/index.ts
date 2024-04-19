@@ -389,12 +389,6 @@ export class SermasToolkit {
       }
     }
 
-    // create a new session if one does not already exists
-    if (!this.getSessionId()) {
-      this.createSessionId();
-      this.logger.debug(`created new session sessionId=${this.sessionId}`);
-    }
-
     if (token) {
       const topics = await this.api.listTopics(this.options.moduleId);
       if (topics) {
@@ -407,23 +401,18 @@ export class SermasToolkit {
 
     await this.fpsMonitor.init();
 
-    if (this.avatar) {
-      this.on('avatar.status', async (status: 'ready' | 'removed') => {
-        if (status !== 'ready') return;
-        if (this.settings?.get().interactionStart == 'on-load') {
-          await this.sendHeartBit();
-        }
-      });
-    } else {
-      await this.sendHeartBit();
-    }
-    // this.heartbitInterval = setInterval(() => this.sendHeartBit(), 10 * 1000);
+    this.on('avatar.status', async (status: 'ready' | 'removed') => {
+      if (status !== 'ready') return;
+      if (this.settings?.get().interactionStart == 'on-load') {
+        await this.sendHeartBit();
+      }
+    });
 
     this.emit('ready', this);
   }
 
   private async onIntentDetection(ev: UserInteractionIntentionDto) {
-    if (this.sessionId) return;
+    if (this.getSessionId()) return;
 
     if (ev.source == 'ui' && this.settings?.get().interactionStart != 'touch')
       return;
@@ -443,6 +432,10 @@ export class SermasToolkit {
   }
 
   private async sendHeartBit() {
+    if (!this.getSessionId()) {
+      this.createSessionId();
+      this.logger.debug(`created new session sessionId=${this.sessionId}`);
+    }
     await this.api.sendAgentHeartBeat({
       appId: this.options.appId,
       moduleId: this.options.moduleId,
