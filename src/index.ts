@@ -3,6 +3,7 @@ import type {
   RepositoryAssetTypes,
   RepositoryConfigDto,
   SessionChangedDto,
+  UserInteractionIntentionDto,
 } from '@sermas/api-client';
 import EventEmitter2, { ListenerFn } from 'eventemitter2';
 import { v4 as uuidv4 } from 'uuid';
@@ -317,6 +318,7 @@ export class SermasToolkit {
     this.off('avatar.speech.stop', this.onAvatarSpeechStop);
     this.off('session.session', this.onSessionChanged);
     this.off('user.changed', this.onUserChanged);
+    this.off('detection.intent', this.onIntentDetection);
 
     // clear all registered event listeners
     this.listeners.clear();
@@ -341,6 +343,7 @@ export class SermasToolkit {
     this.onAvatarSpeechStop = this.onAvatarSpeechStop.bind(this);
     this.onSessionChanged = this.onSessionChanged.bind(this);
     this.onUserChanged = this.onUserChanged.bind(this);
+    this.onIntentDetection = this.onIntentDetection.bind(this);
 
     // internal events handler
     this.on('session', this.onSession);
@@ -349,6 +352,7 @@ export class SermasToolkit {
     this.on('avatar.speech.stop', this.onAvatarSpeechStop);
     this.on('session.session', this.onSessionChanged);
     this.on('user.changed', this.onUserChanged);
+    this.on('detection.intent', this.onIntentDetection);
 
     this.logger.debug(`appId=${this.options.appId}`);
 
@@ -385,12 +389,6 @@ export class SermasToolkit {
       }
     }
 
-    // create a new session if one does not already exists
-    if (!this.getSessionId()) {
-      this.createSessionId();
-      this.logger.debug(`created new session sessionId=${this.sessionId}`);
-    }
-
     if (token) {
       const topics = await this.api.listTopics(this.options.moduleId);
       if (topics) {
@@ -403,20 +401,41 @@ export class SermasToolkit {
 
     await this.fpsMonitor.init();
 
-    if (this.avatar) {
-      this.on('avatar.status', async (status: 'ready' | 'removed') => {
-        if (status !== 'ready') return;
+    this.on('avatar.status', async (status: 'ready' | 'removed') => {
+      if (status !== 'ready') return;
+      if (this.settings?.get().interactionStart == 'on-load') {
         await this.sendHeartBit();
-      });
-    } else {
-      await this.sendHeartBit();
-    }
-    // this.heartbitInterval = setInterval(() => this.sendHeartBit(), 10 * 1000);
+      }
+    });
 
     this.emit('ready', this);
   }
 
+  private async onIntentDetection(ev: UserInteractionIntentionDto) {
+    if (this.getSessionId()) return;
+
+    if (ev.source == 'ui' && this.settings?.get().interactionStart != 'touch')
+      return;
+    if (
+      ev.source == 'microphone' &&
+      this.settings?.get().interactionStart != 'speak'
+    )
+      return;
+    if (
+      ev.source == 'camera' &&
+      this.settings?.get().interactionStart != 'intent-detection'
+    )
+      return;
+
+    this.logger.log(`Starting interaction on event from source ${ev.source}`);
+    await this.sendHeartBit();
+  }
+
   private async sendHeartBit() {
+    if (!this.getSessionId()) {
+      this.createSessionId();
+      this.logger.debug(`created new session sessionId=${this.sessionId}`);
+    }
     await this.api.sendAgentHeartBeat({
       appId: this.options.appId,
       moduleId: this.options.moduleId,

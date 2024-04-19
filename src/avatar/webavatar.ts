@@ -205,8 +205,6 @@ export class AvatarModel {
 
     logger.debug('avatar initialized');
 
-    this.toolkit?.emit('avatar.status', 'ready');
-
     this.handleEyesMotion.bind(this);
     this.toolkit?.on('detection.characterization', this.handleEyesMotion);
 
