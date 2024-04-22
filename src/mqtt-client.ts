@@ -82,11 +82,11 @@ export class MqttClient {
   }
 
   unsubscribe(topic: string) {
-    this.logger.debug(`Unsubscribing ${topic}`);
     if (!this.isConnected()) {
       this.logger.debug(`Cannot unsubsribe, not connected`);
       return;
     }
+    this.logger.debug(`UNSUB ${topic}`);
     this.mqttClient?.unsubscribe(topic);
   }
 
@@ -113,6 +113,7 @@ export class MqttClient {
       );
       return;
     }
+    this.logger.debug(`SUB ${topics}`);
     this.mqttClient?.subscribe(topics, (e) => {
       if (e) {
         this.logger.warn(
@@ -152,14 +153,26 @@ export class MqttClient {
   }
 
   mapTopics(topics: string[]): string[] {
-    return topics.map((topicTemplate) => {
-      let topic = topicTemplate;
-      if (this.appId) topic = topic.replace(':appId', this.appId);
-      if (this.sessionId) topic = topic.replace(':sessionId', this.sessionId);
-      if (this.userId) topic = topic.replace(':userId', this.userId);
-      topic = topic.replace(/(:.+)$/g, '+');
-      return topic;
-    });
+    return topics
+      .map((topicTemplate) => {
+        let topic = topicTemplate;
+        if (this.appId) topic = topic.replace(':appId', this.appId);
+        if (this.sessionId) topic = topic.replace(':sessionId', this.sessionId);
+        if (this.userId) topic = topic.replace(':userId', this.userId);
+
+        if (
+          [':sessionId', ':appId'].filter((param) => topic.indexOf(param) > -1)
+            .length
+        ) {
+          this.logger.warn(`SUB Skip topic=${topic} with unmapped param`);
+          return '';
+        } else {
+          topic = topic.replace(/(:.+)$/g, '+');
+        }
+
+        return topic;
+      })
+      .filter((topic) => topic !== '');
   }
 
   onClientConnected() {

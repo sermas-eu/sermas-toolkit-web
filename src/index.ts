@@ -443,6 +443,7 @@ export class SermasToolkit {
       sessionId: this.sessionId,
       userId: this.userId,
     });
+    this.logger.debug(`Sent heartbit sessionId=${this.sessionId}`);
   }
 
   emit(event: string, ...args: any[]): void {
