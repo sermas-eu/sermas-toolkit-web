@@ -86,7 +86,7 @@ export class MqttClient {
       this.logger.debug(`Cannot unsubsribe, not connected`);
       return;
     }
-    this.logger.debug(`UNSUB ${topic}`);
+    // this.logger.debug(`UNSUB ${topic}`);
     this.mqttClient?.unsubscribe(topic);
   }
 
@@ -113,7 +113,7 @@ export class MqttClient {
       );
       return;
     }
-    this.logger.debug(`SUB ${topics}`);
+    // this.logger.debug(`SUB ${topics}`);
     this.mqttClient?.subscribe(topics, (e) => {
       if (e) {
         this.logger.warn(
@@ -164,7 +164,7 @@ export class MqttClient {
           [':sessionId', ':appId'].filter((param) => topic.indexOf(param) > -1)
             .length
         ) {
-          this.logger.warn(`SUB Skip topic=${topic} with unmapped param`);
+          // this.logger.warn(`SUB Skip topic=${topic} with unmapped param`);
           return '';
         } else {
           topic = topic.replace(/(:.+)$/g, '+');
