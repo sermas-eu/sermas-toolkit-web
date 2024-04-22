@@ -205,8 +205,6 @@ export class AvatarModel {
 
     logger.debug('avatar initialized');
 
-    this.toolkit?.emit('avatar.status', 'ready');
-
     this.handleEyesMotion.bind(this);
     this.toolkit?.on('detection.characterization', this.handleEyesMotion);
 
@@ -386,7 +384,7 @@ export class AvatarModel {
 
     let url: string | undefined = this.config.path;
 
-    if (this.toolkit) {
+    if (this.toolkit && this.config.id != 'rpm') {
       url = await this.toolkit.configureLoader(
         'avatars',
         this.config.id,

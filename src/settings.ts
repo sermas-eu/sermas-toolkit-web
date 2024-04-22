@@ -31,6 +31,7 @@ export class Settings {
     detectorHuman: true,
     detectorFaceLandmarker: false,
     qrcode: true,
+    interactionStart: 'on-load',
   };
 
   constructor() {
@@ -61,6 +62,7 @@ export class Settings {
       enableAudio: settings.enableAudio,
       enableMic: settings.enableMic,
       devMode: settings.devMode === true ? true : false,
+      interactionStart: settings.interactionStart,
     };
 
     localStorage.setItem(`sermas.settings`, JSON.stringify(cfg));
