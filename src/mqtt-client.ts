@@ -164,7 +164,7 @@ export class MqttClient {
           [':sessionId', ':appId'].filter((param) => topic.indexOf(param) > -1)
             .length
         ) {
-          // this.logger.warn(`SUB Skip topic=${topic} with unmapped param`);
+          this.logger.debug(`SUB Skip topic=${topic} with unmapped param`);
           return '';
         } else {
           topic = topic.replace(/(:.+)$/g, '+');
