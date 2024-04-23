@@ -1,4 +1,8 @@
-import type { AppPromptDto, AppSettingsDto } from '@sermas/api-client';
+import type {
+  AppPromptDto,
+  AppSettingsDto,
+  InteractionStartTypes,
+} from '@sermas/api-client';
 
 export class AppSettings implements AppSettingsDto {
   enableTestFaces: boolean;
@@ -24,5 +28,5 @@ export class AppSettings implements AppSettingsDto {
   llm: string;
   login: boolean;
   prompt?: AppPromptDto | undefined;
-  interactionStart?: string;
+  interactionStart?: InteractionStartTypes;
 }
