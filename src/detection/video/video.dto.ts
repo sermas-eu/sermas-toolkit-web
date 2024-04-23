@@ -16,7 +16,8 @@ export type VideoDetectorType =
   | 'human'
   | 'holistic_v1'
   | 'faceLandmark'
-  | 'qrcode';
+  | 'qrcode'
+  | 'object';
 
 export interface VideoDetectionConfig extends Record<string, any> {
   camera: AtLeast<CameraHandlerConfig, 'width' | 'height' | 'video'>;

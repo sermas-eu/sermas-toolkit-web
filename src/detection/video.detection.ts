@@ -32,6 +32,7 @@ export class VideoDetection extends EventEmitter2 {
     holistic_v1: performance.now(),
     human: performance.now(),
     qrcode: performance.now(),
+    object: performance.now(),
   };
 
   private canvas: HTMLCanvasElement | undefined;
