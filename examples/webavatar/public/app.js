@@ -94939,11 +94939,12 @@ ${t4}`);
   var require_app = __commonJS({
     "src/app.ts"() {
       init_toolkit();
+      var appId = "45cdddf9-a4ac-4d61-acac-b49223e03de9";
       var main = async () => {
         const toolkit = new SermasToolkit({
           url: "http://localhost:8080",
           moduleId: "kiosk",
-          appId: "",
+          appId,
           auth: {
             url: "http://localhost:8080",
             clientId: "platform",
