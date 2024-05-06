@@ -209,6 +209,7 @@ export class SermasToolkit {
   createSessionId(): string {
     const sessionId = uuidv4();
     this.setSessionId(sessionId);
+    this.logger.debug(`Created new session sessionId=${this.sessionId}`);
     return sessionId;
   }
 
@@ -318,7 +319,7 @@ export class SermasToolkit {
     this.off('avatar.speech.stop', this.onAvatarSpeechStop);
     this.off('session.session', this.onSessionChanged);
     this.off('user.changed', this.onUserChanged);
-    this.off('detection.intent', this.onIntentDetection);
+    this.off('detection.interaction', this.onInteractionDetection);
 
     // clear all registered event listeners
     this.listeners.clear();
@@ -343,7 +344,7 @@ export class SermasToolkit {
     this.onAvatarSpeechStop = this.onAvatarSpeechStop.bind(this);
     this.onSessionChanged = this.onSessionChanged.bind(this);
     this.onUserChanged = this.onUserChanged.bind(this);
-    this.onIntentDetection = this.onIntentDetection.bind(this);
+    this.onInteractionDetection = this.onInteractionDetection.bind(this);
 
     // internal events handler
     this.on('session', this.onSession);
@@ -352,7 +353,7 @@ export class SermasToolkit {
     this.on('avatar.speech.stop', this.onAvatarSpeechStop);
     this.on('session.session', this.onSessionChanged);
     this.on('user.changed', this.onUserChanged);
-    this.on('detection.intent', this.onIntentDetection);
+    this.on('detection.interaction', this.onInteractionDetection);
 
     this.logger.debug(`appId=${this.options.appId}`);
 
@@ -404,6 +405,7 @@ export class SermasToolkit {
     this.on('avatar.status', async (status: 'ready' | 'removed') => {
       if (status !== 'ready') return;
       if (this.settings?.get().interactionStart == 'on-load') {
+        this.createSessionId();
         await this.sendHeartBit();
       }
     });
@@ -411,7 +413,18 @@ export class SermasToolkit {
     this.emit('ready', this);
   }
 
-  private async onIntentDetection(ev: UserInteractionIntentionDto) {
+  public async triggerInteractionStart(source: string) {
+    this.onInteractionDetection({
+      source,
+      appId: this.getAppId(),
+      sessionId: '',
+      moduleId: 'detection',
+      interactionType: 'start',
+      probability: 1.0,
+    });
+  }
+
+  private async onInteractionDetection(ev: UserInteractionIntentionDto) {
     if (this.getSessionId()) return;
 
     if (ev.source == 'ui' && this.settings?.get().interactionStart != 'touch')
@@ -428,14 +441,11 @@ export class SermasToolkit {
       return;
 
     this.logger.log(`Starting interaction on event from source ${ev.source}`);
+    this.createSessionId();
     await this.sendHeartBit();
   }
 
   private async sendHeartBit() {
-    if (!this.getSessionId()) {
-      this.createSessionId();
-      this.logger.debug(`created new session sessionId=${this.sessionId}`);
-    }
     await this.api.sendAgentHeartBeat({
       appId: this.options.appId,
       moduleId: this.options.moduleId,
