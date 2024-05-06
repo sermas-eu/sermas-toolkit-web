@@ -156,9 +156,10 @@ export class MqttClient {
     return topics
       .map((topicTemplate) => {
         let topic = topicTemplate;
-        if (this.appId) topic = topic.replace(':appId', this.appId);
-        if (this.sessionId) topic = topic.replace(':sessionId', this.sessionId);
-        if (this.userId) topic = topic.replace(':userId', this.userId);
+        if (this.appId) topic = topic.replaceAll(':appId', this.appId);
+        if (this.sessionId)
+          topic = topic.replaceAll(':sessionId', this.sessionId);
+        if (this.userId) topic = topic.replaceAll(':userId', this.userId);
 
         if (
           [':sessionId', ':appId'].filter((param) => topic.indexOf(param) > -1)
@@ -167,7 +168,7 @@ export class MqttClient {
           this.logger.debug(`SUB Skip topic=${topic} with unmapped param`);
           return '';
         } else {
-          topic = topic.replace(/(:.+)$/g, '+');
+          topic = topic.replaceAll(/(:.+)$/g, '+');
         }
 
         return topic;
