@@ -124,13 +124,6 @@ export class UI {
     this.emitter.emit('ui.dialogue.history', this.history);
   }
 
-  getLastMessage(): UIContentDto | undefined {
-    if (!this.history.length) return undefined;
-    if (!this.history[0].messages || !this.history[0].messages.length)
-      return undefined;
-    return this.history[0].messages[this.history[0].messages.length - 1];
-  }
-
   async handleCleanScreen(ev: UIContentDto) {
     if (ev.options && ev.options.stopSpeech) {
       this.logger.debug(`Stop avatar speech`);
@@ -183,22 +176,29 @@ export class UI {
     }
 
     // do not show again if the last message is repeated eg "could you repeat?"
-    const lastMessage = this.getLastMessage();
-    if (lastMessage) {
-      if (lastMessage.contentType === 'dialogue-message') {
-        const dialogueMessageEvent = ev as DialogueMessageUIContentDto;
-        if (dialogueMessageEvent.content.text === lastMessage.content.text) {
-          return;
-        }
-        if (dialogueMessageEvent.content.actor === lastMessage.content.actor) {
-          lastMessage.content.text += dialogueMessageEvent.content.text;
-          return;
-        }
+    const lastIndex = this.history.length ? this.history.length - 1 : 0;
+    const lastItem = this.history[lastIndex];
+
+    const lastMessage =
+      lastItem.messages[
+        lastItem.messages.length ? lastItem.messages.length - 1 : 0
+      ];
+
+    let messageAppended = false;
+    if (lastMessage && lastMessage.contentType === 'dialogue-message') {
+      const dialogueMessageEvent = ev as DialogueMessageUIContentDto;
+      if (dialogueMessageEvent.content.text === lastMessage.content.text) {
+        return;
+      }
+      if (dialogueMessageEvent.contentType === lastMessage.contentType) {
+        lastMessage.content.text += dialogueMessageEvent.content.text;
+        messageAppended = true;
       }
     }
 
-    const lastIndex = this.history.length - 1;
-    this.history[lastIndex].messages.push(ev);
+    if (!messageAppended) {
+      this.history[lastIndex].messages.push(ev);
+    }
     this.history[lastIndex].messages = this.history[lastIndex].messages.sort(
       (a, b) => {
         const aChunckId = a.chunkId || getChunkId();
