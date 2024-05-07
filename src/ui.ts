@@ -1,5 +1,6 @@
 import {
   DialogueMessageDto,
+  DialogueMessageUIContentDto,
   SessionChangedDto,
   UIContentDto,
   sleep,
@@ -185,7 +186,12 @@ export class UI {
     const lastMessage = this.getLastMessage();
     if (lastMessage) {
       if (lastMessage.contentType === 'dialogue-message') {
-        if (ev.content.text === lastMessage.content.text) {
+        const dialogueMessageEvent = ev as DialogueMessageUIContentDto;
+        if (dialogueMessageEvent.content.text === lastMessage.content.text) {
+          return;
+        }
+        if (dialogueMessageEvent.content.actor === lastMessage.content.actor) {
+          lastMessage.content.text += dialogueMessageEvent.content.text;
           return;
         }
       }
