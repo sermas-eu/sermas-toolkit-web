@@ -102,6 +102,8 @@ export class SermasToolkit {
   private avatar?: AvatarModel;
   private repositoryDefaults?: RepositoryConfigDto | undefined;
 
+  private availableModels: string[] = [];
+
   constructor(private readonly options: SermasToolkitOptions) {
     this.fpsMonitor = new FpsMonitor(this.emitter);
 
@@ -148,6 +150,10 @@ export class SermasToolkit {
     });
 
     this.userAuth = new UserAuth(this);
+  }
+
+  getAvailableModels() {
+    return this.availableModels;
   }
 
   async createWebAvatar(
@@ -399,6 +405,9 @@ export class SermasToolkit {
       }
       await this.broker.connect(token);
     }
+
+    const availableModels = await this.api.listModels();
+    this.availableModels = availableModels || [];
 
     await this.fpsMonitor.init();
 
