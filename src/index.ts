@@ -406,8 +406,12 @@ export class SermasToolkit {
       await this.broker.connect(token);
     }
 
-    const availableModels = await this.api.listModels();
-    this.availableModels = availableModels || [];
+    try {
+      const availableModels = await this.api.listModels();
+      this.availableModels = availableModels || [];
+    } catch (e: any) {
+      this.logger.debug(`Failed loading models: ${e.stack}`);
+    }
 
     await this.fpsMonitor.init();
 
