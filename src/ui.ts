@@ -13,7 +13,7 @@ import { SessionStatus } from './dto/session.dto';
 import { ChatMessage, UiButtonSession } from './dto/ui.dto.js';
 import { EventListenerTracker, emitter } from './events.js';
 import { Logger } from './logger.js';
-import { deepCopy, getChunkId } from './utils.js';
+import { deepCopy, getChunkId, getMessageId } from './utils.js';
 
 export class UI {
   private readonly logger = new Logger('UI');
@@ -122,6 +122,13 @@ export class UI {
 
   private setHistory(history?: ChatMessage[]) {
     history = history || [];
+    history.forEach((m) => {
+      m.messages = m.messages.sort((a, b) =>
+        (a.messageId || getMessageId()) > (b.messageId || getMessageId())
+          ? 1
+          : -1,
+      );
+    });
     this.history = history;
     this.emitter.emit('ui.dialogue.history', this.history);
   }
@@ -185,7 +192,7 @@ export class UI {
       if (isUser) return;
     }
 
-    const messageId = ev.messageId || getChunkId().toString();
+    const messageId = ev.messageId || getMessageId();
     ev.messageId = messageId;
     ev.chunkId = ev.chunkId || getChunkId();
     ev.ts = ev.ts || new Date().toString();
@@ -197,9 +204,7 @@ export class UI {
 
     if (ev.contentType !== 'dialogue-message') {
       lastItem.messages.push(ev);
-      lastItem.messages = lastItem.messages.sort((a, b) =>
-        +(a.chunkId || getChunkId()) >= +(b.chunkId || getChunkId()) ? 1 : -1,
-      );
+      lastItem.messages = lastItem.messages.sort(this.sortChunks);
       this.setHistory(this.history);
       return;
     }
@@ -228,19 +233,21 @@ export class UI {
 
     chunks.push(deepCopy(ev) as DialogueMessageUIContentDto);
 
-    // console.log('chunks', chunks.map((c) => c.content.text).join('\n'));
+    console.log('chunks', chunks.map((c) => c.content.text).join('\n'));
 
     message.metadata = message.metadata || {};
     message.metadata.chunks = chunks;
 
     message.content.text = chunks
-      .sort((a, b) =>
-        +(a.chunkId || getChunkId()) >= +(b.chunkId || getChunkId()) ? 1 : -1,
-      )
+      .sort(this.sortChunks)
       .map((c) => c.content.text)
       .join('');
 
     this.setHistory(this.history);
+  }
+
+  protected sortChunks(a: UIContentDto, b: UIContentDto) {
+    return (a.chunkId || getChunkId()) >= (b.chunkId || getChunkId()) ? 1 : -1;
   }
 
   async updateSession(
