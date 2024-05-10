@@ -6,13 +6,14 @@ import {
   sleep,
 } from '@sermas/api-client';
 import EventEmitter2, { ListenerFn } from 'eventemitter2';
+import { SermasToolkit } from 'index.js';
 import { AvatarAudioPlaybackStatus } from './avatar/index.js';
 import { DialogueActor } from './dto/dialogue.dto';
 import { SessionStatus } from './dto/session.dto';
 import { ChatMessage, UiButtonSession } from './dto/ui.dto.js';
 import { EventListenerTracker, emitter } from './events.js';
 import { Logger } from './logger.js';
-import { getChunkId } from './utils.js';
+import { deepCopy, getChunkId } from './utils.js';
 
 export class UI {
   private readonly logger = new Logger('UI');
@@ -23,7 +24,7 @@ export class UI {
   private history: ChatMessage[] = [];
   private initialized = false;
 
-  constructor() {
+  constructor(private readonly toolkit: SermasToolkit) {
     this.emitter = emitter;
     this.listeners = new EventListenerTracker(this.emitter);
 
@@ -112,6 +113,7 @@ export class UI {
         avatar: ev.avatar,
       },
       options: {},
+      ts: new Date().toString(),
     };
 
     const actor = ev.actor as DialogueActor;
@@ -143,15 +145,22 @@ export class UI {
 
   async appendContent(actor: DialogueActor, ev: UIContentDto) {
     if (
+      this.toolkit.getSessionId() &&
+      ev.sessionId &&
+      this.toolkit.getSessionId() !== ev.sessionId
+    )
+      return;
+
+    if (
       ev.content &&
       typeof ev.content === 'object' &&
       !(ev.content instanceof Array)
     )
-      ev.content.chunkId = ev.content.chunkId || Date.now() + performance.now();
+      ev.content.chunkId = ev.content.chunkId || getChunkId();
 
-    this.logger.debug(`ev ${JSON.stringify(ev)}`);
+    // this.logger.debug(`ev ${JSON.stringify(ev)}`);
     this.logger.debug(
-      `Got content actor=${actor} contentType=${ev.contentType}`,
+      `Adding UI content contentType=${ev.contentType} for actor=${actor}`,
     );
 
     await this.handleCleanScreen(ev);
@@ -175,37 +184,59 @@ export class UI {
       return;
     }
 
-    // do not show again if the last message is repeated eg "could you repeat?"
+    const messageId = ev.messageId || getChunkId().toString();
+    ev.messageId = messageId;
+    ev.chunkId = ev.chunkId || getChunkId();
+    ev.ts = ev.ts || new Date().toString();
+
     const lastIndex = this.history.length ? this.history.length - 1 : 0;
     const lastItem = this.history[lastIndex];
 
-    const lastMessage =
-      lastItem.messages[
-        lastItem.messages.length ? lastItem.messages.length - 1 : 0
-      ];
+    lastItem.messages = lastItem.messages || [];
 
-    let messageAppended = false;
-    if (lastMessage && lastMessage.contentType === 'dialogue-message') {
-      const dialogueMessageEvent = ev as DialogueMessageUIContentDto;
-      if (dialogueMessageEvent.content.text === lastMessage.content.text) {
-        return;
-      }
-      if (dialogueMessageEvent.contentType === lastMessage.contentType) {
-        lastMessage.content.text += dialogueMessageEvent.content.text;
-        messageAppended = true;
-      }
+    if (ev.contentType !== 'dialogue-message') {
+      lastItem.messages.push(ev);
+      lastItem.messages = lastItem.messages.sort((a, b) =>
+        +(a.chunkId || getChunkId()) >= +(b.chunkId || getChunkId()) ? 1 : -1,
+      );
+      this.setHistory(this.history);
+      return;
     }
 
-    if (!messageAppended) {
-      this.history[lastIndex].messages.push(ev);
+    const filtered = lastItem.messages.filter((m) => m.messageId === messageId);
+
+    const message: UIContentDto = filtered.length
+      ? filtered[0]
+      : {
+          appId: ev.appId,
+          contentType: 'dialogue-message',
+          messageId: ev.messageId,
+          content: { text: '' },
+          metadata: { chunks: [] },
+        };
+
+    if (!filtered.length) {
+      lastItem.messages.push(message);
     }
-    this.history[lastIndex].messages = this.history[lastIndex].messages.sort(
-      (a, b) => {
-        const aChunckId = a.chunkId || getChunkId();
-        const bChunckId = b.chunkId || getChunkId();
-        return +aChunckId >= +bChunckId ? 1 : -1;
-      },
-    );
+
+    const chunks: DialogueMessageUIContentDto[] = (
+      message.metadata?.chunks ? message.metadata?.chunks : []
+    ) as DialogueMessageUIContentDto[];
+
+    chunks.push(deepCopy(ev) as DialogueMessageUIContentDto);
+
+    // console.log('chunks', chunks.map((c) => c.content.text).join('\n'));
+    // console.log('message', message);
+
+    message.metadata = message.metadata || {};
+    message.metadata.chunks = chunks;
+
+    message.content.text = chunks
+      .sort((a, b) =>
+        +(a.chunkId || getChunkId()) >= +(b.chunkId || getChunkId()) ? 1 : -1,
+      )
+      .map((c) => c.content.text)
+      .join('');
 
     this.setHistory(this.history);
   }

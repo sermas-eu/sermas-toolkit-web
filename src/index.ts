@@ -6,6 +6,7 @@ import type {
   UserInteractionIntentionDto,
 } from '@sermas/api-client';
 import EventEmitter2, { ListenerFn } from 'eventemitter2';
+import { UI } from './ui.js';
 import { v4 as uuidv4 } from 'uuid';
 import { ApiClient } from './api.js';
 import { AuthClient } from './auth.js';
@@ -104,6 +105,8 @@ export class SermasToolkit {
 
   private availableModels: string[] = [];
 
+  private ui: UI;
+
   constructor(private readonly options: SermasToolkitOptions) {
     this.fpsMonitor = new FpsMonitor(this.emitter);
 
@@ -166,6 +169,13 @@ export class SermasToolkit {
       this,
     );
     return this.avatar;
+  }
+
+  getUI() {
+    if (!this.ui) {
+      this.ui = new UI(this);
+    }
+    return this.ui;
   }
 
   getAudioDetection() {
