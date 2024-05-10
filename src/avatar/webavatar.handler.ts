@@ -31,10 +31,6 @@ export class WebAvatarHandler {
 
   private audioQueue: AudioQueue[] = [];
 
-  private messagesQueue: {
-    [chunkId: string]: { [time: string]: Uint8Array[] };
-  } = {};
-
   private lipsync?: LipSync;
   private isPlaying = false;
 
@@ -171,7 +167,7 @@ export class WebAvatarHandler {
     if (!this.audioQueue.length) return;
 
     const raw = this.audioQueue
-      .sort((a, b) => (+a.chunkId > +b.chunkId ? 1 : -1))
+      .sort((a, b) => (a.chunkId > b.chunkId ? 1 : -1))
       .splice(0, 1)[0];
 
     logger.debug(`play speech chunk chunkId=${raw.chunkId}`);
