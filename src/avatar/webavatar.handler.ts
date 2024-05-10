@@ -120,6 +120,7 @@ export class WebAvatarHandler {
 
   setListening(op: 'started' | 'stopped') {
     if (op === 'started') {
+      this.stopSpeech();
       this.avatar.getAnimation()?.playGesture('gesture_listening');
     } else {
       this.avatar.getAnimation()?.playGesture('gesture_idle');
