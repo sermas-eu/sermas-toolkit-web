@@ -82,11 +82,11 @@ export class UI {
     this.setHistory(this.history);
   }
 
-  newChatMessage(actor: DialogueActor, ev: UIContentDto): ChatMessage {
+  newChatMessage(actor: DialogueActor, ev?: UIContentDto): ChatMessage {
     return {
       actor,
       ts: new Date(),
-      messages: [ev],
+      messages: ev ? [ev] : [],
     };
   }
 
@@ -180,8 +180,9 @@ export class UI {
       this.history[this.history.length - 1].actor !== actor
     ) {
       // this.logger.debug(`Add new message from ${actor} : ${JSON.stringify(ev.content)}`)
-      this.addHistory(this.newChatMessage(actor, ev));
-      return;
+      const isUser = actor === 'user';
+      this.addHistory(this.newChatMessage(actor, isUser ? ev : undefined));
+      if (isUser) return;
     }
 
     const messageId = ev.messageId || getChunkId().toString();
@@ -202,6 +203,8 @@ export class UI {
       this.setHistory(this.history);
       return;
     }
+
+    // console.warn('[add message]', ev.content?.text);
 
     const filtered = lastItem.messages.filter((m) => m.messageId === messageId);
 
@@ -226,7 +229,6 @@ export class UI {
     chunks.push(deepCopy(ev) as DialogueMessageUIContentDto);
 
     // console.log('chunks', chunks.map((c) => c.content.text).join('\n'));
-    // console.log('message', message);
 
     message.metadata = message.metadata || {};
     message.metadata.chunks = chunks;
