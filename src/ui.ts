@@ -233,7 +233,7 @@ export class UI {
 
     chunks.push(deepCopy(ev) as DialogueMessageUIContentDto);
 
-    console.log('chunks', chunks.map((c) => c.content.text).join('\n'));
+    // console.log('chunks', chunks.map((c) => c.content.text).join('\n'));
 
     message.metadata = message.metadata || {};
     message.metadata.chunks = chunks;
