@@ -22,6 +22,7 @@ import {
   UserCharacterizationEventDto,
 } from '@sermas/api-client';
 import { ListenerFn } from 'eventemitter2';
+import { EmotionBlendShape } from './animations/blendshapes/lib/index.js';
 import { VisemeType } from './animations/blendshapes/lib/viseme/index.js';
 
 const logger = new Logger('webavatar.handler');
@@ -184,8 +185,19 @@ export class WebAvatarHandler {
     }
   }
 
-  setFace(blendingShapes: AvatarFaceBlendShape[]) {
-    // this.avatarModel?.showBlendShapeGui()
+  setFace(blendingShapes: AvatarFaceBlendShape[], emotion?: EmotionBlendShape) {
+    if (emotion) {
+      logger.debug(`set face emotion ${emotion}`);
+      const emotionBlendingShapes = this.avatar
+        ?.getBlendShapes()
+        ?.getEmotion(emotion);
+      if (!emotionBlendingShapes) {
+        logger.warn(`face emotion ${emotion} not found`);
+        return;
+      }
+      blendingShapes = emotionBlendingShapes;
+    }
+
     this.avatar?.getBlendShapes()?.setFaceBlendShapes(blendingShapes);
   }
 
