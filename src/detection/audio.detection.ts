@@ -68,16 +68,14 @@ export class AudioDetection extends EventEmitter2 {
    * Pause the microphone audio stream
    */
   pause() {
-    const tracks = this.stream?.getTracks() || [];
-    tracks.forEach((t) => (t.enabled = false));
+    this.vad?.pause();
   }
 
   /**
    * Restore the microphone audio stream
    */
   restore() {
-    const tracks = this.stream?.getTracks() || [];
-    tracks.forEach((t) => (t.enabled = true));
+    this.vad?.start();
   }
 
   async start(stream?: MediaStream): Promise<boolean> {
@@ -156,37 +154,37 @@ export class AudioDetection extends EventEmitter2 {
     return true;
   }
 
-  async startMediaRecorder(stream: MediaStream) {
-    if (this.mediaRecorder) {
-      this.mediaRecorder.stop();
-      this.mediaRecorder.ondataavailable = () => {};
-    }
+  // async startMediaRecorder(stream: MediaStream) {
+  //   if (this.mediaRecorder) {
+  //     this.mediaRecorder.stop();
+  //     this.mediaRecorder.ondataavailable = () => {};
+  //   }
 
-    const sample = AUDIO_CLASSIFICATION_SAMPLE_SEC * 1000;
+  //   const sample = AUDIO_CLASSIFICATION_SAMPLE_SEC * 1000;
 
-    this.mediaRecorder = new MediaRecorder(stream, {});
-    this.mediaRecorder.ondataavailable = (e: BlobEvent) => {
-      (async () => {
-        try {
-          const arrayBuffer = await e.data.arrayBuffer();
-          const arr = this.convertBlock(arrayBuffer);
-          // const sampleRate = this.getSampleRate()
-          this.classify(arr);
-        } catch {}
-      })();
-    };
-    this.mediaRecorder.start(sample);
-  }
+  //   this.mediaRecorder = new MediaRecorder(stream, {});
+  //   this.mediaRecorder.ondataavailable = (e: BlobEvent) => {
+  //     (async () => {
+  //       try {
+  //         const arrayBuffer = await e.data.arrayBuffer();
+  //         const arr = this.convertBlock(arrayBuffer);
+  //         // const sampleRate = this.getSampleRate()
+  //         this.classify(arr);
+  //       } catch {}
+  //     })();
+  //   };
+  //   this.mediaRecorder.start(sample);
+  // }
 
-  convertBlock(buffer: ArrayBuffer) {
-    const incomingData = new Uint8Array(buffer);
-    const l = incomingData.length;
-    const outputData = new Float32Array(incomingData.length);
-    for (let i = 0; i < l; i++) {
-      outputData[i] = (incomingData[i] - 128) / 128.0;
-    }
-    return outputData;
-  }
+  // convertBlock(buffer: ArrayBuffer) {
+  //   const incomingData = new Uint8Array(buffer);
+  //   const l = incomingData.length;
+  //   const outputData = new Float32Array(incomingData.length);
+  //   for (let i = 0; i < l; i++) {
+  //     outputData[i] = (incomingData[i] - 128) / 128.0;
+  //   }
+  //   return outputData;
+  // }
 
   async classify(audio: Float32Array, sampleRate?: number) {
     if (!audio || !audio.length) return;
@@ -346,6 +344,10 @@ export class AudioDetection extends EventEmitter2 {
       !this.toolkit.getSessionId()
     ) {
       this.toolkit.triggerInteractionStart('microphone');
+      return;
+    }
+
+    if (!this.toolkit.getSessionId()) {
       return;
     }
 
