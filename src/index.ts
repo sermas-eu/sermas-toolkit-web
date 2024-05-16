@@ -22,7 +22,7 @@ import { ErrorEventDto, ErrorReason } from './dto/errors.dto.js';
 import { UiButtonSession } from './dto/ui.dto.js';
 import { EventListenerTracker, emitter } from './events.js';
 import { FpsMonitor } from './fps.js';
-import { Logger } from './logger.js';
+import { Logger, initLogger } from './logger.js';
 import { MqttClient } from './mqtt-client.js';
 import { Settings } from './settings.js';
 import { UserAuth } from './user-auth.js';
@@ -108,6 +108,8 @@ export class SermasToolkit {
   private ui: UI;
 
   constructor(private readonly options: SermasToolkitOptions) {
+    initLogger();
+
     this.fpsMonitor = new FpsMonitor(this.emitter);
 
     const env = getEnv();

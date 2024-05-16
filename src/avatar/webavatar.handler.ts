@@ -148,6 +148,8 @@ export class WebAvatarHandler {
 
     const [, chunkId] = raw.context;
 
+    logger.debug(`Queued speech ${chunkId} size=${buffer.byteLength / 1000}kb`);
+
     // already playing, add to queue
     this.audioQueue.push({ chunkId, buffer });
 
@@ -156,23 +158,41 @@ export class WebAvatarHandler {
       return;
     }
 
-    setTimeout(() => this.playAudio(), 10);
+    this.playAudio();
   }
 
-  playAudio() {
+  playAudio(wait = 3) {
     if (this.isPlaying) {
       logger.debug(`already playing`);
       return;
     }
-    this.isPlaying = true;
 
     if (!this.audioQueue.length) return;
+
+    const size = this.audioQueue.reduce(
+      (sum, { buffer }) => sum + buffer.byteLength / 1000,
+      0,
+    );
+
+    // to allow the sentences to be wrapped together,
+    // wait to reach a threshold before playing
+    // const threshold = 100;
+    // if (size < threshold && wait < 2) {
+    if (this.audioQueue.length < 3 && wait > 0) {
+      logger.debug(
+        `Waiting queue threshold to be reached size=${size}kb wait=${wait} length=${this.audioQueue.length}`,
+      );
+      setTimeout(() => this.playAudio(wait - 1), 200);
+      return;
+    }
+
+    this.isPlaying = true;
 
     const raw = this.audioQueue
       .sort((a, b) => (a.chunkId > b.chunkId ? 1 : -1))
       .splice(0, 1)[0];
 
-    logger.debug(`play speech chunk chunkId=${raw.chunkId}`);
+    logger.debug(`play queued speech chunkId=${raw.chunkId}`);
     this.lipsync?.startFromAudioFile(raw.buffer as Uint8Array);
   }
 
