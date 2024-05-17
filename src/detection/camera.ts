@@ -82,7 +82,7 @@ export class CameraHandler {
       if (this.stopped) return;
       if (currentTime !== lastTime) {
         lastTime = currentTime;
-        this.config.onFrame(this.config.video);
+        if (this.config?.onFrame) this.config.onFrame(this.config.video);
       }
       // https://developer.mozilla.org/en-US/docs/Web/API/HTMLVideoElement/requestVideoFrameCallback
       if ('requestVideoFrameCallback' in HTMLVideoElement.prototype) {
