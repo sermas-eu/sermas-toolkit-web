@@ -1,7 +1,6 @@
 import type { AudioClassifier } from '@mediapipe/tasks-audio';
 import type { MicVAD } from '@ricky0123/vad-web/dist/real-time-vad';
 import EventEmitter2 from 'eventemitter2';
-import { getChunkId } from '../utils.js';
 import { emitter } from '../events.js';
 import {
   AUDIO_CLASSIFICATION_TOPIC,
@@ -10,6 +9,7 @@ import {
   SermasToolkit,
 } from '../index.js';
 import { Logger } from '../logger.js';
+import { getChunkId } from '../utils.js';
 import { AudioClassificationValue } from './audio/audio.detection.dto.js';
 import { createAudioClassifier } from './audio/mediapipe/audio.classifier.js';
 import classes from './audio/mediapipe/classes.json' assert { type: 'json' };
@@ -17,7 +17,6 @@ import classes from './audio/mediapipe/classes.json' assert { type: 'json' };
 const VAD_SAMPLE_RATE = 16000;
 const SPEECH_CLASSIFIER_THRESHOLD = 0.5;
 
-const AUDIO_CLASSIFICATION_SAMPLE_SEC = 1;
 const AUDIO_CLASSIFICATION_THRESHOLD = 0.3;
 const AUDIO_CLASSIFICATION_SKIP_CLASSES = ['Static', 'Silence', 'White noise'];
 
@@ -39,6 +38,7 @@ export class AudioDetection extends EventEmitter2 {
   }
 
   async stop() {
+    this.logger.debug(`Stop microphone detection`);
     if (this.mediaRecorder) {
       this.mediaRecorder.stop();
       this.mediaRecorder.ondataavailable = () => {};
@@ -47,11 +47,12 @@ export class AudioDetection extends EventEmitter2 {
 
     if (this.vad) {
       this.vad.pause();
-      // await this.vad.destroy();
     }
+
     if (this.stream) {
       this.pause();
     }
+
     if (this.classifier) {
       this.classifier.close();
     }
@@ -79,13 +80,32 @@ export class AudioDetection extends EventEmitter2 {
   }
 
   async start(stream?: MediaStream): Promise<boolean> {
+    this.logger.debug(`Start microphone detection`);
+    if (this.stream) {
+      try {
+        await this.stop();
+      } catch {}
+    }
+
     if (!this.hasMediaSupport()) {
       return false;
     }
 
     // sample rate from
-    await this.startClassifier();
+    try {
+      await this.startClassifier();
+    } catch (e: any) {
+      this.logger.warn(`Failed to start classifier: ${e.stack}`);
+    }
+
+    if (!stream) {
+      stream = await this.createMicrophoneStream();
+    }
+
     const ok = await this.startVAD(stream);
+    if (!ok) {
+      this.logger.warn(`Failed to start VAD module`);
+    }
     // start media recorder to detect audio classes
     // if (this.vad) {
     //     await this.startMediaRecorder(this.vad.audioContext.createMediaStreamDestination().stream)
@@ -95,12 +115,11 @@ export class AudioDetection extends EventEmitter2 {
   }
 
   async startVAD(stream?: MediaStream) {
-    this.logger.debug(`Loading VAD`);
-
-    const vadModuleLoader = await import('@ricky0123/vad-web/dist/index');
-    const vadModule = vadModuleLoader.default || vadModuleLoader;
-
     try {
+      this.logger.debug(`Loading VAD`);
+      const vadModuleLoader = await import('@ricky0123/vad-web/dist/index');
+      const vadModule = vadModuleLoader.default || vadModuleLoader;
+
       const onSpeech = async (
         op: 'started' | 'stopped',
         audio?: Float32Array,
@@ -145,46 +164,15 @@ export class AudioDetection extends EventEmitter2 {
 
       this.emit('started');
       this.logger.debug(`VAD started (sampleRate=${this.getSampleRate()})`);
+
+      return true;
     } catch (e: any) {
-      this.logger.error(`Failed to start VAD ${e.stack}`);
-      this.emit('error', e);
+      this.logger.error(`Failed to start VAD: ${e.message}`);
+      this.logger.debug(e);
+      // this.emit('error', e);
       return false;
     }
-
-    return true;
   }
-
-  // async startMediaRecorder(stream: MediaStream) {
-  //   if (this.mediaRecorder) {
-  //     this.mediaRecorder.stop();
-  //     this.mediaRecorder.ondataavailable = () => {};
-  //   }
-
-  //   const sample = AUDIO_CLASSIFICATION_SAMPLE_SEC * 1000;
-
-  //   this.mediaRecorder = new MediaRecorder(stream, {});
-  //   this.mediaRecorder.ondataavailable = (e: BlobEvent) => {
-  //     (async () => {
-  //       try {
-  //         const arrayBuffer = await e.data.arrayBuffer();
-  //         const arr = this.convertBlock(arrayBuffer);
-  //         // const sampleRate = this.getSampleRate()
-  //         this.classify(arr);
-  //       } catch {}
-  //     })();
-  //   };
-  //   this.mediaRecorder.start(sample);
-  // }
-
-  // convertBlock(buffer: ArrayBuffer) {
-  //   const incomingData = new Uint8Array(buffer);
-  //   const l = incomingData.length;
-  //   const outputData = new Float32Array(incomingData.length);
-  //   for (let i = 0; i < l; i++) {
-  //     outputData[i] = (incomingData[i] - 128) / 128.0;
-  //   }
-  //   return outputData;
-  // }
 
   async classify(audio: Float32Array, sampleRate?: number) {
     if (!audio || !audio.length) return;
@@ -255,14 +243,21 @@ export class AudioDetection extends EventEmitter2 {
   }
 
   async startClassifier(sampleRate?: number) {
-    if (this.classifier) {
-      this.classifier.close();
+    try {
+      if (this.classifier) {
+        this.classifier.close();
+      }
+      this.classifier = await createAudioClassifier();
+      if (sampleRate) this.classifier.setDefaultSampleRate(sampleRate);
+    } catch (e: any) {
+      this.logger.warn(`Failed to start classifier: ${e.message}`);
+      this.logger.debug(e);
     }
-    this.classifier = await createAudioClassifier();
-    if (sampleRate) this.classifier.setDefaultSampleRate(sampleRate);
   }
 
   protected hasMediaSupport(): boolean {
+    // not a browser env
+    if (typeof navigator === 'undefined') return false;
     const _navigator = navigator as any;
     if (!_navigator.getUserMedia) {
       _navigator.getUserMedia =
@@ -274,40 +269,44 @@ export class AudioDetection extends EventEmitter2 {
     return _navigator.getUserMedia ? true : false;
   }
 
-  async createMicrophoneStream(
+  createMicrophoneStream(
     constraints?: AudioConstraints,
   ): Promise<MediaStream | undefined> {
     this.logger.log('start mic');
 
     if (this.stream) {
       this.logger.debug('mic is already started');
-      return this.stream;
+      return Promise.resolve(this.stream);
     }
 
     if (!this.hasMediaSupport()) {
       this.logger.error('mic not supported');
       this.emit('error', new Error('Microphone not supported'));
-      return undefined;
+      return Promise.resolve(undefined);
     }
 
-    try {
-      this.stream = await navigator.mediaDevices.getUserMedia({
+    // NOTE async fails to catch PermissionError, using Promise works <3
+    return navigator.mediaDevices
+      .getUserMedia({
         audio: {
           ...(constraints || {}),
-          sampleRate: { exact: VAD_SAMPLE_RATE },
+          // sampleRate: { exact: VAD_SAMPLE_RATE },
           channelCount: 1,
           echoCancellation: true,
           autoGainControl: true,
           noiseSuppression: true,
         },
+      })
+      .then((stream) => {
+        this.stream = stream;
+        return stream;
+      })
+      .catch((e) => {
+        this.logger.error(`Failed to get mic stream: ${e.message}`);
+        this.stream = undefined;
+        // this.emit('error', e);
+        return Promise.resolve(undefined);
       });
-    } catch (e: any) {
-      this.logger.error(`Failed to get mic stream: ${e.stack}`);
-      this.stream = undefined;
-      this.emit('error', e);
-    }
-
-    return this.stream;
   }
 
   sendAudioClassification(detections: AudioClassificationValue[]) {

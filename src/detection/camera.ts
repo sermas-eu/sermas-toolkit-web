@@ -63,7 +63,7 @@ export class CameraHandler {
     this.createCanvas();
     if (!this.canvas) {
       this.logger.error('Failed to load canvas');
-      return;
+      return false;
     }
 
     const mediaStream = await this.loadStream();

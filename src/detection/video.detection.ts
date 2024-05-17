@@ -132,7 +132,10 @@ export class VideoDetection extends EventEmitter2 {
       config.camera as CameraHandlerConfig,
     );
 
-    if (!cameraEnabled) return;
+    if (!cameraEnabled) {
+      this.logger.warn(`Video detection disabled`);
+      return;
+    }
 
     if (this.config.render === true && !this.config.canvas) {
       this.logger.warn(
