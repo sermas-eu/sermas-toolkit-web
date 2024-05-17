@@ -182,7 +182,7 @@ export class WebAvatarHandler {
       logger.debug(
         `Waiting queue threshold to be reached size=${size}kb wait=${wait} length=${this.audioQueue.length}`,
       );
-      setTimeout(() => this.playAudio(wait - 1), 200);
+      setTimeout(() => this.playAudio(wait - 1), 100);
       return;
     }
 
