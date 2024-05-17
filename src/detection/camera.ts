@@ -49,22 +49,27 @@ export class CameraHandler {
     return this.canvas;
   }
 
-  async init(config: CameraHandlerConfig) {
+  async init(config: CameraHandlerConfig): Promise<boolean> {
     if (!config.video) throw new Error(`video not set`);
     this.config = { ...this.defaultConfig, ...config };
 
-    if (!this.isSupported()) throw new Error('Camera not supported');
+    if (!this.isSupported()) {
+      this.logger.error('Camera not supported');
+      return false;
+    }
 
     this.stopped = false;
 
     this.createCanvas();
     if (!this.canvas) {
-      throw new Error('Failed to load canvas');
+      this.logger.error('Failed to load canvas');
+      return;
     }
 
     const mediaStream = await this.loadStream();
     if (!mediaStream) {
-      throw new Error(`Failed to load stream`);
+      this.logger.error(`Failed to load stream`);
+      return false;
     }
 
     // init
@@ -80,15 +85,15 @@ export class CameraHandler {
         this.config.onFrame(this.config.video);
       }
       // https://developer.mozilla.org/en-US/docs/Web/API/HTMLVideoElement/requestVideoFrameCallback
-      if ("requestVideoFrameCallback" in HTMLVideoElement.prototype) {
-        this.config.video.requestVideoFrameCallback(onAnimationFrame)
-      }
-      else {
+      if ('requestVideoFrameCallback' in HTMLVideoElement.prototype) {
+        this.config.video.requestVideoFrameCallback(onAnimationFrame);
+      } else {
         requestAnimationFrame(onAnimationFrame);
       }
     };
 
     onAnimationFrame();
+    return true;
   }
 
   async destroy() {
