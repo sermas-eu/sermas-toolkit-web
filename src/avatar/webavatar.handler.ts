@@ -31,6 +31,8 @@ export class WebAvatarHandler {
   private lastSet: { time: number; emotion: string };
 
   private audioQueue: AudioQueue[] = [];
+  private processedQueue = 0;
+  private processedQueueTimer: NodeJS.Timeout;
 
   private lipsync?: LipSync;
   private isPlaying = false;
@@ -178,11 +180,12 @@ export class WebAvatarHandler {
     // wait to reach a threshold before playing
     // const threshold = 100;
     // if (size < threshold && wait < 2) {
-    if (this.audioQueue.length < 3 && wait > 0) {
+    if (this.processedQueue < 2 && this.audioQueue.length < 3 && wait > 0) {
+      const waitFor = 200 / wait;
       logger.debug(
-        `Waiting queue threshold to be reached size=${size}kb wait=${wait} length=${this.audioQueue.length}`,
+        `Waiting queue threshold to be reached size=${size}kb wait=${wait} length=${this.audioQueue.length} waitFor=${waitFor}`,
       );
-      setTimeout(() => this.playAudio(wait - 1), 100);
+      setTimeout(() => this.playAudio(wait - 1), waitFor);
       return;
     }
 
@@ -194,6 +197,13 @@ export class WebAvatarHandler {
 
     logger.debug(`play queued speech chunkId=${raw.chunkId}`);
     this.lipsync?.startFromAudioFile(raw.buffer as Uint8Array);
+
+    this.processedQueue++;
+    if (this.processedQueueTimer) clearTimeout(this.processedQueueTimer);
+    this.processedQueueTimer = setTimeout(() => {
+      logger.debug('processed queue counter cleared');
+      this.processedQueue = 0;
+    }, 10 * 1000);
   }
 
   onDialogueMessage(ev: DialogueMessageDto) {

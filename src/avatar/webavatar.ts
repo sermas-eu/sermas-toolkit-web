@@ -148,7 +148,12 @@ export class AvatarModel {
 
     this.stopped = false;
 
-    this.createScene();
+    const sceneCreated = this.createScene();
+
+    if (!sceneCreated) {
+      logger.warn(`Failed to create scene, aborting avatar creation`);
+      return this;
+    }
 
     const model = await this.loadModel();
     if (!model) {
@@ -290,12 +295,19 @@ export class AvatarModel {
     // grid.material.transparent = true;
     // this.scene.add(grid);
 
-    this.renderer = new THREE.WebGLRenderer({
-      antialias: true,
-      alpha: false,
-      logarithmicDepthBuffer: true,
-      // powerPreference: 'high-performance',
-    });
+    try {
+      this.renderer = new THREE.WebGLRenderer({
+        antialias: true,
+        alpha: false,
+        logarithmicDepthBuffer: true,
+        // powerPreference: 'high-performance',
+      });
+    } catch (e: any) {
+      logger.error(`Failed to create scene: ${e.message}`);
+      logger.debug(e.stack);
+      return false;
+    }
+
     this.renderer.setPixelRatio(window.devicePixelRatio);
     this.renderer.setSize(containerSizes.width, containerSizes.height);
     this.renderer.shadowMap.enabled = true;
@@ -313,6 +325,8 @@ export class AvatarModel {
       this.stats = new Stats();
       this.container.appendChild(this.stats.dom);
     }
+
+    return true;
   }
 
   async setBackground(assetId: string) {
