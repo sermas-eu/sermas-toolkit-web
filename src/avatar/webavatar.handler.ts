@@ -30,6 +30,8 @@ const logger = new Logger('webavatar.handler');
 export class WebAvatarHandler {
   private lastSet: { time: number; emotion: string };
 
+  private sessionStarted = false;
+
   private audioQueue: AudioQueue[] = [];
   private processedQueue = 0;
   private processedQueueTimer: NodeJS.Timeout;
@@ -124,7 +126,10 @@ export class WebAvatarHandler {
   setListening(op: 'started' | 'stopped') {
     if (op === 'started') {
       this.stopSpeech();
-      this.avatar.getAnimation()?.playGesture('gesture_listening');
+      // move only if the session has started
+      if (this.sessionStarted) {
+        this.avatar.getAnimation()?.playGesture('gesture_listening');
+      }
     } else {
       this.avatar.getAnimation()?.playGesture('gesture_idle');
     }
@@ -132,11 +137,13 @@ export class WebAvatarHandler {
 
   onSession(ev: SessionChangedDto) {
     if (ev.operation === 'created') {
+      this.sessionStarted = true;
       // avatar greeting
       this.avatar.getAnimation()?.playGesture('gesture_waving');
     }
     if (ev.operation === 'updated') {
       if (ev.record.closedAt) {
+        this.sessionStarted = false;
         // avatar bye bye
         this.avatar.getAnimation()?.playGesture('gesture_waving');
       }
