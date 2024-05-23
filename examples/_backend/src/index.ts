@@ -1,4 +1,5 @@
 import express, { Express, Request, Response } from "express";
+import cors from "cors";
 import {
   getAvatarToken,
   getAvatarTokenWithClientSecret,
@@ -11,10 +12,10 @@ const PRIVATE_API_BASE_URL =
   process.env.PRIVATE_API_BASE_URL || "http://172.17.0.1:8080/api";
 
 app.use(express.json());
+app.use(cors());
 app.use("*", (req, res, next) => {
   console.log(`[server]: Request arrived - ${req.method} ${req.path}`);
   next();
-  console.log(`[server]: Sending response - ${res.statusCode} ${res.json}`);
 });
 
 app.get("/auth/public/:appId", async (req: Request, res: Response) => {

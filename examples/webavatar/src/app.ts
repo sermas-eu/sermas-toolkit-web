@@ -1,11 +1,23 @@
+import axios from 'axios';
 import { SermasToolkit } from '@sermas/toolkit';
 
-const appId = '45cdddf9-a4ac-4d61-acac-b49223e03de9';
+const appId = 'sermas';
+
+type tokenResponse = {
+  appId: string | null;
+  accessToken?: string;
+  refreshToken?: string;
+  expiresIn?: Date;
+};
 
 const main = async () => {
+  const { data: token } = await axios.get<tokenResponse>(
+    `http://localhost:3000/auth/public/${appId}`,
+  );
+
   const toolkit = new SermasToolkit({
     url: 'http://localhost:8080',
-    moduleId: 'kiosk',
+    moduleId: 'sermas-avatar',
     appId,
     auth: {
       url: 'http://localhost:8080',
@@ -14,9 +26,7 @@ const main = async () => {
     },
   });
 
-  await toolkit.init();
-
-  console.log(toolkit);
+  await toolkit.init(token.accessToken);
 };
 
 main().catch((e) => console.error(e.stack));
