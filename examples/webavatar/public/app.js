@@ -94164,7 +94164,7 @@ ${t4}`);
   };
 
   // src/app.ts
-  var appId = "sermas";
+  var appId = "spxl";
   var main = async () => {
     const { data: token } = await axios_default.get(
       `http://localhost:3000/auth/public/${appId}`
@@ -94180,6 +94180,7 @@ ${t4}`);
       }
     });
     await toolkit.init(token.accessToken);
+    await toolkit.createWebAvatar();
   };
   main().catch((e4) => console.error(e4.stack));
 })();

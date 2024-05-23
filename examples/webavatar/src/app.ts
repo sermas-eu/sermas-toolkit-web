@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { SermasToolkit } from '@sermas/toolkit';
 
-const appId = 'sermas';
+const appId = 'spxl';
 
 type tokenResponse = {
   appId: string | null;
@@ -27,6 +27,8 @@ const main = async () => {
   });
 
   await toolkit.init(token.accessToken);
+
+  await toolkit.createWebAvatar();
 };
 
 main().catch((e) => console.error(e.stack));
