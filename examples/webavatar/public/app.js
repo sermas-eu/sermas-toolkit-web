@@ -94171,7 +94171,7 @@ ${t4}`);
     );
     const toolkit = new SermasToolkit({
       url: "http://localhost:8080",
-      moduleId: "sermas-avatar",
+      moduleId: "avatar",
       appId,
       auth: {
         url: "http://localhost:8080",
