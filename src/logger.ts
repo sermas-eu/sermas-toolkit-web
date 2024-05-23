@@ -1,14 +1,46 @@
+import { addGlobal } from './global.js';
+
 type FormatterCallback = (v?: any[]) => any[];
 
-export type LogLevel = 'DEBUG' | 'LOG' | 'WARN' | 'ERROR';
+export type LogLevel = 'VERBOSE' | 'DEBUG' | 'LOG' | 'WARN' | 'ERROR';
 
-export const DefaultLogLevel: LogLevel = 'DEBUG';
+let DefaultLogLevel: LogLevel = 'WARN';
+
+export const initLogger = () => {
+  DefaultLogLevel = loadStoredLogLevel() || DefaultLogLevel;
+};
+
+const loadStoredLogLevel = () => {
+  if (typeof window !== 'undefined') {
+    const prevlogLevel = window.localStorage.getItem('sermas.logLevel');
+    return prevlogLevel as LogLevel;
+  }
+  return undefined;
+};
+
+export const setDefaultLogLevel = (level: LogLevel) => {
+  DefaultLogLevel = level;
+  if (typeof window !== 'undefined') {
+    window.localStorage.setItem('sermas.logLevel', level);
+  }
+};
 
 const levels: Record<LogLevel, number> = {
+  VERBOSE: 50,
   DEBUG: 100,
   LOG: 200,
   WARN: 300,
   ERROR: 400,
+};
+
+let logFilter: string | undefined = '*';
+
+// set log filter
+// empty / undefined = none
+// * = all
+// prefix = filter by logger prefix
+export const setLogFilter = (filter?: string) => {
+  logFilter = filter;
 };
 
 export class Logger {
@@ -16,7 +48,7 @@ export class Logger {
     private readonly prefix: string = '',
     private readonly showDates?: boolean,
     private readonly formatterCallback?: FormatterCallback,
-    private readonly logLevel = DefaultLogLevel,
+    private logLevel?: LogLevel | undefined,
   ) {}
 
   private format(level: LogLevel, v?: any[]): any[] {
@@ -24,7 +56,32 @@ export class Logger {
     if (this.formatterCallback) {
       return this.formatterCallback(v);
     }
-    return [`${this.showDates ? new Date() + ' ' : ''}[${this.prefix}]`, ...v];
+    return [
+      `${level} ${this.showDates ? new Date() + ' ' : ''}[${this.prefix}]`,
+      ...v,
+    ];
+  }
+
+  isLogFiltered(level: number) {
+    // called here to get window availble (not SSR)
+    if (!DefaultLogLevel) {
+      DefaultLogLevel = loadStoredLogLevel() || 'WARN';
+    }
+
+    const logLevel = this.logLevel || DefaultLogLevel;
+
+    // console.error(
+    //   'LOGLEVEL=' + logLevel,
+    //   ' --->',
+    //   levels[logLevel],
+    //   level,
+    //   levels[logLevel] > level,
+    // );
+
+    if (levels[logLevel] > level) return true;
+    if (logFilter === undefined) return true;
+    if (logFilter === '*') return false;
+    return this.prefix.toLowerCase().indexOf(logFilter.toLowerCase()) === -1;
   }
 
   clear() {
@@ -32,21 +89,24 @@ export class Logger {
   }
 
   debug(...v: any[]) {
-    if (levels[this.logLevel] !== levels.DEBUG) return;
+    if (this.isLogFiltered(levels.DEBUG)) return;
     console.debug(...this.format('DEBUG', v));
   }
   log(...v: any[]) {
-    if (levels[this.logLevel] > levels.DEBUG) return;
+    if (this.isLogFiltered(levels.LOG)) return;
     console.log(...this.format('LOG', v));
   }
   warn(...v: any[]) {
-    if (levels[this.logLevel] > levels.LOG) return;
+    if (this.isLogFiltered(levels.WARN)) return;
     console.warn(...this.format('WARN', v));
   }
   error(...v: any[]) {
-    if (levels[this.logLevel] > levels.WARN) return;
+    if (this.isLogFiltered(levels.ERROR)) return;
     console.error(...this.format('ERROR', v));
   }
 }
 
 export const logger = new Logger('default');
+
+addGlobal('setLogFilter', setLogFilter);
+initLogger();

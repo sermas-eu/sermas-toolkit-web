@@ -128,6 +128,15 @@ export class VideoDetection extends EventEmitter2 {
   async init(config: VideoDetectionConfig) {
     this.config = config;
 
+    const cameraEnabled = await this.camera.init(
+      config.camera as CameraHandlerConfig,
+    );
+
+    if (!cameraEnabled) {
+      this.logger.warn(`Video detection disabled`);
+      return;
+    }
+
     if (this.config.render === true && !this.config.canvas) {
       this.logger.warn(
         `render=true but canvas not provided, no rendering will be performed`,
@@ -137,7 +146,6 @@ export class VideoDetection extends EventEmitter2 {
     this.config.camera.onFrame = async (video: HTMLVideoElement) => {
       await this.onFrame(video);
     };
-    await this.camera.init(config.camera as CameraHandlerConfig);
 
     this.checkCanvas();
 

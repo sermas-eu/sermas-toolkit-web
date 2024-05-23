@@ -22,6 +22,7 @@ import {
   UserCharacterizationEventDto,
 } from '@sermas/api-client';
 import { ListenerFn } from 'eventemitter2';
+import { EmotionBlendShape } from './animations/blendshapes/lib/index.js';
 import { VisemeType } from './animations/blendshapes/lib/viseme/index.js';
 
 const logger = new Logger('webavatar.handler');
@@ -29,11 +30,11 @@ const logger = new Logger('webavatar.handler');
 export class WebAvatarHandler {
   private lastSet: { time: number; emotion: string };
 
-  private audioQueue: AudioQueue[] = [];
+  private sessionStarted = false;
 
-  private messagesQueue: {
-    [chunkId: string]: { [time: string]: Uint8Array[] };
-  } = {};
+  private audioQueue: AudioQueue[] = [];
+  private processedQueue = 0;
+  private processedQueueTimer: NodeJS.Timeout;
 
   private lipsync?: LipSync;
   private isPlaying = false;
@@ -124,7 +125,11 @@ export class WebAvatarHandler {
 
   setListening(op: 'started' | 'stopped') {
     if (op === 'started') {
-      this.avatar.getAnimation()?.playGesture('gesture_listening');
+      this.stopSpeech();
+      // move only if the session has started
+      if (this.sessionStarted) {
+        this.avatar.getAnimation()?.playGesture('gesture_listening');
+      }
     } else {
       this.avatar.getAnimation()?.playGesture('gesture_idle');
     }
@@ -132,11 +137,13 @@ export class WebAvatarHandler {
 
   onSession(ev: SessionChangedDto) {
     if (ev.operation === 'created') {
+      this.sessionStarted = true;
       // avatar greeting
       this.avatar.getAnimation()?.playGesture('gesture_waving');
     }
     if (ev.operation === 'updated') {
       if (ev.record.closedAt) {
+        this.sessionStarted = false;
         // avatar bye bye
         this.avatar.getAnimation()?.playGesture('gesture_waving');
       }
@@ -150,6 +157,8 @@ export class WebAvatarHandler {
 
     const [, chunkId] = raw.context;
 
+    logger.debug(`Queued speech ${chunkId} size=${buffer.byteLength / 1000}kb`);
+
     // already playing, add to queue
     this.audioQueue.push({ chunkId, buffer });
 
@@ -158,24 +167,50 @@ export class WebAvatarHandler {
       return;
     }
 
-    setTimeout(() => this.playAudio(), 10);
+    this.playAudio();
   }
 
-  playAudio() {
+  playAudio(wait = 3) {
     if (this.isPlaying) {
       logger.debug(`already playing`);
       return;
     }
-    this.isPlaying = true;
 
     if (!this.audioQueue.length) return;
 
+    const size = this.audioQueue.reduce(
+      (sum, { buffer }) => sum + buffer.byteLength / 1000,
+      0,
+    );
+
+    // to allow the sentences to be wrapped together,
+    // wait to reach a threshold before playing
+    // const threshold = 100;
+    // if (size < threshold && wait < 2) {
+    if (this.processedQueue < 2 && this.audioQueue.length < 3 && wait > 0) {
+      const waitFor = 200 / wait;
+      logger.debug(
+        `Waiting queue threshold to be reached size=${size}kb wait=${wait} length=${this.audioQueue.length} waitFor=${waitFor}`,
+      );
+      setTimeout(() => this.playAudio(wait - 1), waitFor);
+      return;
+    }
+
+    this.isPlaying = true;
+
     const raw = this.audioQueue
-      .sort((a, b) => (+a.chunkId > +b.chunkId ? 1 : -1))
+      .sort((a, b) => (a.chunkId > b.chunkId ? 1 : -1))
       .splice(0, 1)[0];
 
-    logger.debug(`play speech chunk chunkId=${raw.chunkId}`);
+    logger.debug(`play queued speech chunkId=${raw.chunkId}`);
     this.lipsync?.startFromAudioFile(raw.buffer as Uint8Array);
+
+    this.processedQueue++;
+    if (this.processedQueueTimer) clearTimeout(this.processedQueueTimer);
+    this.processedQueueTimer = setTimeout(() => {
+      logger.debug('processed queue counter cleared');
+      this.processedQueue = 0;
+    }, 10 * 1000);
   }
 
   onDialogueMessage(ev: DialogueMessageDto) {
@@ -187,8 +222,19 @@ export class WebAvatarHandler {
     }
   }
 
-  setFace(blendingShapes: AvatarFaceBlendShape[]) {
-    // this.avatarModel?.showBlendShapeGui()
+  setFace(blendingShapes: AvatarFaceBlendShape[], emotion?: EmotionBlendShape) {
+    if (emotion) {
+      logger.debug(`set face emotion ${emotion}`);
+      const emotionBlendingShapes = this.avatar
+        ?.getBlendShapes()
+        ?.getEmotion(emotion);
+      if (!emotionBlendingShapes) {
+        logger.warn(`face emotion ${emotion} not found`);
+        return;
+      }
+      blendingShapes = emotionBlendingShapes;
+    }
+
     this.avatar?.getBlendShapes()?.setFaceBlendShapes(blendingShapes);
   }
 

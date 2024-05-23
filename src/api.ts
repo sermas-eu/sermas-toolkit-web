@@ -277,6 +277,10 @@ export class ApiClient {
     );
   }
 
+  async listModels() {
+    return await this.get<string[]>(`dialogue/speech/models`);
+  }
+
   async interactionIntention(
     moduleId = 'avatar',
     source: UserReferenceSource,

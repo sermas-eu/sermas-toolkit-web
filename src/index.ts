@@ -6,6 +6,7 @@ import type {
   UserInteractionIntentionDto,
 } from '@sermas/api-client';
 import EventEmitter2, { ListenerFn } from 'eventemitter2';
+import { UI } from './ui.js';
 import { v4 as uuidv4 } from 'uuid';
 import { ApiClient } from './api.js';
 import { AuthClient } from './auth.js';
@@ -21,7 +22,7 @@ import { ErrorEventDto, ErrorReason } from './dto/errors.dto.js';
 import { UiButtonSession } from './dto/ui.dto.js';
 import { EventListenerTracker, emitter } from './events.js';
 import { FpsMonitor } from './fps.js';
-import { Logger } from './logger.js';
+import { Logger, initLogger } from './logger.js';
 import { MqttClient } from './mqtt-client.js';
 import { Settings } from './settings.js';
 import { UserAuth } from './user-auth.js';
@@ -102,7 +103,13 @@ export class SermasToolkit {
   private avatar?: AvatarModel;
   private repositoryDefaults?: RepositoryConfigDto | undefined;
 
+  private availableModels: string[] = [];
+
+  private ui: UI;
+
   constructor(private readonly options: SermasToolkitOptions) {
+    initLogger();
+
     this.fpsMonitor = new FpsMonitor(this.emitter);
 
     const env = getEnv();
@@ -150,6 +157,10 @@ export class SermasToolkit {
     this.userAuth = new UserAuth(this);
   }
 
+  getAvailableModels() {
+    return this.availableModels;
+  }
+
   async createWebAvatar(
     avatarConfig?: Partial<AvatarModelConfig>,
   ): Promise<AvatarModel> {
@@ -160,6 +171,13 @@ export class SermasToolkit {
       this,
     );
     return this.avatar;
+  }
+
+  getUI() {
+    if (!this.ui) {
+      this.ui = new UI(this);
+    }
+    return this.ui;
   }
 
   getAudioDetection() {
@@ -398,6 +416,13 @@ export class SermasToolkit {
         this.logger.warn(`Failed to fetch topics`);
       }
       await this.broker.connect(token);
+    }
+
+    try {
+      const availableModels = await this.api.listModels();
+      this.availableModels = availableModels || [];
+    } catch (e: any) {
+      this.logger.debug(`Failed loading models: ${e.stack}`);
     }
 
     await this.fpsMonitor.init();
