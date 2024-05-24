@@ -1,0 +1,17 @@
+networks:
+  sermas_dev:
+    name: sermas_dev
+
+services:
+  toolkit-example-backend:
+    build: ./_backend
+    container_name: toolkit-example-backend
+    ports:
+      - 3000:3000
+    networks:
+      - sermas_dev
+  toolkit-example-webavatar:
+    build: ./webavatar
+    container_name: kiosk
+    networks:
+      - sermas_dev

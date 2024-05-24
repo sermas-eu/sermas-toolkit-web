@@ -8,7 +8,7 @@
     "dev": "npm-run-all --parallel watch start",
     "watch": "nodemon --exec 'npm run build' -e ts",
     "build": "esbuild ./src/app.ts --bundle --outfile=./public/app.js",
-    "start": "serve public --listen 3010"
+    "start": "serve public --listen 5173"
   },
   "author": "",
   "license": "Apache-2.0",

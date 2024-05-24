@@ -94167,14 +94167,14 @@ ${t4}`);
   var appId = "spxl";
   var main = async () => {
     const { data: token } = await axios_default.get(
-      `http://localhost:3000/auth/public/${appId}`
+      `http://toolkit-example-backend:3000/auth/public/${appId}`
     );
     const toolkit = new SermasToolkit({
-      url: "http://localhost:8080",
+      url: "http://api:3000",
       moduleId: "avatar",
       appId,
       auth: {
-        url: "http://localhost:8080",
+        url: "http://api:3000",
         clientId: "platform",
         realm: "sermas-local"
       }

@@ -9,7 +9,7 @@ const app: Express = express();
 const port = 3000;
 
 const PRIVATE_API_BASE_URL =
-  process.env.PRIVATE_API_BASE_URL || "http://172.17.0.1:8080/api";
+  process.env.PRIVATE_API_BASE_URL || "http://api:3000/api";
 
 app.use(express.json());
 app.use(cors());
@@ -24,6 +24,7 @@ app.get("/auth/public/:appId", async (req: Request, res: Response) => {
   return res.json(
     await getAvatarToken(appId, {
       PRIVATE_API_BASE_URL,
+      PUBLIC_AUTH_URL: "http://sermasxr-keycloak-1:8080/keycloak",
     }),
   );
 });
@@ -34,6 +35,7 @@ app.get("/auth/private/:appId", async (req: Request, res: Response) => {
   return res.json(
     await getAvatarTokenWithClientSecret(appId, {
       PRIVATE_API_BASE_URL,
+      PUBLIC_AUTH_URL: "http://sermasxr-keycloak-1:8080/keycloak",
     }),
   );
 });
