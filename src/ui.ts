@@ -162,12 +162,10 @@ export class UI {
     )
       return;
 
-    if (
-      ev.content &&
-      typeof ev.content === 'object' &&
-      !(ev.content instanceof Array)
-    )
+    if (ev.content) {
+      ev.content.messageId = ev.content.messageId || getChunkId();
       ev.content.chunkId = ev.content.chunkId || getChunkId();
+    }
 
     // this.logger.debug(`ev ${JSON.stringify(ev)}`);
     this.logger.debug(
