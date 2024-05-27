@@ -354,13 +354,15 @@ export class AudioDetection extends EventEmitter2 {
 
     this.logger.log(`Sending speech chunk type=${type}`);
 
+    const chunkId = getChunkId();
     const ev: DialogueMessageDto = {
       appId: this.toolkit.getAppId(),
       gender: await this.toolkit.getAvatarGender(),
       avatar: (await this.toolkit.getAvatarConfig())?.id,
       actor: 'user',
       language: this.toolkit.getAppLanguage(),
-      chunkId: getChunkId(),
+      messageId: chunkId,
+      chunkId,
       text: '',
       sessionId: this.toolkit.getSessionId(),
       userId: this.toolkit.getUserId(),
