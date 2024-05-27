@@ -123,11 +123,15 @@ export class UI {
   private setHistory(history?: ChatMessage[]) {
     history = history || [];
     history.forEach((m) => {
-      m.messages = m.messages.sort((a, b) =>
-        (a.messageId || getMessageId()) > (b.messageId || getMessageId())
-          ? 1
-          : -1,
-      );
+      m.messages = m.messages.sort((a, b) => {
+        return m.actor === 'agent'
+          ? (a.messageId || getMessageId()) > (b.messageId || getMessageId())
+            ? 1
+            : -1
+          : a.messageId! > b.messageId!
+            ? -1
+            : 1;
+      });
     });
     this.history = history;
     this.emitter.emit('ui.dialogue.history', this.history);
