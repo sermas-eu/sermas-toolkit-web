@@ -137,7 +137,7 @@ export class AudioDetection extends EventEmitter2 {
         const wav = vadModule.utils.encodeWAV(audio);
         const ev = { op, audio, wav };
         this.emit('speech', ev);
-        this.speechDetected(ev);
+        await this.speechDetected(ev);
       };
 
       this.vad = await vadModule.MicVAD.new({
@@ -321,13 +321,13 @@ export class AudioDetection extends EventEmitter2 {
     this.toolkit.getBroker().publish(AUDIO_CLASSIFICATION_TOPIC, payload);
   }
 
-  speechDetected(ev) {
+  async speechDetected(ev) {
     if (!this.toolkit) return;
     if (ev.wav) {
       this.sendSpeechAudio('wav', ev.wav);
     } else if (ev.audio) {
       const sampleRate = this.getSampleRate() || 16000;
-      this.sendSpeechAudio('raw', ev.audio, sampleRate);
+      await this.sendSpeechAudio('raw', ev.audio, sampleRate);
     }
   }
 

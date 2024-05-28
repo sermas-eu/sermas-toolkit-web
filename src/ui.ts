@@ -124,13 +124,7 @@ export class UI {
     history = history || [];
     history.forEach((m) => {
       m.messages = m.messages.sort((a, b) => {
-        return m.actor === 'agent'
-          ? (a.messageId || getMessageId()) > (b.messageId || getMessageId())
-            ? 1
-            : -1
-          : a.messageId! > b.messageId!
-            ? -1
-            : 1;
+        return a.messageId! > b.messageId! ? 1 : -1;
       });
     });
     this.history = history;
@@ -189,9 +183,7 @@ export class UI {
       this.history[this.history.length - 1].actor !== actor
     ) {
       // this.logger.debug(`Add new message from ${actor} : ${JSON.stringify(ev.content)}`)
-      const isUser = actor === 'user';
-      this.addHistory(this.newChatMessage(actor, isUser ? ev : undefined));
-      if (isUser) return;
+      this.addHistory(this.newChatMessage(actor, undefined));
     }
 
     const messageId = ev.messageId || getMessageId();
