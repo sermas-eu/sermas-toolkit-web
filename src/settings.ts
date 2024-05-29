@@ -32,6 +32,7 @@ export class Settings {
     detectorFaceLandmarker: false,
     qrcode: true,
     interactionStart: 'on-load',
+    virtualKeyboardEnabled: false,
   };
 
   constructor() {
@@ -63,6 +64,7 @@ export class Settings {
       enableMic: settings.enableMic,
       devMode: settings.devMode === true ? true : false,
       interactionStart: settings.interactionStart,
+      virtualKeyboardEnabled: settings.virtualKeyboardEnabled,
     };
 
     localStorage.setItem(`sermas.settings`, JSON.stringify(cfg));

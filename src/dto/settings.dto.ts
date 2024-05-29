@@ -30,4 +30,5 @@ export class AppSettings implements AppSettingsDto {
   prompt?: AppPromptDto | undefined;
   interactionStart?: InteractionStartTypes;
   theme?: Record<string, any>;
+  virtualKeyboardEnabled?: boolean;
 }
