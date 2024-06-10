@@ -5,7 +5,8 @@ import {
 
 export const DEFAULT_AVATAR_LANGUAGE = 'en-GB';
 
-export const XRMARKER_DETECTION = 'app/:appId/xr/marker/detected';
+export const XRMARKER_DETECTION = 'xr/marker/detected';
+export const QR_DETECTION = 'detection/qr_code';
 export const USER_CHARACTERIZATION_TOPIC = 'detection/characterization';
 export const AUDIO_CLASSIFICATION_TOPIC = 'detection/audio';
 export const UI_INTERACTION_TOPIC = 'ui/interaction';

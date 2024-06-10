@@ -3,6 +3,8 @@ import {
   XRMARKER_DETECTION,
   XRMarkerDto,
   type SermasToolkit,
+  QR_DETECTION,
+  QRCodeEventDto,
 } from '../../../index.js';
 import { BaseDetector } from '../base.detector.js';
 import { VideoDetectorType } from '../video.dto.js';
@@ -116,6 +118,15 @@ export class QrcodeDetector extends BaseDetector<
       toolkit
         .getBroker()
         .publish(XRMARKER_DETECTION.replace(':appId', marker.appId), marker);
+
+      const qr: QRCodeEventDto = {
+        appId: toolkit.getAppId(),
+        sessionId: toolkit.getSessionId(),
+        version: qrcode.type.toString(),
+        payload: qrcode.decode(),
+      };
+
+      toolkit.getBroker().publish(QR_DETECTION, qr);
     }
   }
 }

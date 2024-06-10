@@ -569,6 +569,7 @@ export class SermasToolkit {
     if (!repo) return defaultValue;
 
     const filtered = repo?.filter((a) => a.id === id);
+
     return filtered && filtered.length ? (filtered[0] as T) : defaultValue;
   }
 
