@@ -294,9 +294,14 @@ export class SermasToolkit {
 
     if (ev.operation === 'updated') {
       if (ev.record.closedAt) {
-        // on session close, generate new sessionId and propagate to APIs
-        this.logger.log(`Session closed, creating new session id`);
-        this.createSessionId();
+        this.logger.log('Session closed');
+        if (this.settings?.get().interactionStart == 'on-load') {
+          // on session close, generate new sessionId and propagate to APIs
+          this.logger.log(`Creating new session id`);
+          this.createSessionId();
+        } else {
+          this.sessionId = undefined;
+        }
       }
     }
   }
