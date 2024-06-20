@@ -178,7 +178,6 @@ export class MqttClient {
 
   onClientConnected() {
     if (!this.mqttClient) return;
-
     this.subscribeTopics();
   }
 
@@ -211,6 +210,15 @@ export class MqttClient {
         scope,
         context,
       };
+
+      if (ev.payload && ev.payload?.sessionId) {
+        if (ev.payload?.sessionId !== this.sessionId) {
+          this.logger.debug(
+            `Skip unmatching sessionId=${ev.payload.sessionId} for ${resource}.${scope}. Current sessionId=${this.sessionId}`,
+          );
+          return;
+        }
+      }
 
       // emitter.emit('mqtt.message', ev)
       (() => emitter.emit(`${resource}.${scope}`, ev.payload, ev))();
