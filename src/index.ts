@@ -6,7 +6,6 @@ import type {
   UserInteractionIntentionDto,
 } from '@sermas/api-client';
 import EventEmitter2, { ListenerFn } from 'eventemitter2';
-import { UI } from './ui.js';
 import { v4 as uuidv4 } from 'uuid';
 import { ApiClient } from './api.js';
 import { AuthClient } from './auth.js';
@@ -25,6 +24,7 @@ import { FpsMonitor } from './fps.js';
 import { Logger, initLogger } from './logger.js';
 import { MqttClient } from './mqtt-client.js';
 import { Settings } from './settings.js';
+import { UI } from './ui.js';
 import { UserAuth } from './user-auth.js';
 export * from '@sermas/api-client';
 export * from './constants.js';
@@ -482,6 +482,7 @@ export class SermasToolkit {
       status: 'ready',
       sessionId: this.sessionId,
       userId: this.userId,
+      settings: this.settings.export(),
     });
     this.logger.debug(`Sent heartbit sessionId=${this.sessionId}`);
   }
