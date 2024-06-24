@@ -2,14 +2,14 @@ import * as THREE from 'three';
 import { HolisticV1Results } from '../../detection/index.js';
 import { Logger } from '../../logger.js';
 import { getTypedKeys } from '../util.js';
-import { AvatarModel } from '../webavatar.js';
 import {
   AnimationGroup,
   AnimationHandler,
   AnimationLabel,
-  GestureMappingKeys,
   DetectionPosition,
+  GestureMappingKeys,
 } from '../webavatar.dto.js';
+import { AvatarModel } from '../webavatar.js';
 import { AnimationBase } from './animation.base.js';
 import { Animator } from './animator/index.js';
 import { BlendShapeAnimation } from './blendshapes/index.js';

@@ -11,7 +11,7 @@ export class Settings {
     login: false,
     avatar: 'default',
     background: 'backgrounds/default',
-    llm: 'openai/gpt-4',
+    llm: 'openai/gpt-4o',
     language: DEFAULT_AVATAR_LANGUAGE,
     // developerMode
     testFace: '',
