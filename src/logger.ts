@@ -88,6 +88,10 @@ export class Logger {
     console.clear();
   }
 
+  verbose(...v: any[]) {
+    if (this.isLogFiltered(levels.VERBOSE)) return;
+    console.debug(...this.format('VERBOSE', v));
+  }
   debug(...v: any[]) {
     if (this.isLogFiltered(levels.DEBUG)) return;
     console.debug(...this.format('DEBUG', v));

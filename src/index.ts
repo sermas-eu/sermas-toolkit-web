@@ -1,9 +1,10 @@
-import type {
-  PlatformAppDto,
-  RepositoryAssetTypes,
-  RepositoryConfigDto,
-  SessionChangedDto,
-  UserInteractionIntentionDto,
+import {
+  SermasApiClient,
+  type PlatformAppDto,
+  type RepositoryAssetTypes,
+  type RepositoryConfigDto,
+  type SessionChangedDto,
+  type UserInteractionIntentionDto,
 } from '@sermas/api-client';
 import EventEmitter2, { ListenerFn } from 'eventemitter2';
 import { v4 as uuidv4 } from 'uuid';
@@ -88,6 +89,8 @@ export class SermasToolkit {
   private readonly broker: MqttClient;
   private readonly userAuth: UserAuth;
 
+  private readonly apiClient: SermasApiClient;
+
   private token?: string | null;
 
   private userId?: string;
@@ -155,6 +158,17 @@ export class SermasToolkit {
     });
 
     this.userAuth = new UserAuth(this);
+
+    this.apiClient = new SermasApiClient({
+      appId: options.appId,
+      baseURL: options.url,
+      clientId: authClientId,
+      logger: this.logger,
+    });
+  }
+
+  getApiClient() {
+    return this.apiClient;
   }
 
   getAvailableModels() {
@@ -360,6 +374,8 @@ export class SermasToolkit {
 
   async init(token?: string | null) {
     this.token = token;
+
+    if (token) this.apiClient.setToken(token);
 
     this.onApp = this.onApp.bind(this);
     this.onSession = this.onSession.bind(this);
