@@ -306,6 +306,11 @@ export class SermasToolkit {
     }
   }
 
+  async closeSession() {
+    await this.api.closeSession();
+    this.setSessionId(undefined);
+  }
+
   onUiButtonSession(ev: UiButtonSession) {
     const interactionType =
       ev.status === 'started' ? InteractionType.start : InteractionType.stop;

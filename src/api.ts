@@ -367,4 +367,13 @@ export class ApiClient {
   updateSession(session: SessionDto) {
     return this.put(`session`, session);
   }
+
+  async closeSession() {
+    if (!this.sessionId) return;
+    const session = await this.getSession(this.sessionId);
+    if (session) {
+      session.closedAt = new Date().toString();
+      this.updateSession(session);
+    }
+  }
 }
