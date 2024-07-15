@@ -31,4 +31,5 @@ export class AppSettings implements AppSettingsDto {
   interactionStart?: InteractionStartTypes;
   theme?: Record<string, any>;
   virtualKeyboardEnabled?: boolean;
+  ttsEnabled?: boolean | undefined;
 }
