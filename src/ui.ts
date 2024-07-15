@@ -148,13 +148,6 @@ export class UI {
     await sleep(100);
   }
 
-  async handleSessionClose(ev: UIContentDto) {
-    if (ev.contentType !== 'close-session') {
-      return;
-    }
-    this.emitter.emit(`close.session`);
-  }
-
   async appendContent(actor: DialogueActor, ev: UIContentDto) {
     if (
       this.toolkit.getSessionId() &&
@@ -174,7 +167,6 @@ export class UI {
     );
 
     await this.handleCleanScreen(ev);
-    await this.handleSessionClose(ev);
 
     if (ev.contentType == 'navigation') {
       this.emitter.emit('ui.tool.request', ev.content);
@@ -182,10 +174,6 @@ export class UI {
     }
 
     if (ev.contentType === 'clear-screen') {
-      return;
-    }
-
-    if (ev.contentType === 'close-session') {
       return;
     }
 

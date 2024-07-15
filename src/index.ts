@@ -476,6 +476,11 @@ export class SermasToolkit {
   }
 
   private async onInteractionDetection(ev: UserInteractionIntentionDto) {
+    if (ev.interactionType === 'stop') {
+      this.closeSession();
+      return;
+    }
+
     if (this.getSessionId()) return;
 
     if (ev.source == 'ui' && this.settings?.get().interactionStart != 'touch')
