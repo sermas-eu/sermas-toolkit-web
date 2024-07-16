@@ -342,7 +342,7 @@ export class AudioDetection extends EventEmitter2 {
       this.toolkit.getSettings().get().interactionStart == 'speak' &&
       !this.toolkit.getSessionId()
     ) {
-      this.toolkit.triggerInteractionStart('microphone');
+      this.toolkit.triggerInteraction('microphone', 'start');
       return;
     }
 

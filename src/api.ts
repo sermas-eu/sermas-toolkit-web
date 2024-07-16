@@ -1,6 +1,7 @@
 import type {
   AgentHeartBeatEventDto,
   AuthJwtUser,
+  DatasetRecordDto,
   DialogueMessageDto,
   JwtTokenDto,
   LoginRequestDto,
@@ -375,5 +376,9 @@ export class ApiClient {
       session.closedAt = new Date().toString();
       this.updateSession(session);
     }
+  }
+
+  saveRecord(record: DatasetRecordDto) {
+    return this.post(`platform/monitoring`, record);
   }
 }

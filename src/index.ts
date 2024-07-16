@@ -1,5 +1,6 @@
 import {
   SermasApiClient,
+  sleep,
   type PlatformAppDto,
   type RepositoryAssetTypes,
   type RepositoryConfigDto,
@@ -301,7 +302,7 @@ export class SermasToolkit {
     this.getApi().sendForceStop();
   }
 
-  onSessionChanged(ev: SessionChangedDto) {
+  async onSessionChanged(ev: SessionChangedDto) {
     this.logger.debug(
       `session event ${ev.operation} sessionId=${ev.record.sessionId}`,
     );
@@ -314,7 +315,7 @@ export class SermasToolkit {
           this.logger.log(`Creating new session id`);
           this.createSessionId();
         } else {
-          this.sessionId = undefined;
+          this.setSessionId(undefined);
         }
       }
     }
@@ -322,7 +323,6 @@ export class SermasToolkit {
 
   async closeSession() {
     await this.api.closeSession();
-    this.setSessionId(undefined);
   }
 
   onUiButtonSession(ev: UiButtonSession) {
@@ -464,24 +464,44 @@ export class SermasToolkit {
     this.emit('ready', this);
   }
 
-  public async triggerInteractionStart(source: string) {
+  public async triggerInteraction(source: string, trigger: 'start' | 'stop') {
+    const sessionId = this.getSessionId();
     this.onInteractionDetection({
       source,
       appId: this.getAppId(),
-      sessionId: '',
+      sessionId: sessionId ? sessionId : '',
       moduleId: 'detection',
-      interactionType: 'start',
+      interactionType: trigger,
       probability: 1.0,
     });
   }
 
   private async onInteractionDetection(ev: UserInteractionIntentionDto) {
-    if (ev.interactionType === 'stop') {
-      this.closeSession();
+    let sessionId = this.getSessionId();
+    if (sessionId) {
+      if (ev.interactionType === 'stop' && sessionId == ev.sessionId) {
+        this.ui.clearHistory();
+        await this.api.sendChatMessage({
+          actor: 'agent',
+          sessionId: ev.sessionId,
+          appId: ev.appId,
+          text: 'Goodbye, see you next time!',
+          language: this.getAppLanguage(),
+          emotion: 'happy',
+        });
+        this.api.saveRecord({
+          appId: this.getAppId(),
+          sessionId: ev.sessionId,
+          type: 'interaction',
+          label: `Interaction event ${ev.interactionType.toUpperCase()} from ${ev.source.toUpperCase()}`,
+          ts: new Date().toString(),
+          data: ev,
+        });
+        await sleep(10000);
+        await this.closeSession();
+      }
       return;
     }
-
-    if (this.getSessionId()) return;
 
     if (ev.source == 'ui' && this.settings?.get().interactionStart != 'touch')
       return;
@@ -499,6 +519,15 @@ export class SermasToolkit {
     this.logger.log(`Starting interaction on event from source ${ev.source}`);
     this.createSessionId();
     await this.sendHeartBit();
+    sessionId = this.getSessionId();
+    this.api.saveRecord({
+      appId: this.getAppId(),
+      sessionId: sessionId ? sessionId : '',
+      type: 'interaction',
+      label: `Interaction event ${ev.interactionType.toUpperCase()} from ${ev.source.toUpperCase()}`,
+      ts: new Date().toString(),
+      data: ev,
+    });
   }
 
   private async sendHeartBit() {
