@@ -486,7 +486,7 @@ export class SermasToolkit {
           sessionId: ev.sessionId,
           appId: ev.appId,
           text: 'Goodbye, see you next time!',
-          language: this.getAppLanguage(),
+          language: 'en-GB',
           emotion: 'happy',
         });
         this.api.saveRecord({
