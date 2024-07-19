@@ -63,6 +63,9 @@ export class Settings {
       enableAudio: settings.enableAudio,
       enableMic: settings.enableMic,
       devMode: settings.devMode === true ? true : false,
+      avatar: settings.avatar,
+      llm: settings.llm,
+      background: settings.background,
       interactionStart: settings.interactionStart,
       virtualKeyboardEnabled: settings.virtualKeyboardEnabled,
     };

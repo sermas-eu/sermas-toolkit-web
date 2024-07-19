@@ -294,7 +294,9 @@ export class SermasToolkit {
 
     this.api.setAppId(app?.appId);
     this.broker.setAppId(app?.appId);
-    this.settings.save(app.settings || {});
+    console.log(app.settings);
+    console.log(this.settings.get());
+    this.settings.save({ ...this.settings.get(), ...(app.settings || {}) });
   }
 
   onAvatarSpeechStop() {
