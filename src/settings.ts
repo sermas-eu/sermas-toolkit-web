@@ -1,7 +1,7 @@
 import { AppSettingsDto } from '@sermas/api-client';
-import { emitter } from './events.js';
 import { DEFAULT_AVATAR_LANGUAGE } from './constants.js';
 import { AppSettings } from './dto.js';
+import { emitter } from './events.js';
 import { logger } from './logger.js';
 
 export class Settings {
@@ -11,7 +11,13 @@ export class Settings {
     login: false,
     avatar: 'default',
     background: 'backgrounds/default',
-    llm: '',
+    llm: {
+      chat: '',
+      tools: '',
+      tasks: '',
+      translation: '',
+      sentiment: '',
+    },
     language: DEFAULT_AVATAR_LANGUAGE,
     // developerMode
     testFace: '',

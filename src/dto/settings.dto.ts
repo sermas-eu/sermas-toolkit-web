@@ -25,7 +25,7 @@ export class AppSettings implements AppSettingsDto {
   avatar: string;
   background: string;
   language: string;
-  llm: string;
+  llm: Record<string, string | undefined>;
   login: boolean;
   prompt?: AppPromptDto | undefined;
   interactionStart?: InteractionStartTypes;
