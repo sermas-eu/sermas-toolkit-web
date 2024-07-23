@@ -294,8 +294,6 @@ export class SermasToolkit {
 
     this.api.setAppId(app?.appId);
     this.broker.setAppId(app?.appId);
-    console.log(app.settings);
-    console.log(this.settings.get());
     this.settings.save({ ...this.settings.get(), ...(app.settings || {}) });
   }
 
