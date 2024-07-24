@@ -4,6 +4,14 @@ import { AppSettings } from './dto.js';
 import { emitter } from './events.js';
 import { logger } from './logger.js';
 
+export const llmDefaults = () => ({
+  chat: '',
+  tools: '',
+  tasks: '',
+  translation: '',
+  sentiment: '',
+});
+
 export class Settings {
   private settings: AppSettings;
 
@@ -11,13 +19,7 @@ export class Settings {
     login: false,
     avatar: 'default',
     background: 'backgrounds/default',
-    llm: {
-      chat: '',
-      tools: '',
-      tasks: '',
-      translation: '',
-      sentiment: '',
-    },
+    llm: llmDefaults(),
     language: DEFAULT_AVATAR_LANGUAGE,
     // developerMode
     testFace: '',
@@ -70,7 +72,7 @@ export class Settings {
       enableMic: settings.enableMic,
       devMode: settings.devMode === true ? true : false,
       avatar: settings.avatar,
-      llm: settings.llm,
+      llm: settings.llm || llmDefaults(),
       background: settings.background,
       interactionStart: settings.interactionStart,
       virtualKeyboardEnabled: settings.virtualKeyboardEnabled,
@@ -87,7 +89,7 @@ export class Settings {
       const json = JSON.parse(raw) as Partial<AppSettings>;
       // todo: fix to update localStorage, remove after 09/2024
       if (json.llm && typeof json.llm === 'string') {
-        delete json.llm;
+        json.llm = llmDefaults();
       }
       // /fix
       return json;
@@ -127,6 +129,8 @@ export class Settings {
       ...this.settings,
       ...(saved || {}),
     } as AppSettings;
+
+    this.settings.llm = this.settings.llm || llmDefaults();
 
     return this.settings;
   }
