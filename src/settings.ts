@@ -84,7 +84,13 @@ export class Settings {
     try {
       const raw = localStorage.getItem(`sermas.settings`);
       if (!raw) return false;
-      return JSON.parse(raw) as Partial<AppSettings>;
+      const json = JSON.parse(raw) as Partial<AppSettings>;
+      // todo: fix to update localStorage, remove after 09/2024
+      if (json.llm && typeof json.llm === 'string') {
+        delete json.llm;
+      }
+      // /fix
+      return json;
     } catch (e: any) {
       logger.error(`Failed loading local storage: ${e.message}`);
       return false;
