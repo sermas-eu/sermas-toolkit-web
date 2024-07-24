@@ -10,6 +10,7 @@ export const llmDefaults = () => ({
   tasks: '',
   translation: '',
   sentiment: '',
+  intent: '',
 });
 
 export class Settings {
