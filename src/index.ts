@@ -95,6 +95,7 @@ export class SermasToolkit {
   private token?: string | null;
 
   private userId?: string;
+  private interactionBodyId?: string;
   private sessionId?: string;
   private app?: PlatformAppDto;
   private readonly baseUrl: string;
@@ -307,6 +308,9 @@ export class SermasToolkit {
       `session event ${ev.operation} sessionId=${ev.record.sessionId}`,
     );
 
+    if (ev.operation === 'created') {
+    }
+
     if (ev.operation === 'updated') {
       if (ev.record.closedAt) {
         this.logger.log('Session closed');
@@ -480,6 +484,15 @@ export class SermasToolkit {
     let sessionId = this.getSessionId();
     if (sessionId) {
       if (ev.interactionType === 'stop' && sessionId == ev.sessionId) {
+        if (
+          this.settings?.get().interactionStart == 'intent-detection' &&
+          this.interactionBodyId != ev.userId
+        ) {
+          this.logger.debug(
+            `Interaction userId (${ev.userId}) does not match with userId (${this.interactionBodyId}) that started the session`,
+          );
+          return;
+        }
         this.ui.clearHistory();
         await this.api.sendChatMessage({
           actor: 'agent',
@@ -517,6 +530,7 @@ export class SermasToolkit {
       return;
 
     this.logger.log(`Starting interaction on event from source ${ev.source}`);
+    this.interactionBodyId = ev.userId;
     this.createSessionId();
     await this.sendHeartBit();
     sessionId = this.getSessionId();
