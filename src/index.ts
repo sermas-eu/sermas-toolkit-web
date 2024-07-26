@@ -326,6 +326,8 @@ export class SermasToolkit {
   }
 
   async closeSession() {
+    this.ui.clearHistory();
+    this.emit('avatar.speech.stop');
     await this.api.closeSession();
   }
 
@@ -481,6 +483,7 @@ export class SermasToolkit {
   }
 
   private async onInteractionDetection(ev: UserInteractionIntentionDto) {
+    this.logger.log(`Interaction ${JSON.stringify(ev)}`);
     let sessionId = this.getSessionId();
     if (sessionId) {
       if (ev.interactionType === 'stop' && sessionId == ev.sessionId) {
@@ -513,6 +516,10 @@ export class SermasToolkit {
         await sleep(10000);
         await this.closeSession();
       }
+      return;
+    }
+
+    if (ev.interactionType != 'start') {
       return;
     }
 
