@@ -483,38 +483,16 @@ export class SermasToolkit {
   }
 
   private async onInteractionDetection(ev: UserInteractionIntentionDto) {
-    this.logger.log(`Interaction ${JSON.stringify(ev)}`);
+    this.logger.debug(`Interaction ${JSON.stringify(ev)}`);
     let sessionId = this.getSessionId();
     if (sessionId) {
-      if (ev.interactionType === 'stop' && sessionId == ev.sessionId) {
-        if (
-          this.settings?.get().interactionStart == 'intent-detection' &&
-          this.interactionBodyId != ev.userId
-        ) {
-          this.logger.debug(
-            `Interaction userId (${ev.userId}) does not match with userId (${this.interactionBodyId}) that started the session`,
-          );
-          return;
-        }
-        this.ui.clearHistory();
-        await this.api.sendChatMessage({
-          actor: 'agent',
-          sessionId: ev.sessionId,
-          appId: ev.appId,
-          text: 'Goodbye, see you next time!',
-          language: 'en-GB',
-          emotion: 'happy',
-        });
-        this.api.saveRecord({
-          appId: this.getAppId(),
-          sessionId: ev.sessionId,
-          type: 'interaction',
-          label: `Interaction event ${ev.interactionType.toUpperCase()} from ${ev.source.toUpperCase()}`,
-          ts: new Date().toString(),
-          data: ev,
-        });
-        await sleep(10000);
-        await this.closeSession();
+      if (
+        ev.interactionType === 'stop' &&
+        (sessionId == ev.sessionId ||
+          (this.settings?.get().interactionStart == 'intent-detection' &&
+            this.interactionBodyId == ev.userId))
+      ) {
+        await this.goodbye(ev);
       }
       return;
     }
@@ -549,6 +527,28 @@ export class SermasToolkit {
       ts: new Date().toString(),
       data: ev,
     });
+  }
+
+  private async goodbye(ev: UserInteractionIntentionDto) {
+    this.ui.clearHistory();
+    await this.api.sendChatMessage({
+      actor: 'agent',
+      sessionId: ev.sessionId,
+      appId: ev.appId,
+      text: 'Goodbye, have a good day!',
+      language: 'en-GB',
+      emotion: 'neutral',
+    });
+    this.api.saveRecord({
+      appId: this.getAppId(),
+      sessionId: ev.sessionId,
+      type: 'interaction',
+      label: `Interaction event ${ev.interactionType.toUpperCase()} from ${ev.source.toUpperCase()}`,
+      ts: new Date().toString(),
+      data: ev,
+    });
+    await sleep(10000);
+    await this.closeSession();
   }
 
   private async sendHeartBit() {
