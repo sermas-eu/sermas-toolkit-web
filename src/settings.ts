@@ -1,8 +1,17 @@
 import { AppSettingsDto } from '@sermas/api-client';
-import { emitter } from './events.js';
 import { DEFAULT_AVATAR_LANGUAGE } from './constants.js';
 import { AppSettings } from './dto.js';
+import { emitter } from './events.js';
 import { logger } from './logger.js';
+
+export const llmDefaults = () => ({
+  chat: '',
+  tools: '',
+  tasks: '',
+  translation: '',
+  sentiment: '',
+  intent: '',
+});
 
 export class Settings {
   private settings: AppSettings;
@@ -11,7 +20,7 @@ export class Settings {
     login: false,
     avatar: 'default',
     background: 'backgrounds/default',
-    llm: 'openai/gpt-4o',
+    llm: llmDefaults(),
     language: DEFAULT_AVATAR_LANGUAGE,
     // developerMode
     testFace: '',
@@ -64,7 +73,7 @@ export class Settings {
       enableMic: settings.enableMic,
       devMode: settings.devMode === true ? true : false,
       avatar: settings.avatar,
-      llm: settings.llm,
+      llm: settings.llm || llmDefaults(),
       background: settings.background,
       interactionStart: settings.interactionStart,
       virtualKeyboardEnabled: settings.virtualKeyboardEnabled,
@@ -78,7 +87,13 @@ export class Settings {
     try {
       const raw = localStorage.getItem(`sermas.settings`);
       if (!raw) return false;
-      return JSON.parse(raw) as Partial<AppSettings>;
+      const json = JSON.parse(raw) as Partial<AppSettings>;
+      // todo: fix to update localStorage, remove after 09/2024
+      if (json.llm && typeof json.llm === 'string') {
+        json.llm = llmDefaults();
+      }
+      // /fix
+      return json;
     } catch (e: any) {
       logger.error(`Failed loading local storage: ${e.message}`);
       return false;
@@ -115,6 +130,8 @@ export class Settings {
       ...this.settings,
       ...(saved || {}),
     } as AppSettings;
+
+    this.settings.llm = this.settings.llm || llmDefaults();
 
     return this.settings;
   }
