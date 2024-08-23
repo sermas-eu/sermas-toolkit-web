@@ -13,8 +13,9 @@ export class AnimationsLoader {
   private mapping: Record<GestureMappingKeys, RpmAnimation[]> = {
     gesture_default: [],
     gesture_idle: [
+      'idle',
       // https://github.com/readyplayerme/animation-library/tree/master/feminine/fbx/idle
-      'F_Standing_Idle_001',
+      // 'F_Standing_Idle_001',
       // 'F_Standing_Idle_Variations_001',
       // 'F_Standing_Idle_Variations_008',
 
@@ -25,16 +26,19 @@ export class AnimationsLoader {
     ],
     gesture_waving: [
       //
-      'M_Standing_Expressions_001',
+      // 'M_Standing_Expressions_001',
+      'waving',
     ],
     gesture_listening: [
       //
-      'F_Talking_Variations_002',
+      // 'F_Talking_Variations_002',
+      'listening',
       // 'M_Talking_Variations_001',
     ],
     gesture_talking: [
       // 'F_Talking_Variations_001',
-      'F_Talking_Variations_002',
+      // 'F_Talking_Variations_002',
+      'talking',
       // 'F_Talking_Variations_005',
 
       //   'M_Talking_Variations_001',
@@ -42,7 +46,7 @@ export class AnimationsLoader {
       //   'M_Talking_Variations_009',
     ],
     gesture_donotknow: [
-      'F_Talking_Variations_003',
+      // 'F_Talking_Variations_003',
       //   'M_Standing_Expressions_005',
     ],
     gesture_walk: [
@@ -114,7 +118,7 @@ export class AnimationsLoader {
 
   async loadAnimations() {
     // this.logger.debug('Loading animations')
-    const genderPath = this.config.gender == 'M' ? 'masculine' : 'feminine';
+    // const genderPath = this.config.gender == 'M' ? 'masculine' : 'feminine';
 
     // const baseUrl = `${window.location.protocol}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
 
@@ -122,7 +126,8 @@ export class AnimationsLoader {
       await Promise.all(
         value.map(async (a, idx) => {
           const ext = 'glb';
-          const path = `/animations/${genderPath}/${ext}/${a}.${ext}`;
+          // const path = `/animations/${genderPath}/${ext}/${a}.${ext}`;
+          const path = `/animations/${a}.${ext}`;
 
           try {
             this.logger.debug(`Loading animation ${a}`);

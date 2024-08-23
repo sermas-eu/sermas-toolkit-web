@@ -119,6 +119,12 @@ export const RpmAnimationGallery = [
   'M_Walk_Jump_003',
   'M_Walk_Strafe_Left_002',
   'M_Walk_Strafe_Right_002',
+
+  'idle',
+  'walking',
+  'waving',
+  'talking',
+  'listening',
 ] as const;
 
 export type RpmAnimation = (typeof RpmAnimationGallery)[number];
