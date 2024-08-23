@@ -330,13 +330,15 @@ export class ApiClient {
     return await this.get<PlatformAppDto[]>(`app`);
   }
 
-  async getAsset(path?: string) {
+  async getAsset(type: string, assetId: string) {
     const appId = this.requireAppId();
     if (!appId) {
       this.logger.warn('getApp: no appId available');
       return null;
     }
-    return await this.get<Buffer>(`ui/asset/${appId}`, { params: { path } });
+    return await this.get<Blob>(`ui/asset/${appId}/${type}/${assetId}`, {
+      responseType: 'blob',
+    });
   }
 
   async getUserSession(appId?: string, token?: string) {

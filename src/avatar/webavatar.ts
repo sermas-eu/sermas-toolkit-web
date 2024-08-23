@@ -263,14 +263,12 @@ export class AvatarModel {
       9,
     );
 
-    const backgroundColor = this.config.ui?.backgroundColor || '#BBBBBB';
     const fogColor = this.config.ui?.fogColor || '#64539E';
     const hemiLightColors = this.config.ui?.hemiLightColor || {};
     hemiLightColors.sky = hemiLightColors.sky || '#fff';
     hemiLightColors.ground = hemiLightColors.ground || '#000';
 
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(backgroundColor);
     this.scene.fog = new THREE.Fog(fogColor, 200, 1000);
 
     const hemiLight = new THREE.HemisphereLight(
@@ -298,7 +296,7 @@ export class AvatarModel {
     try {
       this.renderer = new THREE.WebGLRenderer({
         antialias: true,
-        alpha: false,
+        alpha: true,
         logarithmicDepthBuffer: true,
         // powerPreference: 'high-performance',
       });
@@ -332,14 +330,11 @@ export class AvatarModel {
   async setBackground(assetId: string) {
     // Load the background texture
     const loader = new TextureLoader2();
-
     let url: string | undefined = assetId;
     if (this.toolkit) {
       url = await this.toolkit?.configureLoader('backgrounds', assetId, loader);
     }
-
     if (!url) return;
-
     logger.debug(`Loading background from ${url}`);
     const image = await loader.load(url);
     this.scene.background = image;
