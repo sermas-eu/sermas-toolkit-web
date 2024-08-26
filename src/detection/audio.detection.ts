@@ -114,18 +114,29 @@ export class AudioDetection extends EventEmitter2 {
     return ok;
   }
 
-  async startVAD(stream?: MediaStream) {
+  async enableOnnxRuntimeDebug() {
+    if (typeof localStorage === undefined) return;
+    if (localStorage.getItem('ORT_DEBUG') !== '1') return;
+
     try {
       const ort = await import('onnxruntime-web');
-      ort.env.wasm.wasmPaths = {
-        'ort-wasm-simd-threaded.wasm': '/ort-wasm-simd-threaded.wasm',
-        'ort-wasm-simd.wasm': '/ort-wasm-simd.wasm',
-        'ort-wasm.wasm': '/ort-wasm.wasm',
-        'ort-wasm-threaded.wasm': '/ort-wasm-threaded.wasm',
-      };
-    } catch (e) {
-      this.logger.error(`Failed to set ORT base paths`);
+
+      ort.env.debug = true;
+      ort.env.logLevel = 'verbose';
+
+      // ort.env.wasm.wasmPaths = {
+      //   'ort-wasm-simd-threaded.wasm': '/ort-wasm-simd-threaded.wasm',
+      //   'ort-wasm-simd.wasm': '/ort-wasm-simd.wasm',
+      //   'ort-wasm.wasm': '/ort-wasm.wasm',
+      //   'ort-wasm-threaded.wasm': '/ort-wasm-threaded.wasm',
+      // };
+    } catch (e: any) {
+      this.logger.error(`Failed to set ORT base paths: ${e.message}`);
     }
+  }
+
+  async startVAD(stream?: MediaStream) {
+    await this.enableOnnxRuntimeDebug();
 
     try {
       this.logger.debug(`Loading VAD`);
