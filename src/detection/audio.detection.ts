@@ -116,6 +116,18 @@ export class AudioDetection extends EventEmitter2 {
 
   async startVAD(stream?: MediaStream) {
     try {
+      const ort = await import('onnxruntime-web');
+      ort.env.wasm.wasmPaths = {
+        'ort-wasm-simd-threaded.wasm': '/ort-wasm-simd-threaded.wasm',
+        'ort-wasm-simd.wasm': '/ort-wasm-simd.wasm',
+        'ort-wasm.wasm': '/ort-wasm.wasm',
+        'ort-wasm-threaded.wasm': '/ort-wasm-threaded.wasm',
+      };
+    } catch (e) {
+      this.logger.error(`Failed to set ORT base paths`);
+    }
+
+    try {
       this.logger.debug(`Loading VAD`);
       const vadModuleLoader = await import('@ricky0123/vad-web/dist/index');
       const vadModule = vadModuleLoader.default || vadModuleLoader;
