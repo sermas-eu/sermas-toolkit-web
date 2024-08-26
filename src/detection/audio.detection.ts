@@ -1,5 +1,7 @@
 import type { AudioClassifier } from '@mediapipe/tasks-audio';
+import { ONNXRuntimeAPI } from '@ricky0123/vad-web/dist/_common/models.js';
 import type { MicVAD } from '@ricky0123/vad-web/dist/real-time-vad';
+import axios from 'axios';
 import EventEmitter2 from 'eventemitter2';
 import { emitter } from '../events.js';
 import {
@@ -114,29 +116,29 @@ export class AudioDetection extends EventEmitter2 {
     return ok;
   }
 
-  async enableOnnxRuntimeDebug() {
-    if (typeof localStorage === undefined) return;
-    if (localStorage.getItem('ORT_DEBUG') !== '1') return;
+  // async enableOnnxRuntimeDebug() {
+  //   if (typeof localStorage === undefined) return;
+  //   if (localStorage.getItem('ORT_DEBUG') !== '1') return;
 
-    try {
-      const ort = await import('onnxruntime-web');
+  //   try {
+  //     const ort = await import('onnxruntime-web');
 
-      ort.env.debug = true;
-      ort.env.logLevel = 'verbose';
+  //     ort.env.debug = true;
+  //     ort.env.logLevel = 'verbose';
 
-      // ort.env.wasm.wasmPaths = {
-      //   'ort-wasm-simd-threaded.wasm': '/ort-wasm-simd-threaded.wasm',
-      //   'ort-wasm-simd.wasm': '/ort-wasm-simd.wasm',
-      //   'ort-wasm.wasm': '/ort-wasm.wasm',
-      //   'ort-wasm-threaded.wasm': '/ort-wasm-threaded.wasm',
-      // };
-    } catch (e: any) {
-      this.logger.error(`Failed to set ORT base paths: ${e.message}`);
-    }
-  }
+  //     // ort.env.wasm.wasmPaths = {
+  //     //   'ort-wasm-simd-threaded.wasm': '/ort-wasm-simd-threaded.wasm',
+  //     //   'ort-wasm-simd.wasm': '/ort-wasm-simd.wasm',
+  //     //   'ort-wasm.wasm': '/ort-wasm.wasm',
+  //     //   'ort-wasm-threaded.wasm': '/ort-wasm-threaded.wasm',
+  //     // };
+  //   } catch (e: any) {
+  //     this.logger.error(`Failed to set ORT base paths: ${e.message}`);
+  //   }
+  // }
 
   async startVAD(stream?: MediaStream) {
-    await this.enableOnnxRuntimeDebug();
+    // await this.enableOnnxRuntimeDebug();
 
     try {
       this.logger.debug(`Loading VAD`);
@@ -169,6 +171,38 @@ export class AudioDetection extends EventEmitter2 {
         preSpeechPadFrames: 5,
         stream,
         workletURL: '/vad.worklet.bundle.min.js',
+        modelURL: '/silero_vad.onnx',
+        modelFetcher: async (path: string) => {
+          this.logger.log(`Loading model ${path}`);
+          const res = await axios.get(path, {
+            responseType: 'arraybuffer',
+          });
+          return res.data;
+        },
+        ortConfig: (ort: ONNXRuntimeAPI) => {
+          // console.log(ort);
+
+          // ort.env.debug = true;
+          // ort.env.logLevel = 'verbose';
+          // ort.env.proxy = true;
+          // ort.env.trace = true;
+
+          // ort.env.wasm.wasmPaths = {
+          //   'ort-wasm-simd-threaded.wasm': '/ort-wasm-simd-threaded.wasm',
+          //   'ort-wasm-simd.wasm': '/ort-wasm-simd.wasm',
+          //   'ort-wasm.wasm': '/ort-wasm.wasm',
+          //   'ort-wasm-threaded.wasm': '/ort-wasm-threaded.wasm',
+          // };
+
+          // ort.env.wasm.wasmPaths = '/';
+          // 'https://cdn.jsdelivr.net/npm/onnxruntime-web@dev/dist/';
+
+          ort.env.wasm.wasmPaths =
+            'https://unpkg.com/onnxruntime-web@dev/dist/';
+
+          return ort;
+        },
+
         onSpeechEnd: (audio: Float32Array) => {
           onSpeech('stopped', audio);
         },
