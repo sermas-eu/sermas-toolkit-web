@@ -1,5 +1,8 @@
 import type { AudioClassifier } from '@mediapipe/tasks-audio';
-import { ONNXRuntimeAPI } from '@ricky0123/vad-web/dist/_common/models.js';
+import {
+  ONNXRuntimeAPI,
+  SpeechProbabilities,
+} from '@ricky0123/vad-web/dist/_common/models.js';
 import type { MicVAD } from '@ricky0123/vad-web/dist/real-time-vad';
 import axios from 'axios';
 import EventEmitter2 from 'eventemitter2';
@@ -90,24 +93,30 @@ export class AudioDetection extends EventEmitter2 {
     }
 
     if (!this.hasMediaSupport()) {
+      this.logger.warn(`missing media support`);
       return false;
     }
 
     // sample rate from
     try {
       await this.startClassifier();
+      this.logger.debug(`Started audio classifier`);
     } catch (e: any) {
       this.logger.warn(`Failed to start classifier: ${e.stack}`);
     }
 
     if (!stream) {
+      this.logger.debug(`Create microphone stream`);
       stream = await this.createMicrophoneStream();
     }
 
     const ok = await this.startVAD(stream);
     if (!ok) {
       this.logger.warn(`Failed to start VAD module`);
+    } else {
+      this.logger.debug(`VAD module loaded`);
     }
+
     // start media recorder to detect audio classes
     // if (this.vad) {
     //     await this.startMediaRecorder(this.vad.audioContext.createMediaStreamDestination().stream)
@@ -115,27 +124,6 @@ export class AudioDetection extends EventEmitter2 {
 
     return ok;
   }
-
-  // async enableOnnxRuntimeDebug() {
-  //   if (typeof localStorage === undefined) return;
-  //   if (localStorage.getItem('ORT_DEBUG') !== '1') return;
-
-  //   try {
-  //     const ort = await import('onnxruntime-web');
-
-  //     ort.env.debug = true;
-  //     ort.env.logLevel = 'verbose';
-
-  //     // ort.env.wasm.wasmPaths = {
-  //     //   'ort-wasm-simd-threaded.wasm': '/ort-wasm-simd-threaded.wasm',
-  //     //   'ort-wasm-simd.wasm': '/ort-wasm-simd.wasm',
-  //     //   'ort-wasm.wasm': '/ort-wasm.wasm',
-  //     //   'ort-wasm-threaded.wasm': '/ort-wasm-threaded.wasm',
-  //     // };
-  //   } catch (e: any) {
-  //     this.logger.error(`Failed to set ORT base paths: ${e.message}`);
-  //   }
-  // }
 
   async startVAD(stream?: MediaStream) {
     // await this.enableOnnxRuntimeDebug();
@@ -165,10 +153,12 @@ export class AudioDetection extends EventEmitter2 {
         await this.speechDetected(ev);
       };
 
+      const positiveSpeechThreshold = 0.8;
+
       this.vad = await vadModule.MicVAD.new({
-        positiveSpeechThreshold: 0.7,
-        minSpeechFrames: 3,
-        preSpeechPadFrames: 5,
+        positiveSpeechThreshold,
+        minSpeechFrames: 5,
+        preSpeechPadFrames: 10,
         stream,
         workletURL: '/vad.worklet.bundle.min.js',
         modelURL: '/silero_vad.onnx',
@@ -180,28 +170,9 @@ export class AudioDetection extends EventEmitter2 {
           return res.data;
         },
         ortConfig: (ort: ONNXRuntimeAPI) => {
-          // console.log(ort);
-
-          // ort.env.debug = true;
-          // ort.env.logLevel = 'verbose';
-          // ort.env.proxy = true;
-          // ort.env.trace = true;
-
-          // ort.env.wasm.wasmPaths = {
-          //   'ort-wasm-simd-threaded.wasm': '/ort-wasm-simd-threaded.wasm',
-          //   'ort-wasm-simd.wasm': '/ort-wasm-simd.wasm',
-          //   'ort-wasm.wasm': '/ort-wasm.wasm',
-          //   'ort-wasm-threaded.wasm': '/ort-wasm-threaded.wasm',
-          // };
-
-          // ort.env.wasm.wasmPaths = '/';
-          // 'https://cdn.jsdelivr.net/npm/onnxruntime-web@dev/dist/';
-
           // ort.env.wasm.wasmPaths =
           //   'https://unpkg.com/onnxruntime-web@dev/dist/';
-
           ort.env.wasm.wasmPaths = '/';
-
           return ort;
         },
 
@@ -211,6 +182,13 @@ export class AudioDetection extends EventEmitter2 {
         onSpeechStart: () => {
           onSpeech('started');
         },
+        onFrameProcessed: (probs: SpeechProbabilities) => {
+          // console.warn('FRAME PROCESSED', probs);
+          this.emit('speaking', probs.isSpeech > positiveSpeechThreshold);
+        },
+        // onVADMisfire: () => {
+        // console.warn('MISFIRE');
+        // },
       });
 
       this.stream = stream ? stream : this.vad.options.stream;
