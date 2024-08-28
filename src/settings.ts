@@ -15,6 +15,7 @@ export const llmDefaults = () => ({
 
 export class Settings {
   private settings: AppSettings;
+  private appId: string;
 
   private readonly defaults: AppSettings = {
     login: false,
@@ -77,15 +78,16 @@ export class Settings {
       background: settings.background,
       interactionStart: settings.interactionStart,
       virtualKeyboardEnabled: settings.virtualKeyboardEnabled,
+      language: settings.language,
     };
 
-    localStorage.setItem(`sermas.settings`, JSON.stringify(cfg));
+    localStorage.setItem(`sermas.settings.${this.appId}`, JSON.stringify(cfg));
   }
 
   private loadLocalStorage(): Partial<AppSettings> | false | undefined {
     if (typeof localStorage === 'undefined') return undefined;
     try {
-      const raw = localStorage.getItem(`sermas.settings`);
+      const raw = localStorage.getItem(`sermas.settings.${this.appId}`);
       if (!raw) return false;
       const json = JSON.parse(raw) as Partial<AppSettings>;
       // todo: fix to update localStorage, remove after 09/2024
@@ -100,11 +102,10 @@ export class Settings {
     }
   }
 
-  init() {
+  init(appId: string) {
+    this.appId = appId;
     const storage = this.loadLocalStorage();
-    if (storage === false) {
-      this.saveLocalStorage(this.settings);
-    } else {
+    if (storage) {
       this.settings = { ...this.settings, ...(storage || {}) };
     }
   }
@@ -134,5 +135,9 @@ export class Settings {
     this.settings.llm = this.settings.llm || llmDefaults();
 
     return this.settings;
+  }
+
+  hasSavedSettings() {
+    return !!this.loadLocalStorage();
   }
 }

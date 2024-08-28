@@ -137,7 +137,7 @@ export class SermasToolkit {
 
     const apiUrl = `${baseUrl}/api`;
 
-    this.settings.init();
+    this.settings.init(appId);
 
     this.api = new ApiClient({
       url: apiUrl,
@@ -295,7 +295,14 @@ export class SermasToolkit {
 
     this.api.setAppId(app?.appId);
     this.broker.setAppId(app?.appId);
-    this.settings.save({ ...this.settings.get(), ...(app.settings || {}) });
+    const lsSettings = this.settings.hasSavedSettings();
+    const appSettings = app.settings || {};
+    const loadedSettings = this.settings.get();
+    if (lsSettings) {
+      this.settings.save({ ...appSettings, ...loadedSettings });
+    } else {
+      this.settings.save({ ...loadedSettings, ...appSettings });
+    }
   }
 
   onAvatarSpeechStop() {
