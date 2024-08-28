@@ -58,7 +58,7 @@
     "eventemitter2": "^6.4.9",
     "keycloak-js": "^22.0.5",
     "mqtt": "^5.3.4",
-    "onnxruntime-web": "^1.14.0",
+    "onnxruntime-web": "^1.18.0",
     "three": "^0.158.0",
     "ulidx": "^2.3.0",
     "uuid": "^9.0.1"

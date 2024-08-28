@@ -197,8 +197,10 @@ export class AudioDetection extends EventEmitter2 {
           // ort.env.wasm.wasmPaths = '/';
           // 'https://cdn.jsdelivr.net/npm/onnxruntime-web@dev/dist/';
 
-          ort.env.wasm.wasmPaths =
-            'https://unpkg.com/onnxruntime-web@dev/dist/';
+          // ort.env.wasm.wasmPaths =
+          //   'https://unpkg.com/onnxruntime-web@dev/dist/';
+
+          ort.env.wasm.wasmPaths = '/';
 
           return ort;
         },
