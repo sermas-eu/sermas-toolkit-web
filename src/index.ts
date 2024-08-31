@@ -545,6 +545,7 @@ export class SermasToolkit {
       text: 'Goodbye, have a good day!',
       language: 'en-GB',
       emotion: 'neutral',
+      ttsEnabled: this.settings.get().ttsEnabled,
     });
     this.api.saveRecord({
       appId: this.getAppId(),

@@ -56,6 +56,7 @@ export class Settings {
       background: this.settings.background,
       language: this.settings.language,
       llm: this.settings.llm,
+      ttsEnabled: this.settings.enableAudio,
     };
     return appSettingsDto;
   }
@@ -95,6 +96,10 @@ export class Settings {
         json.llm = llmDefaults();
       }
       // /fix
+
+      // align tts settings, propagated to backend
+      json.ttsEnabled = json.enableAudio;
+
       return json;
     } catch (e: any) {
       logger.error(`Failed loading local storage: ${e.message}`);

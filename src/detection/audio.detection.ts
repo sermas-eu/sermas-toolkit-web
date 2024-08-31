@@ -414,6 +414,9 @@ export class AudioDetection extends EventEmitter2 {
       formData.append(key, ev[key]);
     }
 
+    const settings = this.toolkit.getSettings().get();
+    formData.append('ttsEnabled', settings.ttsEnabled ? 'true' : 'false');
+
     try {
       await this.toolkit.getApi().sendAudio(formData, {
         sampleRate,
