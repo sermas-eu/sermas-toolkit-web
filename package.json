@@ -1,6 +1,6 @@
 {
   "name": "@sermas/toolkit",
-  "version": "1.0.0-alpha.128",
+  "version": "1.0.0-alpha.129",
   "description": "Sermas Toolkit Web",
   "type": "module",
   "main": "index.js",
