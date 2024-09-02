@@ -13,6 +13,7 @@ export class AppSettings implements AppSettingsDto {
   enableMic: boolean;
   enableAudio: boolean;
   enableVideoDetection: boolean;
+  chatModeEnabled?: boolean | undefined;
   animation: string;
   animationList: string[];
   showVideo: boolean;
