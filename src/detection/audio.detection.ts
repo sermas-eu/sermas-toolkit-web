@@ -3,7 +3,10 @@ import {
   ONNXRuntimeAPI,
   SpeechProbabilities,
 } from '@ricky0123/vad-web/dist/_common/models.js';
-import type { MicVAD } from '@ricky0123/vad-web/dist/real-time-vad';
+import type {
+  MicVAD,
+  RealTimeVADOptions,
+} from '@ricky0123/vad-web/dist/real-time-vad';
 import axios from 'axios';
 import EventEmitter2 from 'eventemitter2';
 import { emitter } from '../events.js';
@@ -37,6 +40,7 @@ export class AudioDetection extends EventEmitter2 {
   private vad?: MicVAD;
   private classifier?: AudioClassifier;
   private mediaRecorder?: MediaRecorder;
+  private vadParams: Record<string, any> = {};
 
   constructor(private readonly toolkit?: SermasToolkit) {
     super();
@@ -64,6 +68,14 @@ export class AudioDetection extends EventEmitter2 {
     this.emit('stopped');
     this.removeAllListeners();
     this.logger.log('Audio detection stopped');
+  }
+
+  setVADParams(params: Record<string, any> = {}) {
+    this.vadParams = params;
+  }
+
+  getVADConfig(): RealTimeVADOptions | undefined {
+    return this.vad?.options;
   }
 
   getSampleRate(): number | undefined {
@@ -153,12 +165,15 @@ export class AudioDetection extends EventEmitter2 {
         await this.speechDetected(ev);
       };
 
-      const positiveSpeechThreshold = 0.8;
+      const vadDefaultParams = {
+        positiveSpeechThreshold: 0.8,
+        minSpeechFrames: 2,
+        preSpeechPadFrames: 13,
+      };
+      const params = Object.assign({}, vadDefaultParams, this.vadParams);
 
       this.vad = await vadModule.MicVAD.new({
-        positiveSpeechThreshold,
-        minSpeechFrames: 5,
-        preSpeechPadFrames: 10,
+        ...params,
         stream,
         workletURL: '/vad.worklet.bundle.min.js',
         modelURL: '/silero_vad.onnx',
@@ -184,7 +199,10 @@ export class AudioDetection extends EventEmitter2 {
         },
         onFrameProcessed: (probs: SpeechProbabilities) => {
           // console.warn('FRAME PROCESSED', probs);
-          this.emit('speaking', probs.isSpeech > positiveSpeechThreshold);
+          this.emit(
+            'speaking',
+            probs.isSpeech > params.positiveSpeechThreshold,
+          );
         },
         // onVADMisfire: () => {
         // console.warn('MISFIRE');
