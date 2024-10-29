@@ -131,10 +131,15 @@ export class UI {
     this.emitter.emit('ui.dialogue.history', this.history);
   }
 
+  async clear() {
+    this.stopAvatarSpeech(getChunkId());
+    this.clearHistory();
+  }
+
   async handleCleanScreen(ev: UIContentDto) {
     if (ev.options && ev.options.stopSpeech) {
       this.logger.debug(`Stop avatar speech`);
-      this.emitter.emit(`avatar.speech.stop`, ev.chunkId || getChunkId());
+      this.stopAvatarSpeech(ev.chunkId || getChunkId());
     }
 
     if (
@@ -203,7 +208,12 @@ export class UI {
       return;
     }
 
-    // console.warn('[add message]', ev.content?.text);
+    // console.log(
+    //   '--- [add message]',
+    //   ev.messageId,
+    //   ev.chunkId,
+    //   ev.content?.text,
+    // );
 
     const filtered = lastItem.messages.filter((m) => m.messageId === messageId);
 
@@ -257,8 +267,8 @@ export class UI {
     } as UiButtonSession);
   }
 
-  async stopAvatarSpeech() {
-    this.emitter.emit('avatar.speech.stop');
+  async stopAvatarSpeech(chunkId?: string) {
+    this.emitter.emit('avatar.speech.stop', chunkId);
   }
 
   onSessionChanged(ev: SessionChangedDto) {

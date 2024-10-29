@@ -2,7 +2,7 @@ import type { AudioClassifier } from '@mediapipe/tasks-audio';
 import {
   ONNXRuntimeAPI,
   SpeechProbabilities,
-} from '@ricky0123/vad-web/dist/_common/models.js';
+} from '@ricky0123/vad-web/dist/models.js';
 import type {
   MicVAD,
   RealTimeVADOptions,
@@ -172,6 +172,8 @@ export class AudioDetection extends EventEmitter2 {
       };
       const params = Object.assign({}, vadDefaultParams, this.vadParams);
 
+      let speechLength: number | null = null;
+
       this.vad = await vadModule.MicVAD.new({
         ...params,
         stream,
@@ -192,16 +194,21 @@ export class AudioDetection extends EventEmitter2 {
         },
 
         onSpeechEnd: (audio: Float32Array) => {
+          speechLength = null;
           onSpeech('stopped', audio);
         },
         onSpeechStart: () => {
+          speechLength = Date.now();
           onSpeech('started');
         },
         onFrameProcessed: (probs: SpeechProbabilities) => {
           // console.warn('FRAME PROCESSED', probs);
+          if (speechLength === null) return;
+
           this.emit(
             'speaking',
             probs.isSpeech > params.positiveSpeechThreshold,
+            Date.now() - speechLength,
           );
         },
         // onVADMisfire: () => {
