@@ -70,7 +70,7 @@ export class WebAvatarHandler {
     this.lipsync?.stopAudio();
   }
 
-  startSpeech(chunkId?: string) {
+  startSpeech(chunkId: string) {
     logger.debug('playing speech started');
 
     const ev: AvatarAudioPlaybackStatus = { status: 'started', chunkId };
@@ -203,7 +203,8 @@ export class WebAvatarHandler {
       .splice(0, 1)[0];
 
     logger.debug(`play queued speech chunkId=${raw.chunkId}`);
-    this.lipsync?.startFromAudioFile(raw.buffer as Uint8Array);
+
+    this.lipsync?.startFromAudioFile(raw.buffer as Uint8Array, raw.chunkId);
 
     this.processedQueue++;
     if (this.processedQueueTimer) clearTimeout(this.processedQueueTimer);
@@ -257,8 +258,8 @@ export class WebAvatarHandler {
       this.avatar.getBlendShapes()?.setViseme(ev.key);
     });
 
-    this.lipsync.on('start', () => {
-      this.startSpeech();
+    this.lipsync.on('start', (chunkId: string) => {
+      this.startSpeech(chunkId);
       speechStopped = false;
     });
 

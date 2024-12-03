@@ -80,6 +80,7 @@ export class Settings {
       interactionStart: settings.interactionStart,
       virtualKeyboardEnabled: settings.virtualKeyboardEnabled,
       language: settings.language,
+      subtitlesEnabled: settings.subtitlesEnabled,
     };
 
     localStorage.setItem(`sermas.settings.${this.appId}`, JSON.stringify(cfg));

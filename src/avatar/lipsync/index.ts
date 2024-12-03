@@ -40,7 +40,7 @@ export class LipSync extends EventEmitter2 {
     if (this.source?.onended) this.source?.onended({} as Event);
   }
 
-  async startFromAudioFile(raw: Uint8Array) {
+  async startFromAudioFile(raw: Uint8Array, chunkId: string) {
     if (!this.audioEnabled) return;
 
     const rawBuffer: ArrayBuffer = raw.buffer.slice(
@@ -73,7 +73,8 @@ export class LipSync extends EventEmitter2 {
     this.source.start();
 
     this.paused = false;
-    this.emit('start');
+
+    this.emit('start', chunkId);
   }
 
   async destroy() {
