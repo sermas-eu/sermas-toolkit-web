@@ -233,7 +233,7 @@ export class UI {
 
     const chunks: DialogueMessageUIContentDto[] = (message.metadata?.chunks
       ? message.metadata?.chunks
-      : []) as unknown as DialogueMessageUIContentDto[];
+      : []) as unknown[] as DialogueMessageUIContentDto[];
 
     chunks.push(deepCopy(ev) as DialogueMessageUIContentDto);
 
