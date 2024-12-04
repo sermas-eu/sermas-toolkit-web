@@ -43,6 +43,7 @@ export class Settings {
     qrcode: true,
     interactionStart: 'on-load',
     virtualKeyboardEnabled: false,
+    subtitlesEnabled: true,
   };
 
   constructor() {
