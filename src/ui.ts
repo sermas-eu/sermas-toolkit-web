@@ -38,7 +38,7 @@ export class UI {
     if (this.initialized) await this.destroy();
     this.initialized = true;
 
-    this.emitter.on('dialogue.messages', this.onChatMessage);
+    this.emitter.on('dialogue.messages', this.onChatMessage); // arrivo messaggi dal be
     this.emitter.on('session.session', this.onSessionChanged);
     this.emitter.on('avatar.speech', this.onPlaybackChanged);
     this.emitter.on('ui.content', this.onUIContent);
@@ -231,9 +231,9 @@ export class UI {
       lastItem.messages.push(message);
     }
 
-    const chunks: DialogueMessageUIContentDto[] = (
-      message.metadata?.chunks ? message.metadata?.chunks : []
-    ) as DialogueMessageUIContentDto[];
+    const chunks: DialogueMessageUIContentDto[] = (message.metadata?.chunks
+      ? message.metadata?.chunks
+      : []) as unknown as DialogueMessageUIContentDto[];
 
     chunks.push(deepCopy(ev) as DialogueMessageUIContentDto);
 
