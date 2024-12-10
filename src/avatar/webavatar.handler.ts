@@ -153,7 +153,7 @@ export class WebAvatarHandler {
   onSpeech(ev: unknown, raw: MqttMessageEvent) {
     if (!this.lipsync) return;
 
-    const buffer = raw.message.payload as Uint8Array;
+    const buffer = raw.message.payload as any as Uint8Array;
 
     const [, chunkId] = raw.context;
 

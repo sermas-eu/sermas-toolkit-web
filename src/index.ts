@@ -306,8 +306,8 @@ export class SermasToolkit {
   }
 
   onAvatarSpeechStop() {
-    this.logger.log(`Stop avatar generation`);
-    this.getApi().sendForceStop();
+    // this.logger.log(`Stop avatar generation`);
+    // this.getApi().sendForceStop();
   }
 
   async onSessionChanged(ev: SessionChangedDto) {
