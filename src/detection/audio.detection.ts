@@ -168,7 +168,7 @@ export class AudioDetection extends EventEmitter2 {
       };
 
       const vadDefaultParams = {
-        positiveSpeechThreshold: 0.9,
+        positiveSpeechThreshold: 0.85,
         minSpeechFrames: 2,
         preSpeechPadFrames: 13,
       };

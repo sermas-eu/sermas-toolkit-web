@@ -120,6 +120,10 @@ export class AvatarModel {
     return this.background;
   }
 
+  getHandler() {
+    return this.handler;
+  }
+
   setMirrorModeEnabled(enabled: boolean) {
     this.animation?.setMirrorModeEnabled(enabled);
   }

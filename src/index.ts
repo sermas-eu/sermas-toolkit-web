@@ -189,6 +189,10 @@ export class SermasToolkit {
     return this.avatar;
   }
 
+  getAvatar() {
+    return this.avatar || null;
+  }
+
   getUI() {
     if (!this.ui) {
       this.ui = new UI(this);
@@ -334,7 +338,7 @@ export class SermasToolkit {
 
   async closeSession() {
     this.ui.clearHistory();
-    this.emit('avatar.speech.stop');
+    this.ui.stopAvatarSpeech();
     await this.api.closeSession();
   }
 

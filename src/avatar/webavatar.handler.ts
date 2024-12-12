@@ -79,8 +79,16 @@ export class WebAvatarHandler {
     this.avatar.getAnimation()?.playGestureTalking();
   }
 
+  async pauseSpeech() {
+    await this.lipsync?.pause();
+  }
+
+  async resumeSpeech() {
+    await this.lipsync?.resume();
+  }
+
   stopSpeech(chunkId?: string) {
-    logger.debug('playing speech ended');
+    logger.debug('playing speech stopped');
 
     const ev: AvatarAudioPlaybackStatus = { status: 'ended', chunkId };
     emitter.emit('avatar.speech', ev);
@@ -162,8 +170,8 @@ export class WebAvatarHandler {
     // already playing, add to queue
     this.audioQueue.push({ chunkId, buffer });
 
-    if (!this.lipsync?.paused) {
-      logger.debug(`lypsync is paused`);
+    if (this.lipsync?.playing) {
+      logger.debug(`lypsync is playing`);
       return;
     }
 
