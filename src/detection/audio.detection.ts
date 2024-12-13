@@ -154,19 +154,21 @@ export class AudioDetection extends EventEmitter2 {
 
         if (!audio) return;
         const isSpeech = await this.classify(audio);
-        if (!isSpeech) {
-          this.logger.debug(`Audio does not classify as speech`);
-          return;
+
+        this.logger.debug(`Audio ${isSpeech ? ' ' : 'NOT '}classify as speech`);
+        emitter.emit('detection.speech', { speech: isSpeech });
+
+        if (isSpeech) {
+          this.logger.debug(`Speech detected`);
+          const wav = vadModule.utils.encodeWAV(audio);
+          const ev = { op, audio, wav };
+          this.emit('speech', ev);
+          await this.speechDetected(ev);
         }
-        this.logger.debug(`Speech detected`);
-        const wav = vadModule.utils.encodeWAV(audio);
-        const ev = { op, audio, wav };
-        this.emit('speech', ev);
-        await this.speechDetected(ev);
       };
 
       const vadDefaultParams = {
-        positiveSpeechThreshold: 0.8,
+        positiveSpeechThreshold: 0.85,
         minSpeechFrames: 2,
         preSpeechPadFrames: 13,
       };

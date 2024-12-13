@@ -7,7 +7,9 @@ const logger = new Logger('webavatar.lipsync');
 
 export class LipSync extends EventEmitter2 {
   private audioEnabled = true;
-  public paused = true;
+
+  public speaking = false;
+  public paused = false;
   private stopped = false;
 
   private lastVowelIndex: number = 0;
@@ -23,7 +25,7 @@ export class LipSync extends EventEmitter2 {
     super();
 
     const update = (deltaTime = 0) => {
-      this.updateExpression(deltaTime);
+      if (!this.paused) this.updateExpression(deltaTime);
       if (!this.stopped) requestAnimationFrame(update);
     };
 
@@ -36,8 +38,26 @@ export class LipSync extends EventEmitter2 {
   }
 
   async stopAudio() {
+    this.paused = false;
+    this.speaking = false;
+
     this.source?.stop();
     if (this.source?.onended) this.source?.onended({} as Event);
+  }
+
+  async pause() {
+    if (!this.audioContext) return;
+    this.emit('viseme', neutral);
+    this.paused = true;
+    this.speaking = false;
+    await this.audioContext.suspend();
+  }
+
+  async resume() {
+    if (!this.audioContext) return;
+    this.paused = false;
+    this.speaking = true;
+    await this.audioContext.resume();
   }
 
   async startFromAudioFile(raw: Uint8Array, chunkId: string) {
@@ -65,7 +85,8 @@ export class LipSync extends EventEmitter2 {
     this.source.connect(this.audioContext.destination);
 
     this.source.onended = () => {
-      this.paused = true;
+      this.paused = false;
+      this.speaking = false;
       this.emit('viseme', neutral);
       this.emit('end');
     };
@@ -73,6 +94,7 @@ export class LipSync extends EventEmitter2 {
     this.source.start();
 
     this.paused = false;
+    this.speaking = true;
 
     this.emit('start', chunkId);
   }

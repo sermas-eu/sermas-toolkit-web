@@ -189,6 +189,10 @@ export class SermasToolkit {
     return this.avatar;
   }
 
+  getAvatar() {
+    return this.avatar || null;
+  }
+
   getUI() {
     if (!this.ui) {
       this.ui = new UI(this);
@@ -306,8 +310,9 @@ export class SermasToolkit {
   }
 
   onAvatarSpeechStop() {
-    this.logger.log(`Stop avatar generation`);
-    this.getApi().sendForceStop();
+    // TODO: review this part to avoid looping between API call and broker message.
+    // this.logger.log(`Stop avatar generation`);
+    // this.getApi().sendForceStop();
   }
 
   async onSessionChanged(ev: SessionChangedDto) {
@@ -334,7 +339,7 @@ export class SermasToolkit {
 
   async closeSession() {
     this.ui.clearHistory();
-    this.emit('avatar.speech.stop');
+    this.ui.stopAvatarSpeech();
     await this.api.closeSession();
   }
 
