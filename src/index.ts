@@ -310,6 +310,7 @@ export class SermasToolkit {
   }
 
   onAvatarSpeechStop() {
+    // TODO: review this part to avoid looping between API call and broker message.
     // this.logger.log(`Stop avatar generation`);
     // this.getApi().sendForceStop();
   }
