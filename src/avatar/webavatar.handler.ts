@@ -170,8 +170,8 @@ export class WebAvatarHandler {
     // already playing, add to queue
     this.audioQueue.push({ chunkId, buffer });
 
-    if (this.lipsync?.playing) {
-      logger.debug(`lypsync is playing`);
+    if (this.lipsync?.speaking) {
+      logger.debug(`lypsync is speaking`);
       return;
     }
 

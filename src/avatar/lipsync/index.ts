@@ -8,7 +8,7 @@ const logger = new Logger('webavatar.lipsync');
 export class LipSync extends EventEmitter2 {
   private audioEnabled = true;
 
-  public playing = false;
+  public speaking = false;
   public paused = false;
   private stopped = false;
 
@@ -39,7 +39,7 @@ export class LipSync extends EventEmitter2 {
 
   async stopAudio() {
     this.paused = false;
-    this.playing = false;
+    this.speaking = false;
 
     this.source?.stop();
     if (this.source?.onended) this.source?.onended({} as Event);
@@ -49,14 +49,14 @@ export class LipSync extends EventEmitter2 {
     if (!this.audioContext) return;
     this.emit('viseme', neutral);
     this.paused = true;
-    this.playing = false;
+    this.speaking = false;
     await this.audioContext.suspend();
   }
 
   async resume() {
     if (!this.audioContext) return;
     this.paused = false;
-    this.playing = true;
+    this.speaking = true;
     await this.audioContext.resume();
   }
 
@@ -86,7 +86,7 @@ export class LipSync extends EventEmitter2 {
 
     this.source.onended = () => {
       this.paused = false;
-      this.playing = false;
+      this.speaking = false;
       this.emit('viseme', neutral);
       this.emit('end');
     };
@@ -94,7 +94,7 @@ export class LipSync extends EventEmitter2 {
     this.source.start();
 
     this.paused = false;
-    this.playing = true;
+    this.speaking = true;
 
     this.emit('start', chunkId);
   }
