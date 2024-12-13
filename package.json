@@ -46,7 +46,7 @@
     "@mediapipe/drawing_utils": "^0.3.1675466124",
     "@mediapipe/holistic": "^0.5.1675471629",
     "@mediapipe/tasks-audio": "^0.10.7",
-    "@mediapipe/tasks-vision": "^0.10.7",
+    "@mediapipe/tasks-vision": "^0.10.19",
     "@ricky0123/vad-web": "^0.0.19",
     "@sermas/api-client": "^1.0.0-alpha.136",
     "@tensorflow-models/pose-detection": "^2.1.3",
