@@ -1,5 +1,5 @@
 import { FilesetResolver } from '@mediapipe/tasks-audio';
-import { DrawingUtils, FaceLandmarker } from '@mediapipe/tasks-vision';
+import { type DrawingUtils, FaceLandmarker } from '@mediapipe/tasks-vision';
 import { BaseDetector } from '../../../base.detector.js';
 import { VideoDetectorType } from '../../../video.dto.js';
 import {
@@ -35,7 +35,10 @@ export class FaceLandmarkDetector extends BaseDetector<
 
     if (!this.drawingUtils) {
       this.loading = true;
-      this.drawingUtils = new DrawingUtils(canvasCtx);
+
+      const m = await import('@mediapipe/tasks-vision');
+      this.drawingUtils = new m.DrawingUtils(canvasCtx);
+
       this.loading = false;
     }
 
