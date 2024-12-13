@@ -33,5 +33,5 @@ export class AppSettings implements AppSettingsDto {
   theme?: Record<string, any>;
   virtualKeyboardEnabled?: boolean;
   ttsEnabled?: boolean | undefined;
-  subtitlesEnabled?: boolean;
+  subtitlesEnabled: boolean;
 }
