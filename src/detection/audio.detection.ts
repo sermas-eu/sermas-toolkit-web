@@ -8,19 +8,23 @@ import type {
   RealTimeVADOptions,
 } from '@ricky0123/vad-web/dist/real-time-vad';
 import axios from 'axios';
+import { Buffer } from 'buffer';
 import EventEmitter2 from 'eventemitter2';
 import { emitter } from '../events.js';
 import {
   AUDIO_CLASSIFICATION_TOPIC,
   AudioClassificationEventDto,
-  DialogueMessageDto,
+  DialogueSpeechToTextDto,
   SermasToolkit,
+  USER_SPEECH_TOPIC,
 } from '../index.js';
 import { Logger } from '../logger.js';
 import { getChunkId } from '../utils.js';
 import { AudioClassificationValue } from './audio/audio.detection.dto.js';
 import { createAudioClassifier } from './audio/mediapipe/audio.classifier.js';
 import classes from './audio/mediapipe/classes.json' assert { type: 'json' };
+
+const TMP_USE_BROKER = true;
 
 const VAD_SAMPLE_RATE = 16000;
 const SPEECH_CLASSIFIER_THRESHOLD = 0.5;
@@ -395,6 +399,23 @@ export class AudioDetection extends EventEmitter2 {
     }
   }
 
+  publishSpeechAudio(audio: Uint32Array | ArrayBuffer) {
+    if (!this.toolkit) return;
+
+    const chunkId = getChunkId();
+    const sessionId = this.toolkit.getSessionId();
+
+    this.logger.log(`Publishing user speech chunk`);
+
+    this.toolkit
+      .getBroker()
+      .publish(
+        `${USER_SPEECH_TOPIC}/${sessionId}/${chunkId}`,
+        Buffer.from(audio),
+        false,
+      );
+  }
+
   async sendSpeechAudio(
     type: 'wav' | 'raw',
     audio: Uint32Array | ArrayBuffer,
@@ -414,12 +435,17 @@ export class AudioDetection extends EventEmitter2 {
       return;
     }
 
+    if (TMP_USE_BROKER) {
+      this.publishSpeechAudio(audio);
+      return;
+    }
+
     this.pause();
 
     this.logger.log(`Sending speech chunk type=${type}`);
 
     const chunkId = getChunkId();
-    const ev: DialogueMessageDto = {
+    const ev: DialogueSpeechToTextDto = {
       appId: this.toolkit.getAppId(),
       gender: await this.toolkit.getAvatarGender(),
       avatar: (await this.toolkit.getAvatarConfig())?.id,

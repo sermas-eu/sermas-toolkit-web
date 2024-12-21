@@ -9,6 +9,7 @@ export const XRMARKER_DETECTION = 'xr/marker/detected';
 export const QR_DETECTION = 'detection/qr_code';
 export const USER_CHARACTERIZATION_TOPIC = 'detection/characterization';
 export const AUDIO_CLASSIFICATION_TOPIC = 'detection/audio';
+export const USER_SPEECH_TOPIC = 'dialogue/user-speech';
 export const UI_INTERACTION_TOPIC = 'ui/interaction';
 
 export const DefaultModel: RepositoryAvatarDto = {
