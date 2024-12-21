@@ -40,16 +40,20 @@ export class WebAvatarHandler {
   private isPlaying = false;
 
   // register callbacks to init/destroy. Bind `this` as function context
-  callbacks: Record<string, ListenerFn> = {
-    'detection.characterization': this.onDetection,
-    'dialogue.speech': this.onSpeech,
-    'dialogue.messages': this.onDialogueMessage,
-    'session.session': this.onSession,
-    'avatar.face': this.setFace,
-    'avatar.speech.stop': this.onForceStop,
-    'dialogue.stop': this.onForceStop,
-    'detection.pose': this.setPose,
-    'detection.audio': this.setListening,
+  callbacks: Record<'broker' | 'emitter', Record<string, ListenerFn>> = {
+    broker: {
+      'dialogue.messages': this.onDialogueMessage,
+      'session.session': this.onSession,
+      'dialogue.speech': this.onSpeech,
+    },
+    emitter: {
+      'detection.characterization': this.onDetection,
+      'avatar.face': this.setFace,
+      'avatar.speech.stop': this.onForceStop,
+      'dialogue.stop': this.onForceStop,
+      'detection.pose': this.setPose,
+      'detection.audio': this.setListening,
+    },
   };
 
   constructor(private readonly avatar: AvatarModel) {
@@ -299,12 +303,40 @@ export class WebAvatarHandler {
     // }
   }
 
-  async init() {
-    Object.keys(this.callbacks).forEach((key) => {
-      this.callbacks[key] = this.callbacks[key].bind(this);
-      emitter.on(key, this.callbacks[key]);
+  registerCallbacks() {
+    Object.keys(this.callbacks).forEach((src) => {
+      Object.keys(this.callbacks[src]).forEach((key) => {
+        this.callbacks[src][key] = this.callbacks[src][key].bind(this);
+        if (src === 'emitter') {
+          emitter.on(key, this.callbacks[src][key]);
+        } else {
+          this.avatar
+            .getToolkit()
+            ?.getBroker()
+            ?.on(key, this.callbacks[src][key]);
+        }
+      });
     });
+  }
 
+  unregisterCallbacks() {
+    Object.keys(this.callbacks).forEach((src) => {
+      Object.keys(this.callbacks[src]).forEach((key) => {
+        this.callbacks[src][key] = this.callbacks[src][key].bind(this);
+        if (src === 'emitter') {
+          emitter.off(key, this.callbacks[src][key]);
+        } else {
+          this.avatar
+            .getToolkit()
+            ?.getBroker()
+            ?.off(key, this.callbacks[src][key]);
+        }
+      });
+    });
+  }
+
+  async init() {
+    this.registerCallbacks();
     await this.startLipsync();
 
     this.avatar.getAnimation()?.playGestureIdle();

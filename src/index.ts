@@ -373,13 +373,14 @@ export class SermasToolkit {
   async destroy() {
     await this.fpsMonitor.destroy();
 
+    this.getBroker().off('session.session', this.onSessionChanged);
+    this.getBroker().off('detection.interaction', this.onInteractionDetection);
+
     this.off('session', this.onSession);
     this.off('app', this.onApp);
     this.off('ui.button.session', this.onUiButtonSession);
     this.off('avatar.speech.stop', this.onAvatarSpeechStop);
-    this.off('session.session', this.onSessionChanged);
     this.off('user.changed', this.onUserChanged);
-    this.off('detection.interaction', this.onInteractionDetection);
 
     // clear all registered event listeners
     this.listeners.clear();
@@ -409,13 +410,14 @@ export class SermasToolkit {
     this.onInteractionDetection = this.onInteractionDetection.bind(this);
 
     // internal events handler
+    this.getBroker().on('session.session', this.onSessionChanged);
+    this.getBroker().on('detection.interaction', this.onInteractionDetection);
+
     this.on('session', this.onSession);
     this.on('app', this.onApp);
     this.on('ui.button.session', this.onUiButtonSession);
     this.on('avatar.speech.stop', this.onAvatarSpeechStop);
-    this.on('session.session', this.onSessionChanged);
     this.on('user.changed', this.onUserChanged);
-    this.on('detection.interaction', this.onInteractionDetection);
 
     this.logger.debug(`appId=${this.options.appId}`);
 
