@@ -24,7 +24,7 @@ import { AudioClassificationValue } from './audio/audio.detection.dto.js';
 import { createAudioClassifier } from './audio/mediapipe/audio.classifier.js';
 import classes from './audio/mediapipe/classes.json' assert { type: 'json' };
 
-const TMP_USE_BROKER = false;
+const SEND_AUDIO_ON_BROKER = true;
 
 const VAD_SAMPLE_RATE = 16000;
 const SPEECH_CLASSIFIER_THRESHOLD = 0.5;
@@ -435,7 +435,7 @@ export class AudioDetection extends EventEmitter2 {
       return;
     }
 
-    if (TMP_USE_BROKER) {
+    if (SEND_AUDIO_ON_BROKER) {
       this.publishSpeechAudio(audio);
       return;
     }
