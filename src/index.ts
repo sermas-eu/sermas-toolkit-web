@@ -299,9 +299,11 @@ export class SermasToolkit {
 
     this.api.setAppId(app?.appId);
     this.broker.setAppId(app?.appId);
+
     const lsSettings = this.settings.hasSavedSettings();
     const appSettings = app.settings || {};
     const loadedSettings = this.settings.get();
+
     if (lsSettings) {
       this.settings.save({ ...appSettings, ...loadedSettings });
     } else {
@@ -607,6 +609,7 @@ export class SermasToolkit {
     useDefaults = true,
   ): Promise<string | undefined> {
     let config = await this.getAssetConfig(type, id);
+
     if (!config) {
       this.logger.warn(`Asset config ${type} ${id} not found`);
       if (!useDefaults) return undefined;

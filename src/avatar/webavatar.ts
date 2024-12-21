@@ -410,6 +410,7 @@ export class AvatarModel {
         loader,
       );
     }
+    // console.warn('**************', this.config, url);
 
     // path is an URL
     if (url && url.startsWith('http') && url.indexOf('readyplayer') > -1) {
@@ -426,11 +427,17 @@ export class AvatarModel {
     }
 
     logger.log(`loading ${format} from ${url}`);
-    const model = await loader.loadAsync(
-      url,
-      (ev: ProgressEvent<EventTarget>) =>
+
+    let model;
+    try {
+      model = await loader.loadAsync(url, (ev: ProgressEvent<EventTarget>) =>
         this.showLoadingProgress(ev.loaded, ev.total),
-    );
+      );
+    } catch (e: any) {
+      logger.warn(`Error loading ${url}: ${e.message}`);
+      return new THREE.Group();
+    }
+
     // loading completed
     sendStatus('');
 

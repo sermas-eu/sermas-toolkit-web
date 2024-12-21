@@ -93,11 +93,6 @@ export class Settings {
       const raw = localStorage.getItem(`sermas.settings.${this.appId}`);
       if (!raw) return false;
       const json = JSON.parse(raw) as Partial<AppSettings>;
-      // todo: fix to update localStorage, remove after 09/2024
-      if (json.llm && typeof json.llm === 'string') {
-        json.llm = llmDefaults();
-      }
-      // /fix
 
       // align tts settings, propagated to backend
       json.ttsEnabled = json.enableAudio;

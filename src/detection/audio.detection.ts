@@ -24,7 +24,7 @@ import { AudioClassificationValue } from './audio/audio.detection.dto.js';
 import { createAudioClassifier } from './audio/mediapipe/audio.classifier.js';
 import classes from './audio/mediapipe/classes.json' assert { type: 'json' };
 
-const TMP_USE_BROKER = true;
+const TMP_USE_BROKER = false;
 
 const VAD_SAMPLE_RATE = 16000;
 const SPEECH_CLASSIFIER_THRESHOLD = 0.5;
