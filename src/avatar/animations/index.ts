@@ -22,6 +22,8 @@ export class WebavatarAnimation extends AnimationBase {
 
   private animations: Record<AnimationGroup, Record<string, AnimationHandler>>;
 
+  private currentAnimation: AnimationHandler;
+
   private mixer: Record<AnimationGroup, THREE.AnimationMixer> = {} as Record<
     AnimationGroup,
     THREE.AnimationMixer
@@ -280,12 +282,13 @@ export class WebavatarAnimation extends AnimationBase {
       );
   }
 
-  resetAction(action: THREE.AnimationAction) {
-    action
-      .reset()
-      .setLoop(THREE.LoopOnce, 1)
-      .setEffectiveWeight(1)
-      .setEffectiveTimeScale(1);
+  resetAction(action: THREE.AnimationAction, loop = false) {
+    action.reset().setEffectiveWeight(1).setEffectiveTimeScale(1);
+    if (loop) {
+      action.setLoop(THREE.LoopPingPong, Infinity);
+    } else {
+      action.setLoop(THREE.LoopOnce, 1);
+    }
     action.clampWhenFinished = true;
   }
 
@@ -295,7 +298,7 @@ export class WebavatarAnimation extends AnimationBase {
     const animationName = this.normalizeAnimationName(actionName);
     const label = this.getAnimationLabel(animationName);
 
-    // logger.debug(`finished animation ${label.group} ${label.name}`);
+    logger.debug(`finished animation ${label.group} ${label.name}`);
 
     if (label.group === 'gesture') {
       if (this.loopableGestures.indexOf(this.currentGesture) === -1) {
@@ -360,7 +363,7 @@ export class WebavatarAnimation extends AnimationBase {
     this.playGesture('gesture_listening');
   }
 
-  play(group: AnimationGroup, name: string, durationSec = 1) {
+  play(group: AnimationGroup, name: string) {
     if (!this.animationEnabled) {
       // logger.debug('Animation disabled');
       return;
@@ -377,39 +380,24 @@ export class WebavatarAnimation extends AnimationBase {
       return;
     }
 
-    // logger.log(`Play ${group} ${anim.name}`);
+    logger.log(`Play ${group} ${anim.name}`);
 
-    const animationRunning: AnimationHandler[] = [];
-    const animations = this.getAnimations(group);
-
-    // idle_1 => idle
-    const baseName = name.replace(/_[0-9]/, '');
-
-    animations.forEach((a) => {
-      if (a.name === name) return;
-
-      if (a.action.isRunning() || a.name.startsWith(baseName)) {
-        // logger.debug(`Current animation ${a.name}`);
-        animationRunning.push(a);
-        return;
-      }
-
-      // logger.debug(`Reset animation ${a.name}`);
-      this.resetAction(a.action);
-      a.action.stop();
-    });
-
-    this.resetAction(anim.action);
-    anim.action.play();
-
-    if (animationRunning.length) {
-      animationRunning.forEach((a) => {
-        // logger.debug(`crossFade ${a.name} to ${anim.name}`);
-        a.action.crossFadeTo(anim.action, durationSec, false);
-      });
+    if (
+      this.currentAnimation &&
+      this.currentAnimation.action.isRunning() &&
+      !this.currentAnimation.name.startsWith('idle')
+    ) {
+      return; // wait animation finish
     }
 
-    // logger.debug(`play ${anim.name}`);
+    this.resetAction(anim.action, anim.name.startsWith('idle'));
+
+    if (this.currentAnimation) {
+      this.currentAnimation.action.crossFadeTo(anim.action, 0.5, true);
+    }
+    anim.action.play();
+
+    this.currentAnimation = anim;
   }
 
   getRunningAnimations(group: AnimationGroup) {
