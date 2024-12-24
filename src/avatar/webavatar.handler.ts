@@ -18,6 +18,7 @@ import {
 
 import {
   DialogueMessageDto,
+  SermasSessionDto,
   SessionChangedDto,
   UserCharacterizationEventDto,
 } from '@sermas/api-client';
@@ -45,12 +46,13 @@ export class WebAvatarHandler {
       'dialogue.messages': this.onDialogueMessage,
       'session.session': this.onSession,
       'dialogue.speech': this.onSpeech,
+      'dialogue.continue': this.onSpeechContinue,
+      'dialogue.stop': this.onSpeechStop,
     },
     emitter: {
       'detection.characterization': this.onDetection,
       'avatar.face': this.setFace,
-      'avatar.speech.stop': this.onForceStop,
-      'dialogue.stop': this.onForceStop,
+      'avatar.speech.stop': this.forceStop,
       'detection.pose': this.setPose,
       'detection.audio': this.setListening,
     },
@@ -64,13 +66,14 @@ export class WebAvatarHandler {
     this.lipsync?.toggleAudio(enabled);
   }
 
-  onForceStop(chunkId?: string) {
+  forceStop(chunkId?: string) {
     if (!chunkId) {
       this.audioQueue = !chunkId
         ? []
         : this.audioQueue.filter((q) => q.chunkId > chunkId);
     }
 
+    // stopping audio will trigger speechStop
     this.lipsync?.stopAudio();
   }
 
@@ -160,6 +163,18 @@ export class WebAvatarHandler {
         this.avatar.getAnimation()?.playGesture('gesture_waving');
       }
     }
+  }
+
+  onSpeechContinue(ev: SermasSessionDto) {
+    if (ev.sessionId !== this.avatar.getToolkit()?.getSessionId()) return;
+    logger.debug(`Resume speaking`);
+    this.resumeSpeech();
+  }
+
+  onSpeechStop(ev: SermasSessionDto) {
+    if (ev.sessionId !== this.avatar.getToolkit()?.getSessionId()) return;
+    logger.debug(`Stop speaking`);
+    this.forceStop();
   }
 
   onSpeech(ev: unknown, raw: MqttMessageEvent) {
@@ -342,9 +357,7 @@ export class WebAvatarHandler {
     this.avatar.getAnimation()?.playGestureIdle();
   }
   async destroy() {
-    Object.keys(this.callbacks).forEach((key) => {
-      emitter.off(key, this.callbacks[key]);
-    });
+    this.unregisterCallbacks();
     await this.stopLipsync();
   }
 }

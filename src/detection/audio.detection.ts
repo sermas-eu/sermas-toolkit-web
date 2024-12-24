@@ -411,7 +411,7 @@ export class AudioDetection extends EventEmitter2 {
       .getBroker()
       .publish(
         `${USER_SPEECH_TOPIC}/${sessionId}/${chunkId}`,
-        Buffer.from(audio),
+        Buffer.from(audio as any),
         false,
       );
   }
