@@ -1,3 +1,4 @@
+import EventEmitter2 from 'eventemitter2';
 import mqtt from 'mqtt';
 import { v4 as uuidv4 } from 'uuid';
 import type { MqttMessageEvent } from './dto.js';
@@ -10,7 +11,7 @@ export interface MqttClientOptions {
   moduleId: string;
 }
 
-export class MqttClient {
+export class MqttClient extends EventEmitter2 {
   private readonly logger: Logger;
   private mqttClient: mqtt.MqttClient | undefined;
 
@@ -27,6 +28,7 @@ export class MqttClient {
   private topics: string[] = [];
 
   constructor(private readonly options: MqttClientOptions) {
+    super();
     this.appId = this.options.appId;
     this.moduleId = this.options.moduleId;
     this.logger = new Logger(`broker <${this.moduleId}>`);
@@ -220,8 +222,12 @@ export class MqttClient {
         }
       }
 
+      // emit event
+      (() => this.emit(`${resource}.${scope}`, ev.payload, ev))();
+
       // emitter.emit('mqtt.message', ev)
       (() => emitter.emit(`${resource}.${scope}`, ev.payload, ev))();
+
       this.addACLEvent('sub', `${resource}.${scope}`);
       // this.logger.debug(`received mqtt event ${resource}.${scope} `, ev.payload)
     } catch (e: any) {

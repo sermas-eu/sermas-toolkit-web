@@ -18,6 +18,7 @@ import {
 
 import {
   DialogueMessageDto,
+  SermasSessionDto,
   SessionChangedDto,
   UserCharacterizationEventDto,
 } from '@sermas/api-client';
@@ -40,16 +41,21 @@ export class WebAvatarHandler {
   private isPlaying = false;
 
   // register callbacks to init/destroy. Bind `this` as function context
-  callbacks: Record<string, ListenerFn> = {
-    'detection.characterization': this.onDetection,
-    'dialogue.speech': this.onSpeech,
-    'dialogue.messages': this.onDialogueMessage,
-    'session.session': this.onSession,
-    'avatar.face': this.setFace,
-    'avatar.speech.stop': this.onForceStop,
-    'dialogue.stop': this.onForceStop,
-    'detection.pose': this.setPose,
-    'detection.audio': this.setListening,
+  callbacks: Record<'broker' | 'emitter', Record<string, ListenerFn>> = {
+    broker: {
+      'dialogue.messages': this.onDialogueMessage,
+      'session.session': this.onSession,
+      'dialogue.speech': this.onSpeech,
+      'dialogue.continue': this.onSpeechContinue,
+      'dialogue.stop': this.onSpeechStop,
+    },
+    emitter: {
+      'detection.characterization': this.onDetection,
+      'avatar.face': this.setFace,
+      'avatar.speech.stop': this.forceStop,
+      'detection.pose': this.setPose,
+      'detection.audio': this.setListening,
+    },
   };
 
   constructor(private readonly avatar: AvatarModel) {
@@ -60,13 +66,14 @@ export class WebAvatarHandler {
     this.lipsync?.toggleAudio(enabled);
   }
 
-  onForceStop(chunkId?: string) {
+  forceStop(chunkId?: string) {
     if (!chunkId) {
       this.audioQueue = !chunkId
         ? []
         : this.audioQueue.filter((q) => q.chunkId > chunkId);
     }
 
+    // stopping audio will trigger speechStop
     this.lipsync?.stopAudio();
   }
 
@@ -156,6 +163,18 @@ export class WebAvatarHandler {
         this.avatar.getAnimation()?.playGesture('gesture_waving');
       }
     }
+  }
+
+  onSpeechContinue(ev: SermasSessionDto) {
+    if (ev.sessionId !== this.avatar.getToolkit()?.getSessionId()) return;
+    logger.debug(`Resume speaking`);
+    this.resumeSpeech();
+  }
+
+  onSpeechStop(ev: SermasSessionDto) {
+    if (ev.sessionId !== this.avatar.getToolkit()?.getSessionId()) return;
+    logger.debug(`Stop speaking`);
+    this.forceStop();
   }
 
   onSpeech(ev: unknown, raw: MqttMessageEvent) {
@@ -299,20 +318,46 @@ export class WebAvatarHandler {
     // }
   }
 
-  async init() {
-    Object.keys(this.callbacks).forEach((key) => {
-      this.callbacks[key] = this.callbacks[key].bind(this);
-      emitter.on(key, this.callbacks[key]);
+  registerCallbacks() {
+    Object.keys(this.callbacks).forEach((src) => {
+      Object.keys(this.callbacks[src]).forEach((key) => {
+        this.callbacks[src][key] = this.callbacks[src][key].bind(this);
+        if (src === 'emitter') {
+          emitter.on(key, this.callbacks[src][key]);
+        } else {
+          this.avatar
+            .getToolkit()
+            ?.getBroker()
+            ?.on(key, this.callbacks[src][key]);
+        }
+      });
     });
+  }
 
+  unregisterCallbacks() {
+    Object.keys(this.callbacks).forEach((src) => {
+      Object.keys(this.callbacks[src]).forEach((key) => {
+        this.callbacks[src][key] = this.callbacks[src][key].bind(this);
+        if (src === 'emitter') {
+          emitter.off(key, this.callbacks[src][key]);
+        } else {
+          this.avatar
+            .getToolkit()
+            ?.getBroker()
+            ?.off(key, this.callbacks[src][key]);
+        }
+      });
+    });
+  }
+
+  async init() {
+    this.registerCallbacks();
     await this.startLipsync();
 
     this.avatar.getAnimation()?.playGestureIdle();
   }
   async destroy() {
-    Object.keys(this.callbacks).forEach((key) => {
-      emitter.off(key, this.callbacks[key]);
-    });
+    this.unregisterCallbacks();
     await this.stopLipsync();
   }
 }

@@ -76,6 +76,10 @@ export class AvatarModel {
     this.xr = new WebAvatarXR(this);
   }
 
+  getToolkit() {
+    return this.toolkit;
+  }
+
   getXR() {
     return this.xr;
   }
@@ -215,7 +219,9 @@ export class AvatarModel {
     logger.debug('avatar initialized');
 
     this.handleEyesMotion.bind(this);
-    this.toolkit?.on('detection.characterization', this.handleEyesMotion);
+    this.toolkit
+      ?.getBroker()
+      .on('detection.characterization', this.handleEyesMotion);
 
     return this;
   }
@@ -404,6 +410,7 @@ export class AvatarModel {
         loader,
       );
     }
+    // console.warn('**************', this.config, url);
 
     // path is an URL
     if (url && url.startsWith('http') && url.indexOf('readyplayer') > -1) {
@@ -420,11 +427,17 @@ export class AvatarModel {
     }
 
     logger.log(`loading ${format} from ${url}`);
-    const model = await loader.loadAsync(
-      url,
-      (ev: ProgressEvent<EventTarget>) =>
+
+    let model;
+    try {
+      model = await loader.loadAsync(url, (ev: ProgressEvent<EventTarget>) =>
         this.showLoadingProgress(ev.loaded, ev.total),
-    );
+      );
+    } catch (e: any) {
+      logger.warn(`Error loading ${url}: ${e.message}`);
+      return new THREE.Group();
+    }
+
     // loading completed
     sendStatus('');
 
@@ -534,7 +547,9 @@ export class AvatarModel {
     await this.handler?.destroy();
     await this.xr?.destroy();
 
-    this.toolkit?.off('detection.characterization', this.handleEyesMotion);
+    this.toolkit
+      ?.getBroker()
+      .off('detection.characterization', this.handleEyesMotion);
 
     logger.debug('avatar destroyed');
     this.toolkit?.emit('avatar.status', 'removed');

@@ -299,20 +299,16 @@ export class SermasToolkit {
 
     this.api.setAppId(app?.appId);
     this.broker.setAppId(app?.appId);
+
     const lsSettings = this.settings.hasSavedSettings();
     const appSettings = app.settings || {};
     const loadedSettings = this.settings.get();
+
     if (lsSettings) {
       this.settings.save({ ...appSettings, ...loadedSettings });
     } else {
       this.settings.save({ ...loadedSettings, ...appSettings });
     }
-  }
-
-  onAvatarSpeechStop() {
-    // TODO: review this part to avoid looping between API call and broker message.
-    // this.logger.log(`Stop avatar generation`);
-    // this.getApi().sendForceStop();
   }
 
   async onSessionChanged(ev: SessionChangedDto) {
@@ -373,13 +369,13 @@ export class SermasToolkit {
   async destroy() {
     await this.fpsMonitor.destroy();
 
+    this.getBroker().off('session.session', this.onSessionChanged);
+    this.getBroker().off('detection.interaction', this.onInteractionDetection);
+
     this.off('session', this.onSession);
     this.off('app', this.onApp);
     this.off('ui.button.session', this.onUiButtonSession);
-    this.off('avatar.speech.stop', this.onAvatarSpeechStop);
-    this.off('session.session', this.onSessionChanged);
     this.off('user.changed', this.onUserChanged);
-    this.off('detection.interaction', this.onInteractionDetection);
 
     // clear all registered event listeners
     this.listeners.clear();
@@ -403,19 +399,18 @@ export class SermasToolkit {
     this.onApp = this.onApp.bind(this);
     this.onSession = this.onSession.bind(this);
     this.onUiButtonSession = this.onUiButtonSession.bind(this);
-    this.onAvatarSpeechStop = this.onAvatarSpeechStop.bind(this);
     this.onSessionChanged = this.onSessionChanged.bind(this);
     this.onUserChanged = this.onUserChanged.bind(this);
     this.onInteractionDetection = this.onInteractionDetection.bind(this);
 
     // internal events handler
+    this.getBroker().on('session.session', this.onSessionChanged);
+    this.getBroker().on('detection.interaction', this.onInteractionDetection);
+
     this.on('session', this.onSession);
     this.on('app', this.onApp);
     this.on('ui.button.session', this.onUiButtonSession);
-    this.on('avatar.speech.stop', this.onAvatarSpeechStop);
-    this.on('session.session', this.onSessionChanged);
     this.on('user.changed', this.onUserChanged);
-    this.on('detection.interaction', this.onInteractionDetection);
 
     this.logger.debug(`appId=${this.options.appId}`);
 
@@ -605,6 +600,7 @@ export class SermasToolkit {
     useDefaults = true,
   ): Promise<string | undefined> {
     let config = await this.getAssetConfig(type, id);
+
     if (!config) {
       this.logger.warn(`Asset config ${type} ${id} not found`);
       if (!useDefaults) return undefined;
