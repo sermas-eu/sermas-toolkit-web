@@ -76,6 +76,10 @@ export class AvatarModel {
     this.xr = new WebAvatarXR(this);
   }
 
+  getToolkit() {
+    return this.toolkit;
+  }
+
   getXR() {
     return this.xr;
   }
@@ -215,7 +219,9 @@ export class AvatarModel {
     logger.debug('avatar initialized');
 
     this.handleEyesMotion.bind(this);
-    this.toolkit?.on('detection.characterization', this.handleEyesMotion);
+    this.toolkit
+      ?.getBroker()
+      .on('detection.characterization', this.handleEyesMotion);
 
     return this;
   }
@@ -534,7 +540,9 @@ export class AvatarModel {
     await this.handler?.destroy();
     await this.xr?.destroy();
 
-    this.toolkit?.off('detection.characterization', this.handleEyesMotion);
+    this.toolkit
+      ?.getBroker()
+      .off('detection.characterization', this.handleEyesMotion);
 
     logger.debug('avatar destroyed');
     this.toolkit?.emit('avatar.status', 'removed');

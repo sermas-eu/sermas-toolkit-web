@@ -38,19 +38,19 @@ export class UI {
     if (this.initialized) await this.destroy();
     this.initialized = true;
 
-    this.emitter.on('dialogue.messages', this.onChatMessage); // arrivo messaggi dal be
-    this.emitter.on('session.session', this.onSessionChanged);
+    this.toolkit.getBroker().on('dialogue.messages', this.onChatMessage); // arrivo messaggi dal be
+    this.toolkit.getBroker().on('session.session', this.onSessionChanged);
+    this.toolkit.getBroker().on('ui.content', this.onUIContent);
     this.emitter.on('avatar.speech', this.onPlaybackChanged);
-    this.emitter.on('ui.content', this.onUIContent);
   }
 
   async destroy() {
     this.listeners.clear();
 
-    this.emitter.off('dialogue.messages', this.onChatMessage);
-    this.emitter.off('session.session', this.onSessionChanged);
+    this.toolkit.getBroker().off('dialogue.messages', this.onChatMessage);
+    this.toolkit.getBroker().off('session.session', this.onSessionChanged);
+    this.toolkit.getBroker().off('ui.content', this.onUIContent);
     this.emitter.off('avatar.speech', this.onPlaybackChanged);
-    this.emitter.off('ui.content', this.onUIContent);
 
     this.initialized = false;
   }
