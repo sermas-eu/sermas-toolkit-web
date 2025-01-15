@@ -96,7 +96,7 @@ export class LipSync extends EventEmitter2 {
     this.paused = false;
     this.speaking = true;
 
-    this.emit('start', chunkId);
+    this.emit('start', chunkId, buffer.duration);
   }
 
   async destroy() {

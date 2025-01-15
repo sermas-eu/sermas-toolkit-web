@@ -18,6 +18,7 @@ type Subset<T extends U, U> = U;
 export interface AvatarAudioPlaybackStatus {
   chunkId?: string;
   status: 'started' | 'ended';
+  duration?: number; // seconds
 }
 
 export interface AvatarFaceBlendShape {

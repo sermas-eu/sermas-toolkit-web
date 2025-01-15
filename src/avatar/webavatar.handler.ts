@@ -74,10 +74,14 @@ export class WebAvatarHandler {
     this.lipsync?.stopAudio();
   }
 
-  startSpeech(chunkId: string) {
+  startSpeech(chunkId: string, duration: number) {
     logger.debug('playing speech started');
 
-    const ev: AvatarAudioPlaybackStatus = { status: 'started', chunkId };
+    const ev: AvatarAudioPlaybackStatus = {
+      status: 'started',
+      chunkId,
+      duration,
+    };
     emitter.emit('avatar.speech', ev);
 
     this.avatar.getAnimation()?.playGestureTalking();
@@ -270,8 +274,8 @@ export class WebAvatarHandler {
       this.avatar.getBlendShapes()?.setViseme(ev.key);
     });
 
-    this.lipsync.on('start', (chunkId: string) => {
-      this.startSpeech(chunkId);
+    this.lipsync.on('start', (chunkId: string, duration: number) => {
+      this.startSpeech(chunkId, duration);
       speechStopped = false;
     });
 
