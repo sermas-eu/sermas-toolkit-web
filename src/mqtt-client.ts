@@ -109,13 +109,15 @@ export class MqttClient extends EventEmitter2 {
   }
 
   subscribe(topics: string | string[]) {
+    topics = topics instanceof Array ? topics : [topics];
+
     if (!this.isConnected()) {
       this.logger.debug(
         `MQTT not connected, cannot subscribe to ${JSON.stringify(topics)}`,
       );
       return;
     }
-    // this.logger.debug(`SUB ${topics}`);
+    this.logger.debug(`SUB ${topics}`);
     this.mqttClient?.subscribe(topics, (e) => {
       if (e) {
         this.logger.warn(
@@ -170,9 +172,8 @@ export class MqttClient extends EventEmitter2 {
           this.logger.debug(`SUB Skip topic=${topic} with unmapped param`);
           return '';
         } else {
-          topic = topic.replaceAll(/(:.+)$/g, '+');
+          topic = topic.replaceAll(/(:[a-zA-Z0-9]+[^/])/g, '+');
         }
-
         return topic;
       })
       .filter((topic) => topic !== '');

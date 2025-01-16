@@ -13,6 +13,7 @@ import {
   AvatarAudioPlaybackStatus,
   AvatarFaceBlendShape,
   AvatarModel,
+  AvatarStopSpeechReference,
   LipSync,
 } from './index.js';
 
@@ -27,12 +28,16 @@ import { VisemeType } from './animations/blendshapes/lib/viseme/index.js';
 
 const logger = new Logger('webavatar.handler');
 
+const sortChunks = (a, b) => (a.chunkId > b.chunkId ? 1 : -1);
+
 export class WebAvatarHandler {
   private lastSet: { time: number; emotion: string };
 
   private sessionStarted = false;
 
   private audioQueue: AudioQueue[] = [];
+  private clearanceQueue: string[] = [];
+
   private processedQueue = 0;
   private processedQueueTimer: NodeJS.Timeout;
 
@@ -64,12 +69,21 @@ export class WebAvatarHandler {
     this.lipsync?.toggleAudio(enabled);
   }
 
-  onForceStop(chunkId?: string) {
-    if (!chunkId) {
-      this.audioQueue = !chunkId
-        ? []
-        : this.audioQueue.filter((q) => q.chunkId > chunkId);
+  onForceStop(ev: AvatarStopSpeechReference) {
+    // clear messages older than current messageId
+    // track the messageId to drop any upcoming chunk with the same messageId
+    const messageId = ev.messageId;
+    if (messageId) {
+      this.clearanceQueue.push(
+        ...new Set([...this.clearanceQueue, messageId].sort(sortChunks)),
+      );
+      this.audioQueue.filter((q) => q.messageId > messageId);
     }
+
+    const chunkId = ev.chunkId;
+    this.audioQueue = chunkId
+      ? this.audioQueue.filter((q) => q.chunkId > chunkId)
+      : [];
 
     this.lipsync?.stopAudio();
   }
@@ -167,15 +181,22 @@ export class WebAvatarHandler {
 
     const buffer = raw.message.payload as any as Uint8Array;
 
-    const [, chunkId] = raw.context;
+    const [, messageId, chunkId] = raw.context;
 
-    logger.debug(`Queued speech ${chunkId} size=${buffer.byteLength / 1000}kb`);
+    if (this.clearanceQueue.indexOf(messageId) > -1) {
+      logger.debug(`Skip stopped speech message messageId=${messageId}`);
+      return;
+    }
+
+    logger.debug(
+      `Queued speech messageId=${messageId} chunkId=${chunkId} size=${buffer.byteLength / 1000}kb`,
+    );
 
     // already playing, add to queue
-    this.audioQueue.push({ chunkId, buffer });
+    this.audioQueue.push({ messageId, chunkId, buffer });
 
     if (this.lipsync?.speaking) {
-      logger.debug(`lypsync is speaking`);
+      logger.debug(`lypsync: avatar already speaking`);
       return;
     }
 
@@ -210,9 +231,7 @@ export class WebAvatarHandler {
 
     this.isPlaying = true;
 
-    const raw = this.audioQueue
-      .sort((a, b) => (a.chunkId > b.chunkId ? 1 : -1))
-      .splice(0, 1)[0];
+    const raw = this.audioQueue.sort(sortChunks).splice(0, 1)[0];
 
     logger.debug(`play queued speech chunkId=${raw.chunkId}`);
 
