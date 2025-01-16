@@ -7,7 +7,10 @@ import {
 } from '@sermas/api-client';
 import EventEmitter2, { ListenerFn } from 'eventemitter2';
 import { SermasToolkit } from 'index.js';
-import { AvatarAudioPlaybackStatus } from './avatar/index.js';
+import {
+  AvatarAudioPlaybackStatus,
+  AvatarStopSpeechReference,
+} from './avatar/index.js';
 import { DialogueActor } from './dto/dialogue.dto';
 import { SessionStatus } from './dto/session.dto';
 import { ChatMessage, UiButtonSession } from './dto/ui.dto.js';
@@ -132,14 +135,17 @@ export class UI {
   }
 
   async clear() {
-    this.stopAvatarSpeech(getChunkId());
+    this.stopAvatarSpeech(getMessageId(), getChunkId());
     this.clearHistory();
   }
 
   async handleCleanScreen(ev: UIContentDto) {
     if (ev.options && ev.options.stopSpeech) {
       this.logger.debug(`Stop avatar speech`);
-      this.stopAvatarSpeech(ev.chunkId || getChunkId());
+      this.stopAvatarSpeech(
+        ev.messageId || getMessageId(),
+        ev.chunkId || getChunkId(),
+      );
     }
 
     if (
@@ -220,12 +226,12 @@ export class UI {
     const message: UIContentDto = filtered.length
       ? filtered[0]
       : {
-          appId: ev.appId,
-          contentType: 'dialogue-message',
-          messageId: ev.messageId,
-          content: { text: '' },
-          metadata: { chunks: [] },
-        };
+        appId: ev.appId,
+        contentType: 'dialogue-message',
+        messageId: ev.messageId,
+        content: { text: '' },
+        metadata: { chunks: [] },
+      };
 
     if (!filtered.length) {
       lastItem.messages.push(message);
@@ -267,8 +273,11 @@ export class UI {
     } as UiButtonSession);
   }
 
-  async stopAvatarSpeech(chunkId?: string) {
-    this.emitter.emit('avatar.speech.stop', chunkId);
+  async stopAvatarSpeech(messageId?: string, chunkId?: string) {
+    this.emitter.emit('avatar.speech.stop', {
+      messageId,
+      chunkId,
+    } as AvatarStopSpeechReference);
   }
 
   onSessionChanged(ev: SessionChangedDto) {

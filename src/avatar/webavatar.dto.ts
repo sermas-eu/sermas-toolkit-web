@@ -1,6 +1,11 @@
 import { RepositoryAvatarDto } from '@sermas/api-client';
 import * as THREE from 'three';
 
+export type AvatarStopSpeechReference = {
+  messageId?: string;
+  chunkId?: string;
+};
+
 export type GestureMappingKeys =
   | 'gesture_default'
   | 'gesture_idle'
@@ -94,6 +99,7 @@ export interface AvatarModelConfig extends RepositoryAvatarDto {
 }
 
 export interface AudioQueue {
+  messageId: string;
   chunkId: string;
   buffer: Uint8Array;
 }
