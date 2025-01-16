@@ -199,6 +199,9 @@ export class WebAvatarHandler {
     // already playing, add to queue
     this.audioQueue.push({ messageId, chunkId, buffer });
 
+    // remove messageId references older than this messageId
+    this.clearanceQueue = this.clearanceQueue.filter((q) => q > messageId);
+
     if (this.lipsync?.speaking) {
       logger.debug(`lypsync: avatar already speaking`);
       return;
