@@ -34,4 +34,5 @@ export class AppSettings implements AppSettingsDto {
   virtualKeyboardEnabled?: boolean;
   ttsEnabled?: boolean | undefined;
   subtitlesEnabled: boolean;
+  githubRepository?: string;
 }
