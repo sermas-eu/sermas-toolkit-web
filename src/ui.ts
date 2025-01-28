@@ -117,6 +117,7 @@ export class UI {
       },
       options: {},
       ts: new Date().toString(),
+      isWelcome: ev.isWelcome || false,
     };
 
     const actor = ev.actor as DialogueActor;
@@ -226,12 +227,13 @@ export class UI {
     const message: UIContentDto = filtered.length
       ? filtered[0]
       : {
-        appId: ev.appId,
-        contentType: 'dialogue-message',
-        messageId: ev.messageId,
-        content: { text: '' },
-        metadata: { chunks: [] },
-      };
+          appId: ev.appId,
+          contentType: 'dialogue-message',
+          messageId: ev.messageId,
+          content: { text: '' },
+          metadata: { chunks: [] },
+          isWelcome: ev.isWelcome,
+        };
 
     if (!filtered.length) {
       lastItem.messages.push(message);
