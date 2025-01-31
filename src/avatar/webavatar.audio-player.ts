@@ -2,7 +2,7 @@ import EventEmitter2 from 'eventemitter2';
 import { Logger } from '../logger.js';
 import { AudioPlayerStatus } from './webavatar.audio-player.dto.js';
 
-const logger = new Logger('webavatar.lipsync');
+const logger = new Logger('webavatar.player');
 
 const defaultStatus = (): AudioPlayerStatus => ({
   enabled: true,
@@ -47,11 +47,9 @@ export class WebAvatarAudioPlayer extends EventEmitter2 {
 
   async stop() {
     logger.debug(`Player stopped chunkId=${this.status.chunkId}`);
-    this.status.playback = 'stopped';
     this.source?.stop();
-    if (this.source?.onended) {
-      this.source?.onended({} as Event);
-    }
+    this.status = defaultStatus();
+    this.status.playback = 'stopped';
     this.emitStatus();
   }
 
@@ -96,9 +94,9 @@ export class WebAvatarAudioPlayer extends EventEmitter2 {
     this.source.connect(this.audioContext.destination);
 
     this.source.onended = () => {
+      logger.debug(`Player completed chunkId=${this.status.chunkId}`);
       this.emitStatus({ playback: 'completed' });
       this.status = defaultStatus();
-      console.warn(`Ended ${chunkId}`);
     };
 
     this.source.start();

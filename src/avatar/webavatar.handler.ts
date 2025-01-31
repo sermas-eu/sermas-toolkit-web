@@ -213,7 +213,7 @@ export class WebAvatarHandler {
     if (ev.actor === 'user') return;
     if (!ev.text) {
       // empty text comes when the user speech is not recognizable
-      this.stopSpeech();
+      this.stopSpeech(ev.chunkId);
       return;
     }
   }
@@ -293,7 +293,7 @@ export class WebAvatarHandler {
   }
 
   onAudioPlayerStatus(ev: AudioPlayerStatus) {
-    console.log(ev);
+    // console.log(ev);
 
     switch (ev.playback) {
       case 'started':
@@ -316,7 +316,7 @@ export class WebAvatarHandler {
           return;
         }
 
-        this.stopSpeech();
+        this.stopSpeech(ev.chunkId);
         break;
     }
   }
