@@ -46,6 +46,8 @@ export class WebAvatarHandler {
   private lipsync?: LipSync;
   private isPlaying = false;
 
+  private progressSync: Record<string, number> = {};
+
   // register callbacks to init/destroy. Bind `this` as function context
   callbacks: Record<'broker' | 'emitter', Record<string, ListenerFn>> = {
     broker: {
@@ -112,6 +114,17 @@ export class WebAvatarHandler {
   // onPlaybackChange(ev: AvatarAudioPlaybackStatus) {
   //   this.avatarModel.setSpeaking(ev.status !== "ended")
   // }
+
+  updateProgressSpeech(chunkId: string, progress: number) {
+    // logger.debug('playing speech progress');
+
+    const ev: AvatarAudioPlaybackStatus = {
+      status: 'playing',
+      chunkId,
+      progress,
+    };
+    emitter.emit('avatar.speech', ev);
+  }
 
   onForceStop(ev: AvatarStopSpeechReference) {
     // clear messages older than current messageId
@@ -302,6 +315,16 @@ export class WebAvatarHandler {
         this.isPlaying = true;
         break;
       case 'playing':
+        if (
+          ev.chunkId &&
+          ev.progress &&
+          ((this.progressSync[ev.chunkId] &&
+            this.progressSync[ev.chunkId] != ev.progress) ||
+            !this.progressSync[ev.chunkId])
+        ) {
+          this.updateProgressSpeech(ev.chunkId, ev.progress);
+          this.progressSync[ev.chunkId] = ev.progress;
+        }
         this.lipsync?.updateViseme(ev.volume);
         break;
       case 'paused':

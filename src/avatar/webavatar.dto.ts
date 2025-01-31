@@ -1,6 +1,5 @@
 import { RepositoryAvatarDto } from '@sermas/api-client';
 import * as THREE from 'three';
-import { PlaybackStatus } from './webavatar.audio-player.dto';
 
 export type AvatarStopSpeechReference = {
   messageId?: string;
@@ -23,7 +22,7 @@ type Subset<T extends U, U> = U;
 
 export interface AvatarAudioPlaybackStatus {
   chunkId?: string;
-  status: 'started' | 'ended';
+  status: 'started' | 'ended' | 'playing';
   duration?: number; // seconds
   progress?: number;
 }
