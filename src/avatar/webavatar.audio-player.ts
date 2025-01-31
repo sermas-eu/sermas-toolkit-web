@@ -106,7 +106,7 @@ export class WebAvatarAudioPlayer extends EventEmitter2 {
     this.status.progress = 0;
     this.status.duration = buffer.duration;
 
-    this.status.playback = 'playing';
+    this.status.playback = 'started';
 
     this.animationFrameCallback();
 
