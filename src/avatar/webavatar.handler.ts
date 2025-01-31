@@ -24,7 +24,8 @@ import {
 } from '@sermas/api-client';
 import { ListenerFn } from 'eventemitter2';
 import { EmotionBlendShape } from './animations/blendshapes/lib/index.js';
-import { VisemeType } from './animations/blendshapes/lib/viseme/index.js';
+import { AudioPlayerStatus } from './webavatar.audio-player.dto.js';
+import { WebAvatarAudioPlayer } from './webavatar.audio-player.js';
 
 const logger = new Logger('webavatar.handler');
 
@@ -41,6 +42,7 @@ export class WebAvatarHandler {
   private processedQueue = 0;
   private processedQueueTimer: NodeJS.Timeout;
 
+  private player?: WebAvatarAudioPlayer;
   private lipsync?: LipSync;
   private isPlaying = false;
 
@@ -49,7 +51,7 @@ export class WebAvatarHandler {
     broker: {
       'dialogue.messages': this.onDialogueMessage,
       'session.session': this.onSession,
-      'dialogue.speech': this.onSpeech,
+      'dialogue.speech': this.onAvatarSpeechMessage,
     },
     emitter: {
       'detection.characterization': this.onDetection,
@@ -66,8 +68,50 @@ export class WebAvatarHandler {
   }
 
   toggleAudio(enabled?: boolean) {
-    this.lipsync?.toggleAudio(enabled);
+    this.player?.toggle(enabled);
   }
+
+  startSpeech(chunkId: string, duration: number) {
+    logger.debug('playing speech started');
+
+    const ev: AvatarAudioPlaybackStatus = {
+      status: 'started',
+      chunkId,
+      duration,
+    };
+    emitter.emit('avatar.speech', ev);
+
+    this.avatar.getAnimation()?.playGestureTalking();
+  }
+
+  async pauseSpeech() {
+    await this.player?.pause();
+  }
+
+  async resumeSpeech() {
+    await this.player?.resume();
+  }
+
+  emitAvatarEvent(playerStatus: AudioPlayerStatus) {
+    // const ev: AvatarAudioPlaybackStatus = {
+
+    // }
+    // TODO adapt event for AvatarAudioPlaybackStatus
+    emitter.emit('avatar.speech', playerStatus);
+  }
+
+  stopSpeech(chunkId?: string) {
+    logger.debug('playing speech stopped');
+
+    const ev: AvatarAudioPlaybackStatus = { status: 'ended', chunkId };
+    emitter.emit('avatar.speech', ev);
+
+    this.avatar.getAnimation()?.playGestureIdle();
+  }
+
+  // onPlaybackChange(ev: AvatarAudioPlaybackStatus) {
+  //   this.avatarModel.setSpeaking(ev.status !== "ended")
+  // }
 
   onForceStop(ev: AvatarStopSpeechReference) {
     // clear messages older than current messageId
@@ -85,42 +129,8 @@ export class WebAvatarHandler {
       ? this.audioQueue.filter((q) => q.chunkId > chunkId)
       : [];
 
-    this.lipsync?.stopAudio();
+    this.player?.stop();
   }
-
-  startSpeech(chunkId: string, duration: number) {
-    logger.debug('playing speech started');
-
-    const ev: AvatarAudioPlaybackStatus = {
-      status: 'started',
-      chunkId,
-      duration,
-    };
-    emitter.emit('avatar.speech', ev);
-
-    this.avatar.getAnimation()?.playGestureTalking();
-  }
-
-  async pauseSpeech() {
-    await this.lipsync?.pause();
-  }
-
-  async resumeSpeech() {
-    await this.lipsync?.resume();
-  }
-
-  stopSpeech(chunkId?: string) {
-    logger.debug('playing speech stopped');
-
-    const ev: AvatarAudioPlaybackStatus = { status: 'ended', chunkId };
-    emitter.emit('avatar.speech', ev);
-
-    this.avatar.getAnimation()?.playGestureIdle();
-  }
-
-  // onPlaybackChange(ev: AvatarAudioPlaybackStatus) {
-  //   this.avatarModel.setSpeaking(ev.status !== "ended")
-  // }
 
   onDetection(ev: UserCharacterizationEventDto) {
     if (ev.source !== UserCharacterizationEventSource.emotion_tracker) return;
@@ -153,18 +163,6 @@ export class WebAvatarHandler {
     this.avatar.getBlendShapes()?.setEmotion(emotionValue);
   }
 
-  setListening(op: 'started' | 'stopped') {
-    if (op === 'started') {
-      this.stopSpeech();
-      // move only if the session has started
-      if (this.sessionStarted) {
-        this.avatar.getAnimation()?.playGesture('gesture_listening');
-      }
-    } else {
-      this.avatar.getAnimation()?.playGesture('gesture_idle');
-    }
-  }
-
   onSession(ev: SessionChangedDto) {
     if (ev.operation === 'created') {
       this.sessionStarted = true;
@@ -180,7 +178,8 @@ export class WebAvatarHandler {
     }
   }
 
-  onSpeech(ev: unknown, raw: MqttMessageEvent) {
+  // avatar speech received
+  onAvatarSpeechMessage(ev: unknown, raw: MqttMessageEvent) {
     if (!this.lipsync) return;
 
     const buffer = raw.message.payload as any as Uint8Array;
@@ -202,12 +201,33 @@ export class WebAvatarHandler {
     // remove messageId references older than this messageId
     this.clearanceQueue = this.clearanceQueue.filter((q) => q > messageId);
 
-    if (this.lipsync?.speaking) {
-      logger.debug(`lypsync: avatar already speaking`);
+    if (this.player?.isPlaying()) {
+      logger.debug(`player: avatar already speaking`);
       return;
     }
 
     this.playAudio();
+  }
+
+  onDialogueMessage(ev: DialogueMessageDto) {
+    if (ev.actor === 'user') return;
+    if (!ev.text) {
+      // empty text comes when the user speech is not recognizable
+      this.stopSpeech();
+      return;
+    }
+  }
+
+  setListening(op: 'started' | 'stopped') {
+    if (op === 'started') {
+      this.stopSpeech();
+      // move only if the session has started
+      if (this.sessionStarted) {
+        this.avatar.getAnimation()?.playGesture('gesture_listening');
+      }
+    } else {
+      this.avatar.getAnimation()?.playGesture('gesture_idle');
+    }
   }
 
   playAudio(wait = 3) {
@@ -242,7 +262,7 @@ export class WebAvatarHandler {
 
     logger.debug(`play queued speech chunkId=${raw.chunkId}`);
 
-    this.lipsync?.startFromAudioFile(raw.buffer as Uint8Array, raw.chunkId);
+    this.player?.play(raw.buffer as Uint8Array, raw.chunkId);
 
     this.processedQueue++;
     if (this.processedQueueTimer) clearTimeout(this.processedQueueTimer);
@@ -250,15 +270,6 @@ export class WebAvatarHandler {
       logger.debug('processed queue counter cleared');
       this.processedQueue = 0;
     }, 10 * 1000);
-  }
-
-  onDialogueMessage(ev: DialogueMessageDto) {
-    if (ev.actor === 'user') return;
-    if (!ev.text) {
-      // empty text comes when the user speech is not recognizable
-      this.stopSpeech();
-      return;
-    }
   }
 
   setFace(blendingShapes: AvatarFaceBlendShape[], emotion?: EmotionBlendShape) {
@@ -281,52 +292,33 @@ export class WebAvatarHandler {
     this.avatar?.setPoses(poses);
   }
 
-  async stopLipsync() {
-    await this.lipsync?.destroy();
-    this.lipsync?.removeAllListeners();
-  }
+  onAudioPlayerStatus(ev: AudioPlayerStatus) {
+    console.log(ev);
 
-  async startLipsync() {
-    this.lipsync = new LipSync();
+    switch (ev.playback) {
+      case 'started':
+      case 'resumed':
+        this.startSpeech(ev.chunkId, ev.duration);
+        this.isPlaying = true;
+        break;
+      case 'playing':
+        this.lipsync?.updateViseme(ev.volume);
+        break;
+      case 'paused':
+      case 'stopped':
+      case 'completed':
+        this.lipsync?.reset();
 
-    let speechStopped = true;
+        this.isPlaying = false;
 
-    this.lipsync.on('viseme', (ev: { key: VisemeType; value: number }) => {
-      if (speechStopped) return;
-      this.avatar.getBlendShapes()?.setViseme(ev.key);
-    });
+        if (ev.playback === 'completed' && this.audioQueue.length) {
+          this.playAudio();
+          return;
+        }
 
-    this.lipsync.on('start', (chunkId: string, duration: number) => {
-      this.startSpeech(chunkId, duration);
-      speechStopped = false;
-    });
-
-    this.lipsync.on('end', () => {
-      this.avatar.getBlendShapes()?.setViseme('neutral');
-
-      this.isPlaying = false;
-
-      if (this.audioQueue.length) {
-        this.playAudio();
-        return;
-      }
-
-      speechStopped = true;
-      this.stopSpeech();
-    });
-
-    // this.audio = document.createElement('audio') as HTMLAudioElement
-
-    // this.audio.onplay = () => {
-    //   this.startSpeech()
-    // }
-    // this.audio.onended = () => {
-    //   if (this.audioQueue.length) {
-    //     this.playAudio(this.audioQueue.splice(0, 1)[0])
-    //     return
-    //   }
-    //   this.stopSpeech()
-    // }
+        this.stopSpeech();
+        break;
+    }
   }
 
   registerCallbacks() {
@@ -363,14 +355,24 @@ export class WebAvatarHandler {
 
   async init() {
     this.registerCallbacks();
-    await this.startLipsync();
+
+    this.lipsync = new LipSync(this.avatar);
+
+    this.player = new WebAvatarAudioPlayer();
+
+    this.onAudioPlayerStatus = this.onAudioPlayerStatus.bind(this);
+    this.player.on('status', this.onAudioPlayerStatus);
 
     this.avatar.getAnimation()?.playGestureIdle();
   }
+
   async destroy() {
     Object.keys(this.callbacks).forEach((key) => {
       emitter.off(key, this.callbacks[key]);
     });
-    await this.stopLipsync();
+    this.player?.off('status', this.onAudioPlayerStatus);
+
+    await this.lipsync?.reset();
+    await this.player?.stop();
   }
 }
