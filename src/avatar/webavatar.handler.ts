@@ -310,13 +310,12 @@ export class WebAvatarHandler {
         this.lipsync?.reset();
 
         this.isPlaying = false;
+        this.stopSpeech(ev.chunkId);
 
         if (ev.playback === 'completed' && this.audioQueue.length) {
           this.playAudio();
-          return;
         }
 
-        this.stopSpeech(ev.chunkId);
         break;
     }
   }
