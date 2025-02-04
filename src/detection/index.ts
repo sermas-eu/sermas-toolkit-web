@@ -1,5 +1,3 @@
-export * from './detection.dto.js';
-
 export * from './video.detection.js';
 export * from './video/video.dto.js';
 

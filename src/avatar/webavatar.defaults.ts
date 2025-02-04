@@ -1,4 +1,4 @@
-import { AvatarModelConfig } from './webavatar.dto.js';
+import { AvatarModelConfig } from 'dto';
 
 export const DefaultAvatarConfig: AvatarModelConfig = {
   type: 'avatars',

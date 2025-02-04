@@ -1,4 +1,5 @@
 import {
+  AudioPlayerStatus,
   Emotion,
   MqttMessageEvent,
   UserCharacterizationEventSource,
@@ -24,7 +25,6 @@ import {
 } from '@sermas/api-client';
 import { ListenerFn } from 'eventemitter2';
 import { EmotionBlendShape } from './animations/blendshapes/lib/index.js';
-import { AudioPlayerStatus } from './webavatar.audio-player.dto.js';
 import { WebAvatarAudioPlayer } from './webavatar.audio-player.js';
 
 const logger = new Logger('webavatar.handler');

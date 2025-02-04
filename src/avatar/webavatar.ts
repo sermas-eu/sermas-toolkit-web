@@ -12,8 +12,7 @@ import type {
   AvatarModelConfig,
   CameraConfig,
   DetectionPosition,
-} from './webavatar.dto.js';
-
+} from 'dto.js';
 import { HolisticV1Results } from '../detection/index.js';
 import { sendStatus } from '../events.js';
 import { SermasToolkit } from '../index.js';
