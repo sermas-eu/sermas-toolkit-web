@@ -261,7 +261,7 @@ export class WebAvatarHandler {
     // const threshold = 100;
     // if (size < threshold && wait < 2) {
     if (this.processedQueue < 2 && this.audioQueue.length < 3 && wait > 0) {
-      const waitFor = 200 / wait;
+      const waitFor = 300 / wait;
       logger.debug(
         `Waiting queue threshold to be reached size=${size}kb wait=${wait} length=${this.audioQueue.length} waitFor=${waitFor}`,
       );
@@ -306,7 +306,12 @@ export class WebAvatarHandler {
   }
 
   onAudioPlayerStatus(ev: AudioPlayerStatus) {
-    // console.log(ev);
+    // console.warn(
+    //   'ev',
+    //   ev.playback,
+    //   'status',
+    //   this.player?.getStatus().playback,
+    // );
 
     switch (ev.playback) {
       case 'started':

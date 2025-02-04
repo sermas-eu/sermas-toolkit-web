@@ -33,7 +33,8 @@ const levels: Record<LogLevel, number> = {
   ERROR: 400,
 };
 
-let logFilter: string | undefined = '*';
+const defaultLogFilter = '*';
+let logFilter: string | undefined = defaultLogFilter;
 
 // set log filter
 // empty / undefined = none
@@ -41,6 +42,10 @@ let logFilter: string | undefined = '*';
 // prefix = filter by logger prefix
 export const setLogFilter = (filter?: string) => {
   logFilter = filter;
+};
+
+export const resetLogFilter = () => {
+  logFilter = defaultLogFilter;
 };
 
 export class Logger {
@@ -113,4 +118,5 @@ export class Logger {
 export const logger = new Logger('default');
 
 addGlobal('setLogFilter', setLogFilter);
+addGlobal('resetLogFilter', resetLogFilter);
 initLogger();

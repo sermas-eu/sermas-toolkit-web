@@ -26,12 +26,12 @@ export class WebAvatarAudioPlayer extends EventEmitter2 {
     super();
   }
 
+  getStatus() {
+    return this.status;
+  }
+
   isPlaying() {
-    return (
-      this.status.playback === 'started' ||
-      this.status.playback === 'resumed' ||
-      this.status.playback === 'playing'
-    );
+    return this.status.playback === 'playing';
   }
 
   toggle(enabled?: boolean) {
@@ -95,6 +95,7 @@ export class WebAvatarAudioPlayer extends EventEmitter2 {
 
     this.source.onended = () => {
       logger.debug(`Player completed chunkId=${this.status.chunkId}`);
+      this.status.playback = 'stopped';
       this.emitStatus({ playback: 'completed' });
       this.status = defaultStatus();
     };
@@ -106,17 +107,17 @@ export class WebAvatarAudioPlayer extends EventEmitter2 {
     this.status.progress = 0;
     this.status.duration = buffer.duration;
 
-    this.status.playback = 'started';
-    this.emitStatus();
+    this.status.playback = 'playing';
+    this.emitStatus({ playback: 'started' });
     logger.debug(`Player playing chunkId=${this.status.chunkId}`);
 
     this.animationFrameCallback();
   }
 
   animationFrameCallback() {
+    if (!this.isPlaying()) return;
     this.updatePlaybackStatus();
-    if (this.isPlaying())
-      requestAnimationFrame(() => this.animationFrameCallback());
+    requestAnimationFrame(() => this.animationFrameCallback());
   }
 
   private async destroy() {
@@ -183,7 +184,6 @@ export class WebAvatarAudioPlayer extends EventEmitter2 {
     this.status.volume = this.getVolume();
     if (lastVolume !== this.status.volume) hasChanges = true;
 
-    this.status.playback = 'playing';
     if (hasChanges) this.emitStatus();
   }
 }
