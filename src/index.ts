@@ -1,4 +1,5 @@
 import {
+  DialogueMessageDto,
   SermasApiClient,
   sleep,
   type PlatformAppDto,
@@ -8,6 +9,7 @@ import {
   type UserInteractionIntentionDto,
 } from '@sermas/api-client';
 import EventEmitter2, { ListenerFn } from 'eventemitter2';
+import { getChunkId } from './utils.js';
 import { v4 as uuidv4 } from 'uuid';
 import { ApiClient } from './api.js';
 import { AuthClient } from './auth.js';
@@ -680,5 +682,34 @@ export class SermasToolkit {
       this.repositoryDefaults = repositoryDefaults || undefined;
     }
     return this.repositoryDefaults;
+  }
+
+  async sendChatMessage(text: string) {
+    try {
+      const gender = await this.getAvatarGender();
+      const avatar = await this.getAvatarConfig();
+      const messageId = getChunkId();
+      const chunkId = getChunkId();
+      const settings = this.getSettings().get();
+
+      const dialogueMessage: DialogueMessageDto = {
+        appId: this.getAppId(),
+        sessionId: this.getSessionId(),
+        text,
+        messageId,
+        chunkId,
+        language: settings.language || DEFAULT_AVATAR_LANGUAGE,
+        avatar: avatar?.id,
+        gender: gender || 'F',
+        llm: settings.llm,
+        ttsEnabled: settings.ttsEnabled,
+      };
+
+      await this.getApi().sendChatMessage(dialogueMessage);
+      return dialogueMessage;
+    } catch (e: any) {
+      this.logger.error(`Error sending chat message, e=${e.message}`);
+      return false;
+    }
   }
 }
