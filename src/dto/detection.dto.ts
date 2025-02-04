@@ -21,10 +21,3 @@ export enum UserCharacterizationEventSource {
   emotion_tracker = 'emotion_tracker',
   speechbrain = 'speechbrain',
 }
-
-export type WorkerMessageType = 'init' | 'process' | 'render' | 'destroy';
-
-export interface WorkerMessage extends Record<string, any> {
-  type: WorkerMessageType;
-  data: any;
-}

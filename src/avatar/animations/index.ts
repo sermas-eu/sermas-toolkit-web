@@ -8,7 +8,7 @@ import {
   AnimationLabel,
   DetectionPosition,
   GestureMappingKeys,
-} from 'dto.js';
+} from '../webavatar.dto.js';
 import { AvatarModel } from '../webavatar.js';
 import { AnimationBase } from './animation.base.js';
 import { Animator } from './animator/index.js';

@@ -1,4 +1,7 @@
-import { AvatarFaceBlendShape, DetectionPosition } from 'dto.js';
+import {
+  AvatarFaceBlendShape,
+  DetectionPosition,
+} from '../../../avatar/webavatar.dto.js';
 import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js';
 import { Logger } from '../../../logger.js';
 import { AnimationBase } from '../animation.base.js';

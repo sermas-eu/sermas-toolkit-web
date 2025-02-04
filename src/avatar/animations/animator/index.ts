@@ -1,7 +1,7 @@
 import { Logger } from '../../../logger.js';
 import * as THREE from 'three';
 import type { HolisticV1Results } from '../../../detection/video/mediapipe/v1/holistic/holistic.dto.js';
-import { DetectionPosition } from 'dto.js';
+import { DetectionPosition } from '../../webavatar.dto.js';
 
 export class Animator {
   private logger = new Logger('Animator');

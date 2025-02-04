@@ -1,6 +1,6 @@
 /// <reference lib="webworker" />
 
-import { WorkerMessage, WorkerMessageType } from '../dto.js';
+import { WorkerMessage, WorkerMessageType } from './detection.dto.js';
 import { VideoDetectorConfig } from './video/video.dto.js';
 
 export abstract class DetectorWorker {

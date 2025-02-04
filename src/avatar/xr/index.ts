@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { emitter } from '../../events.js';
 import { logger } from '../../logger.js';
-import { CameraConfig } from 'dto.js';
+import { CameraConfig } from '../webavatar.dto.js';
 import { AvatarModel } from '../webavatar.js';
 import { HitTestHandler } from './hitTest.js';
 import { createPlaneMarker } from './planeMarker.js';
