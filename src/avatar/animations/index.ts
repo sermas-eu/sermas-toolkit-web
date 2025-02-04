@@ -380,7 +380,7 @@ export class WebavatarAnimation extends AnimationBase {
       return;
     }
 
-    logger.log(`Play ${group} ${anim.name}`);
+    logger.debug(`Play ${group} ${anim.name}`);
 
     if (
       this.currentAnimation &&

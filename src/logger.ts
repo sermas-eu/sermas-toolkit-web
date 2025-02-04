@@ -8,6 +8,21 @@ let DefaultLogLevel: LogLevel = 'WARN';
 
 export const initLogger = () => {
   DefaultLogLevel = loadStoredLogLevel() || DefaultLogLevel;
+  loadLogFilter();
+};
+
+const loadLogFilter = () => {
+  if (typeof window !== undefined) {
+    const filterRaw = window.localStorage.getItem('sermas.logFilter');
+    if (!filterRaw) return;
+    try {
+      const filter = JSON.parse(filterRaw);
+      setLogFilter(...filter);
+      console.warn(
+        `log fitlers set: ${filter}. Use SERMAS.resetLogFilters() to reset`,
+      );
+    } catch {}
+  }
 };
 
 const loadStoredLogLevel = () => {
@@ -33,19 +48,30 @@ const levels: Record<LogLevel, number> = {
   ERROR: 400,
 };
 
-const defaultLogFilter = '*';
-let logFilter: string | undefined = defaultLogFilter;
+type LogFilter = string[];
+
+const defaultLogFilter = ['*'];
+let logFilter: LogFilter | undefined = defaultLogFilter;
 
 // set log filter
 // empty / undefined = none
 // * = all
 // prefix = filter by logger prefix
-export const setLogFilter = (filter?: string) => {
-  logFilter = filter;
+export const setLogFilter = (...args: string[]) => {
+  logFilter = [...args];
+  if (typeof window !== undefined) {
+    window.localStorage.setItem(
+      'sermas.logFilter',
+      JSON.stringify(logFilter || defaultLogFilter),
+    );
+  }
 };
 
 export const resetLogFilter = () => {
   logFilter = defaultLogFilter;
+  if (typeof window !== undefined) {
+    window.localStorage.removeItem('sermas.logFilter');
+  }
 };
 
 export class Logger {
@@ -85,8 +111,20 @@ export class Logger {
 
     if (levels[logLevel] > level) return true;
     if (logFilter === undefined) return true;
-    if (logFilter === '*') return false;
-    return this.prefix.toLowerCase().indexOf(logFilter.toLowerCase()) === -1;
+    if (logFilter.indexOf('*') > -1) return false;
+
+    const filters = logFilter instanceof Array ? [...logFilter] : [logFilter];
+
+    const filtered = !(
+      filters.filter(
+        (pattern) =>
+          this.prefix.toLowerCase().indexOf(pattern.toLowerCase()) > -1,
+      ).length > 0
+    );
+
+    // console.warn('filters', filters, 'filtered', filtered);
+
+    return filtered;
   }
 
   clear() {
@@ -119,4 +157,5 @@ export const logger = new Logger('default');
 
 addGlobal('setLogFilter', setLogFilter);
 addGlobal('resetLogFilter', resetLogFilter);
+
 initLogger();
