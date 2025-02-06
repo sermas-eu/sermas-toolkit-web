@@ -8,3 +8,4 @@ export * from './dto/proxy.dto.js';
 export * from './dto/session.dto.js';
 export * from './dto/settings.dto.js';
 export * from './dto/ui.dto.js';
+export * from './dto/subtitles.dto.js';

@@ -26,6 +26,7 @@ import { ListenerFn } from 'eventemitter2';
 import { EmotionBlendShape } from './animations/blendshapes/lib/index.js';
 import { AudioPlayerStatus } from './webavatar.audio-player.dto.js';
 import { WebAvatarAudioPlayer } from './webavatar.audio-player.js';
+import { WebAvatarSubtitles } from './webavatar.subtitles.js';
 
 const logger = new Logger('webavatar.handler');
 
@@ -43,6 +44,8 @@ export class WebAvatarHandler {
   private processedQueueTimer: NodeJS.Timeout;
 
   private player?: WebAvatarAudioPlayer;
+  private subtitles?: WebAvatarSubtitles;
+
   private lipsync?: LipSync;
   private isPlaying = false;
 
@@ -94,14 +97,6 @@ export class WebAvatarHandler {
     await this.player?.resume();
   }
 
-  emitAvatarEvent(playerStatus: AudioPlayerStatus) {
-    // const ev: AvatarAudioPlaybackStatus = {
-
-    // }
-    // TODO adapt event for AvatarAudioPlaybackStatus
-    emitter.emit('avatar.speech', playerStatus);
-  }
-
   stopSpeech(chunkId?: string) {
     logger.debug('playing speech stopped');
 
@@ -110,10 +105,6 @@ export class WebAvatarHandler {
 
     this.avatar.getAnimation()?.playGestureIdle();
   }
-
-  // onPlaybackChange(ev: AvatarAudioPlaybackStatus) {
-  //   this.avatarModel.setSpeaking(ev.status !== "ended")
-  // }
 
   updateProgressSpeech(chunkId: string, progress: number) {
     // logger.debug('playing speech progress');
@@ -147,8 +138,6 @@ export class WebAvatarHandler {
 
   onDetection(ev: UserCharacterizationEventDto) {
     if (ev.source !== UserCharacterizationEventSource.emotion_tracker) return;
-
-    // console.warn("EV", ev)
 
     if (!this.avatar) return;
 
@@ -387,6 +376,9 @@ export class WebAvatarHandler {
 
     this.player = new WebAvatarAudioPlayer();
 
+    this.subtitles = new WebAvatarSubtitles(this.avatar.getToolkit());
+    this.subtitles.init();
+
     this.onAudioPlayerStatus = this.onAudioPlayerStatus.bind(this);
     this.player.on('status', this.onAudioPlayerStatus);
 
@@ -401,5 +393,6 @@ export class WebAvatarHandler {
 
     await this.lipsync?.reset();
     await this.player?.stop();
+    await this.subtitles?.destroy();
   }
 }
