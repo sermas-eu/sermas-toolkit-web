@@ -12,8 +12,8 @@ export const initLogger = () => {
 };
 
 const loadLogFilter = () => {
-  if (typeof window !== 'undefined') {
-    const filterRaw = window.localStorage.getItem('sermas.logFilter');
+  if (typeof localStorage !== 'undefined') {
+    const filterRaw = localStorage.getItem('sermas.logFilter');
     if (!filterRaw) return;
     try {
       const filter = JSON.parse(filterRaw);
@@ -26,8 +26,8 @@ const loadLogFilter = () => {
 };
 
 const loadStoredLogLevel = () => {
-  if (typeof window !== 'undefined') {
-    const prevlogLevel = window.localStorage.getItem('sermas.logLevel');
+  if (typeof localStorage !== 'undefined') {
+    const prevlogLevel = localStorage.getItem('sermas.logLevel');
     return prevlogLevel as LogLevel;
   }
   return undefined;
@@ -35,8 +35,8 @@ const loadStoredLogLevel = () => {
 
 export const setDefaultLogLevel = (level: LogLevel) => {
   DefaultLogLevel = level;
-  if (typeof window !== 'undefined') {
-    window.localStorage.setItem('sermas.logLevel', level);
+  if (typeof localStorage !== 'undefined') {
+    localStorage.setItem('sermas.logLevel', level);
   }
 };
 
@@ -59,8 +59,8 @@ let logFilter: LogFilter | undefined = defaultLogFilter;
 // prefix = filter by logger prefix
 export const setLogFilter = (...args: string[]) => {
   logFilter = [...args];
-  if (typeof window !== 'undefined') {
-    window.localStorage.setItem(
+  if (typeof localStorage !== 'undefined') {
+    localStorage.setItem(
       'sermas.logFilter',
       JSON.stringify(logFilter || defaultLogFilter),
     );
@@ -69,8 +69,8 @@ export const setLogFilter = (...args: string[]) => {
 
 export const resetLogFilter = () => {
   logFilter = defaultLogFilter;
-  if (typeof window !== 'undefined') {
-    window.localStorage.removeItem('sermas.logFilter');
+  if (typeof localStorage !== 'undefined') {
+    localStorage.removeItem('sermas.logFilter');
   }
 };
 
