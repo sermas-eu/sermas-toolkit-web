@@ -12,7 +12,7 @@ export const initLogger = () => {
 };
 
 const loadLogFilter = () => {
-  if (typeof window !== undefined) {
+  if (typeof window !== 'undefined') {
     const filterRaw = window.localStorage.getItem('sermas.logFilter');
     if (!filterRaw) return;
     try {
@@ -59,7 +59,7 @@ let logFilter: LogFilter | undefined = defaultLogFilter;
 // prefix = filter by logger prefix
 export const setLogFilter = (...args: string[]) => {
   logFilter = [...args];
-  if (typeof window !== undefined) {
+  if (typeof window !== 'undefined') {
     window.localStorage.setItem(
       'sermas.logFilter',
       JSON.stringify(logFilter || defaultLogFilter),
@@ -69,7 +69,7 @@ export const setLogFilter = (...args: string[]) => {
 
 export const resetLogFilter = () => {
   logFilter = defaultLogFilter;
-  if (typeof window !== undefined) {
+  if (typeof window !== 'undefined') {
     window.localStorage.removeItem('sermas.logFilter');
   }
 };
