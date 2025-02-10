@@ -1,5 +1,5 @@
 import { Logger } from '../logger.js';
-import { AppSettings, mexQueue, SubtitleMessage } from 'dto.js';
+import { AppSettings, messageQueue, SubtitleMessage } from 'dto.js';
 import { AvatarAudioPlaybackStatus } from './webavatar.dto.js';
 import { emitter } from '../events.js';
 import { DialogueMessageDto, SermasToolkit } from 'index.js';
@@ -13,7 +13,7 @@ export class WebAvatarSubtitles {
     this.onForceStop = this.onForceStop.bind(this);
   }
 
-  private messageQ: mexQueue = {} as mexQueue;
+  private messageQ: messageQueue = {} as messageQueue;
   private settings: AppSettings | undefined;
   private playingChunkId: string | null = null;
   private playingChunkIdList: string[] = [];
@@ -43,7 +43,7 @@ export class WebAvatarSubtitles {
       const tmp = ev.text.match(/[a-zA-Z0-9]/g);
       const duration = (tmp ? tmp.length * this.textPace : 5) * 1000;
 
-      let mexList = this.splitMexString(ev.text).map((t) => {
+      let messageList = this.splitMexString(ev.text).map((t) => {
         const tmp1 = t.match(/[a-zA-Z0-9]/g);
         return {
           text: t,
@@ -52,7 +52,7 @@ export class WebAvatarSubtitles {
         };
       });
       let temp = 0;
-      mexList = mexList.map((m) => {
+      messageList = messageList.map((m) => {
         temp = temp + m.durationPercentage;
         return {
           text: m.text,
@@ -62,7 +62,7 @@ export class WebAvatarSubtitles {
 
       this.messageQ[ev.chunkId] = {
         mex: ev.text,
-        mexList,
+        messageList,
         id: ev.chunkId,
         duration,
       };
@@ -86,13 +86,16 @@ export class WebAvatarSubtitles {
       if (!ev.progress) return;
       if (!this.messageQ[ev.chunkId]) return;
       const id = Math.floor(
-        (this.messageQ[ev.chunkId].mexList.length * ev.progress) / 100,
+        (this.messageQ[ev.chunkId].messageList.length * ev.progress) / 100,
       );
 
-      if (id != this.lastId && id < this.messageQ[ev.chunkId].mexList.length) {
+      if (
+        id != this.lastId &&
+        id < this.messageQ[ev.chunkId].messageList.length
+      ) {
         const newEv = {
           id: `${ev.chunkId}${id}`,
-          mex: this.messageQ[ev.chunkId].mexList[id].text,
+          mex: this.messageQ[ev.chunkId].messageList[id].text,
         } as SubtitleMessage;
         emitter.emit('avatar.subtitle', newEv);
         this.lastId = id;
@@ -104,6 +107,7 @@ export class WebAvatarSubtitles {
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   onForceStop(ev) {
     if (this.timerRef) clearTimeout(this.timerRef);
     if (this.intervalRef) clearInterval(this.intervalRef);
@@ -136,7 +140,7 @@ export class WebAvatarSubtitles {
           this.messageQ[playId].duration,
       );
 
-      let id = this.messageQ[playId].mexList.findIndex(
+      let id = this.messageQ[playId].messageList.findIndex(
         (m) => m.durationPercentage >= percentage,
       );
 
@@ -145,10 +149,10 @@ export class WebAvatarSubtitles {
       if (diffTime < 1001 && id > 0) id = 0;
       if (id === -1 && this.lastId != null) id = this.lastId;
 
-      if (id != this.lastId && id < this.messageQ[playId].mexList.length) {
+      if (id != this.lastId && id < this.messageQ[playId].messageList.length) {
         const newEv = {
           id: `${playId}${id}`,
-          mex: this.messageQ[playId].mexList[id].text,
+          mex: this.messageQ[playId].messageList[id].text,
         } as SubtitleMessage;
 
         emitter.emit('avatar.subtitle', newEv);
