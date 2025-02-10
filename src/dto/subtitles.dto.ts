@@ -6,8 +6,13 @@ export interface SubtitleMessage {
 export interface mexQueue {
   [chunkId: string]: {
     mex: string;
-    mexList: string[];
+    mexList: mexListDto[];
     id: string;
     duration: number;
   };
+}
+
+export interface mexListDto {
+  text: string;
+  durationPercentage: number;
 }

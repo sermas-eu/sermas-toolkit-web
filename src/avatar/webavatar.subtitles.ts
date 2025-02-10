@@ -40,18 +40,37 @@ export class WebAvatarSubtitles {
 
   onNewMessage(ev: DialogueMessageDto) {
     if (ev.actor === 'agent' && ev.chunkId) {
-      const mexList = this.splitMexString(ev.text);
       const tmp = ev.text.match(/[a-zA-Z0-9]/g);
+      const duration = (tmp ? tmp.length * this.textPace : 5) * 1000;
+
+      let mexList = this.splitMexString(ev.text).map((t) => {
+        const tmp1 = t.match(/[a-zA-Z0-9]/g);
+        return {
+          text: t,
+          durationPercentage:
+            ((tmp1 ? tmp1.length * this.textPace : 10) * 1000 * 100) / duration,
+        };
+      });
+      let temp = 0;
+      mexList = mexList.map((m) => {
+        temp = temp + m.durationPercentage;
+        return {
+          text: m.text,
+          durationPercentage: temp,
+        };
+      });
 
       this.messageQ[ev.chunkId] = {
         mex: ev.text,
         mexList,
         id: ev.chunkId,
-        duration: (tmp ? tmp.length * this.textPace : 5) * 1000,
+        duration,
       };
       if (!this.settings?.enableAudio) {
         this.playingChunkIdList.push(ev.chunkId);
-        this.playSubs();
+        if (this.playingChunkIdList.length == 1) {
+          this.playSubs();
+        }
       }
     }
   }
@@ -73,7 +92,7 @@ export class WebAvatarSubtitles {
       if (id != this.lastId && id < this.messageQ[ev.chunkId].mexList.length) {
         const newEv = {
           id: `${ev.chunkId}${id}`,
-          mex: this.messageQ[ev.chunkId].mexList[id],
+          mex: this.messageQ[ev.chunkId].mexList[id].text,
         } as SubtitleMessage;
         emitter.emit('avatar.subtitle', newEv);
         this.lastId = id;
@@ -110,21 +129,28 @@ export class WebAvatarSubtitles {
 
     this.intervalRef = setInterval(() => {
       const now = new Date();
+
       const timeElapsed = end.getTime() - now.getTime();
       const percentage = Math.round(
         (100 * (this.messageQ[playId].duration - timeElapsed)) /
           this.messageQ[playId].duration,
       );
 
-      const id = Math.floor(
-        (this.messageQ[playId].mexList.length * percentage) / 100,
+      let id = this.messageQ[playId].mexList.findIndex(
+        (m) => m.durationPercentage >= percentage,
       );
+
+      // play first message if small percentage
+      const diffTime = now.getTime() - start.getTime();
+      if (diffTime < 1001 && id > 0) id = 0;
+      if (id === -1 && this.lastId != null) id = this.lastId;
 
       if (id != this.lastId && id < this.messageQ[playId].mexList.length) {
         const newEv = {
           id: `${playId}${id}`,
-          mex: this.messageQ[playId].mexList[id],
+          mex: this.messageQ[playId].mexList[id].text,
         } as SubtitleMessage;
+
         emitter.emit('avatar.subtitle', newEv);
         this.lastId = id;
       }
