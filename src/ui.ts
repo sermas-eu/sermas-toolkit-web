@@ -121,7 +121,6 @@ export class UI {
     };
 
     const actor = ev.actor as DialogueActor;
-    console.warn('onChatMessage evvvvvvvvvvvvvvvvvvvv content', content);
 
     this.appendContent(actor, content);
   }
@@ -241,14 +240,12 @@ export class UI {
       lastItem.messages.push(message);
     }
 
-    console.warn('......................>essage', message);
     const chunks: DialogueMessageUIContentDto[] = (message.metadata?.chunks
       ? message.metadata?.chunks
       : []) as unknown[] as DialogueMessageUIContentDto[];
 
     chunks.push(deepCopy(ev) as DialogueMessageUIContentDto);
 
-    console.warn('......................>chunks', chunks);
     // console.log('chunks', chunks.map((c) => c.content.text).join('\n'));
 
     message.metadata = message.metadata || {};
@@ -259,9 +256,6 @@ export class UI {
       .map((c) => c.content.text)
       .join('');
 
-    console.warn('......................>chunks', chunks);
-    console.warn('......................>chunksmessage', message);
-    console.warn('......................>this.history', this.history);
     this.setHistory(this.history);
   }
 
