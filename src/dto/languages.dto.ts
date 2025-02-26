@@ -5,7 +5,7 @@ export const supportedLanguages: SupportedLanguages = {
   'en-GB': 'English',
   'it-IT': 'Italian',
   'de-DE': 'German',
-  'pt-PT': 'Portoguese',
+  'pt-PT': 'Portuguese',
   'nl-NL': 'Dutch',
   'fr-FR': 'French',
   'es-ES': 'Spanish',
