@@ -74,7 +74,7 @@ export class Animator {
   }
 
   lookAt(target: THREE.Vector3) {
-    const t = new THREE.Vector3(target.x, target.y, 5);
+    const t = new THREE.Vector3(target.x, target.y, target.z * 5);
     this.bones.leftEye.lookAt(t);
     this.bones.rightEye.lookAt(t);
   }
