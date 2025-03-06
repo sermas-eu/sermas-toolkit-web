@@ -18,8 +18,6 @@ export class Animator {
 
   private isRPM: boolean;
 
-  private lookAtInterval: NodeJS.Timeout;
-
   constructor(
     model: THREE.Group,
     scene: THREE.Scene,
@@ -45,9 +43,9 @@ export class Animator {
     const skeletonHelper = new THREE.SkeletonHelper(model);
     this.skeleton = new THREE.Skeleton(skeletonHelper.bones);
     this.loadBones();
-    this.lookAtInterval = setInterval(() => {
+    setInterval(() => {
       this.lookAt(this.cameraTarget());
-    }, 5000);
+    }, 100);
   }
 
   getBone(name: string): THREE.Bone {
@@ -76,9 +74,9 @@ export class Animator {
   }
 
   lookAt(target: THREE.Vector3) {
-    target.z = target.z * 3; // simulate longer focus distance
-    this.bones.leftEye.lookAt(target);
-    this.bones.rightEye.lookAt(target);
+    const t = new THREE.Vector3(target.x, target.y, target.z * 5);
+    this.bones.leftEye.lookAt(t);
+    this.bones.rightEye.lookAt(t);
   }
 
   cameraTarget(): THREE.Vector3 {

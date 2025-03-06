@@ -270,7 +270,7 @@ export class AvatarModel {
       45,
       containerSizes.width / containerSizes.height,
       0.1,
-      9,
+      1000,
     );
 
     const fogColor = this.config.ui?.fogColor || '#64539E';
@@ -286,8 +286,12 @@ export class AvatarModel {
       hemiLightColors.ground,
       5,
     );
-    hemiLight.position.set(0, 200, 0);
+    hemiLight.position.set(0, 200, -20);
     this.scene.add(hemiLight);
+
+    const pointLight = new THREE.PointLight(0xffffff, 3, 5);
+    pointLight.position.set(0, 2.5, 2);
+    this.scene.add(pointLight);
 
     // ground
     // const mesh = new THREE.Mesh(
