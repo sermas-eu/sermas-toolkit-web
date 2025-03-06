@@ -4,8 +4,8 @@ import { AudioPlayerStatus } from './webavatar.audio-player.dto.js';
 
 const logger = new Logger('webavatar.player');
 
-const defaultStatus = (): AudioPlayerStatus => ({
-  enabled: true,
+const defaultStatus = (enabled: boolean): AudioPlayerStatus => ({
+  enabled: enabled,
   chunkId: '',
   playback: 'stopped',
   duration: 0,
@@ -16,7 +16,7 @@ const defaultStatus = (): AudioPlayerStatus => ({
 });
 
 export class WebAvatarAudioPlayer extends EventEmitter2 {
-  private status = defaultStatus();
+  private status = defaultStatus(true);
 
   private audioContext?: AudioContext;
   private source?: AudioBufferSourceNode;
@@ -48,7 +48,7 @@ export class WebAvatarAudioPlayer extends EventEmitter2 {
   async stop() {
     logger.debug(`Player stopped chunkId=${this.status.chunkId}`);
     this.source?.stop();
-    this.status = defaultStatus();
+    this.status = defaultStatus(this.status.enabled);
     this.status.playback = 'stopped';
     this.emitStatus();
   }
@@ -97,7 +97,7 @@ export class WebAvatarAudioPlayer extends EventEmitter2 {
       logger.debug(`Player completed chunkId=${this.status.chunkId}`);
       this.status.playback = 'stopped';
       this.emitStatus({ playback: 'completed' });
-      this.status = defaultStatus();
+      this.status = defaultStatus(this.status.enabled);
     };
 
     this.source.start();
