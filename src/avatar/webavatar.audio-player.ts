@@ -26,10 +26,6 @@ export class WebAvatarAudioPlayer extends EventEmitter2 {
     super();
   }
 
-  getStatus() {
-    return this.status;
-  }
-
   isPlaying() {
     return this.status.playback === 'playing';
   }
@@ -70,7 +66,10 @@ export class WebAvatarAudioPlayer extends EventEmitter2 {
   }
 
   async play(raw: Uint8Array, chunkId: string) {
-    if (!this.status.enabled) return;
+    if (!this.status.enabled) {
+      logger.debug('Player disabled. Audio will not be played');
+      return;
+    }
 
     const rawBuffer: ArrayBuffer = raw.buffer.slice(
       raw.byteOffset,
