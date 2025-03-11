@@ -34,14 +34,12 @@ export class WebavatarAnimation extends AnimationBase {
 
   private animator: Animator;
 
-  private currentGesture: GestureMappingKeys = 'gesture_idle';
+  private currentAction: THREE.AnimationAction | undefined = undefined;
+
+  private waitAction = false;
 
   // loopable gestures will be played in a loop. Gesture not in the list will just play once
-  private loopableGestures: GestureMappingKeys[] = [
-    'gesture_idle',
-    'gesture_talking',
-    'gesture_walk',
-  ];
+  private loopableGestures: string[] = ['idle', 'talking', 'listening'];
 
   private gestureIndexes: Record<GestureMappingKeys, number> = {
     gesture_default: 0,
@@ -280,16 +278,24 @@ export class WebavatarAnimation extends AnimationBase {
         },
         {} as Record<string, Record<string, AnimationHandler>>,
       );
+    this.initActions();
   }
 
-  resetAction(action: THREE.AnimationAction, loop = false) {
-    action.reset().setEffectiveWeight(1).setEffectiveTimeScale(1);
-    if (loop) {
-      action.setLoop(THREE.LoopPingPong, Infinity);
-    } else {
-      action.setLoop(THREE.LoopOnce, 1);
-    }
-    action.clampWhenFinished = true;
+  initActions() {
+    const actions = this.getAnimations('gesture');
+    actions.forEach((a) => {
+      if (a.name.indexOf('waving') > -1) {
+        a.action.setLoop(THREE.LoopOnce, 1);
+        a.action.clampWhenFinished = true;
+      } else {
+        a.action.setLoop(THREE.LoopPingPong, Infinity);
+        a.action.play();
+      }
+    });
+  }
+
+  resetAction(action: THREE.AnimationAction) {
+    action.reset().setEffectiveWeight(0).setEffectiveTimeScale(1);
   }
 
   onAnimationFinished(event: any) {
@@ -300,14 +306,9 @@ export class WebavatarAnimation extends AnimationBase {
 
     logger.debug(`finished animation ${label.group} ${label.name}`);
 
-    if (label.group === 'gesture') {
-      if (this.loopableGestures.indexOf(this.currentGesture) === -1) {
-        // logger.debug(`reset ${this.currentGesture} to gesture_idle`);
-        this.currentGesture = 'gesture_idle';
-      } else {
-        // logger.debug(`restarting gesture ${this.currentGesture}`);
-      }
-      this.playGesture(this.currentGesture);
+    if (!this.isLoopable(label.name)) {
+      this.waitAction = false;
+      this.playGestureIdle();
     }
   }
 
@@ -341,63 +342,59 @@ export class WebavatarAnimation extends AnimationBase {
     return `${gestureName}_${this.gestureIndexes[gestureKey]}`;
   }
 
-  playGesture(gestureKey: GestureMappingKeys) {
-    const animationName = this.getNextGestureAnimationName(gestureKey);
-    if (!animationName) {
-      logger.warn(`Animation not found ${gestureKey}`);
+  setAnimation(name: GestureMappingKeys) {
+    if (
+      this.currentAction &&
+      this.currentAction.getClip().name.indexOf(name) > -1
+    )
+      return;
+    if (this.waitAction) {
+      // wait action finish
       return;
     }
-    this.play('gesture', animationName);
-    this.currentGesture = gestureKey;
+    const animationName = this.getNextGestureAnimationName(name);
+    if (!animationName) return;
+    const anim = this.getAnimation('gesture', animationName);
+    if (!anim) return;
+
+    if (!this.isLoopable(anim.name)) {
+      this.resetAction(anim.action);
+      this.waitAction = true;
+    }
+
+    this.setWeight(anim.action, 1);
+
+    if (this.currentAction) {
+      this.currentAction.crossFadeTo(anim.action, 1, true);
+    }
+    this.currentAction = anim.action;
+  }
+
+  isLoopable(name: string) {
+    return this.loopableGestures.some((gesture) => name.indexOf(gesture) > -1);
+  }
+
+  setWeight(action, weight) {
+    action.enabled = true;
+    action.setEffectiveTimeScale(1);
+    action.setEffectiveWeight(weight);
   }
 
   playGestureIdle() {
-    this.playGesture('gesture_idle');
+    this.setAnimation('gesture_idle');
   }
 
   playGestureTalking() {
-    this.playGesture('gesture_talking');
+    this.setAnimation('gesture_talking');
   }
 
   playGestureListening() {
-    this.playGesture('gesture_listening');
+    this.setAnimation('gesture_listening');
   }
 
-  play(group: AnimationGroup, name: string) {
-    if (!this.animationEnabled) {
-      // logger.debug('Animation disabled');
-      return;
-    }
-
-    const anim = this.getAnimation(group, name);
-    if (!anim) {
-      // logger.debug(`animation for ${group} ${name} not found`);
-      return;
-    }
-
-    if (anim.action.isRunning()) {
-      // logger.debug(`animation already running ${group} ${name}`);
-      return;
-    }
-
-    logger.debug(`Play ${group} ${anim.name}`);
-
-    if (
-      this.currentAnimation &&
-      this.currentAnimation.action.isRunning() &&
-      !this.currentAnimation.name.startsWith('idle')
-    ) {
-      return; // wait animation finish
-    }
-
-    this.resetAction(anim.action, anim.name.startsWith('idle'));
-
-    if (this.currentAnimation) {
-      this.currentAnimation.action.crossFadeTo(anim.action, 0.5, true);
-    }
-    anim.action.play();
-
-    this.currentAnimation = anim;
+  playGestureWaving() {
+    this.setAnimation('gesture_waving');
+    this.currentAction?.play();
   }
 
   getRunningAnimations(group: AnimationGroup) {

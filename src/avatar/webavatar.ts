@@ -284,13 +284,13 @@ export class AvatarModel {
     const hemiLight = new THREE.HemisphereLight(
       hemiLightColors.sky,
       hemiLightColors.ground,
-      5,
+      6,
     );
     hemiLight.position.set(0, 200, -20);
     this.scene.add(hemiLight);
 
     const pointLight = new THREE.PointLight(0xffffff, 3, 5);
-    pointLight.position.set(0, 2.5, 2);
+    pointLight.position.set(0, 2.5, 2.2);
     this.scene.add(pointLight);
 
     // ground

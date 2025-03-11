@@ -43,9 +43,9 @@ export class Animator {
     const skeletonHelper = new THREE.SkeletonHelper(model);
     this.skeleton = new THREE.Skeleton(skeletonHelper.bones);
     this.loadBones();
-    setInterval(() => {
-      this.lookAt(this.cameraTarget());
-    }, 100);
+    // setInterval(() => {
+    //   this.lookAt(this.cameraTarget());
+    // }, 100);
   }
 
   getBone(name: string): THREE.Bone {
