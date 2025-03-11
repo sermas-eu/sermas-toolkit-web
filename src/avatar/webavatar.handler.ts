@@ -382,7 +382,9 @@ export class WebAvatarHandler {
 
   async destroy() {
     Object.keys(this.callbacks).forEach((key) => {
+      if (!this.callbacks[key]) return;
       emitter.off(key, this.callbacks[key]);
+      delete this.callbacks[key];
     });
     this.player?.off('status', this.onAudioPlayerStatus);
 
