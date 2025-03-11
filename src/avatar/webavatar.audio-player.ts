@@ -26,10 +26,6 @@ export class WebAvatarAudioPlayer extends EventEmitter2 {
     super();
   }
 
-  getStatus() {
-    return this.status;
-  }
-
   isPlaying() {
     return this.status.playback === 'playing';
   }
