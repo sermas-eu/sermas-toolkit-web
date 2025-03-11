@@ -169,13 +169,13 @@ export class WebAvatarHandler {
     if (ev.operation === 'created') {
       this.sessionStarted = true;
       // avatar greeting
-      this.avatar.getAnimation()?.playGesture('gesture_waving');
+      this.avatar.getAnimation()?.playGestureWaving();
     }
     if (ev.operation === 'updated') {
       if (ev.record.closedAt) {
         this.sessionStarted = false;
         // avatar bye bye
-        this.avatar.getAnimation()?.playGesture('gesture_waving');
+        this.avatar.getAnimation()?.playGestureWaving();
       }
     }
   }
@@ -225,10 +225,10 @@ export class WebAvatarHandler {
       this.stopSpeech();
       // move only if the session has started
       if (this.sessionStarted) {
-        this.avatar.getAnimation()?.playGesture('gesture_listening');
+        this.avatar.getAnimation()?.playGestureListening();
       }
     } else {
-      this.avatar.getAnimation()?.playGesture('gesture_idle');
+      this.avatar.getAnimation()?.playGestureIdle();
     }
   }
 
