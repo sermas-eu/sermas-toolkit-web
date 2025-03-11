@@ -182,6 +182,7 @@ export class WebAvatarHandler {
 
   // avatar speech received
   onAvatarSpeechMessage(ev: unknown, raw: MqttMessageEvent) {
+    logger.debug(`Avatar Speech message event: ${JSON.stringify(ev)}`);
     if (!this.lipsync) return;
 
     const buffer = raw.message.payload as any as Uint8Array;
@@ -295,13 +296,7 @@ export class WebAvatarHandler {
   }
 
   onAudioPlayerStatus(ev: AudioPlayerStatus) {
-    // console.warn(
-    //   'ev',
-    //   ev.playback,
-    //   'status',
-    //   this.player?.getStatus().playback,
-    // );
-
+    logger.debug(`Audio player status event: ${JSON.stringify(ev)}`);
     switch (ev.playback) {
       case 'started':
       case 'resumed':
