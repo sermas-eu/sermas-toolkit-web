@@ -76,7 +76,6 @@ export class Settings {
       enableMic: settings.enableMic,
       devMode: settings.devMode === true ? true : false,
       avatar: settings.avatar,
-      llm: settings.llm || llmDefaults(),
       background: settings.background,
       interactionStart: settings.interactionStart,
       virtualKeyboardEnabled: settings.virtualKeyboardEnabled,
@@ -87,17 +86,25 @@ export class Settings {
     localStorage.setItem(`sermas.settings.${this.appId}`, JSON.stringify(cfg));
   }
 
+  private saveSessionStorage(settings: AppSettings) {
+    if (typeof sessionStorage === 'undefined') return;
+
+    const cfg = {
+      llm: settings.llm || llmDefaults(),
+    };
+
+    sessionStorage.setItem(
+      `sermas.settings.${this.appId}`,
+      JSON.stringify(cfg),
+    );
+  }
+
   private loadLocalStorage(): Partial<AppSettings> | false | undefined {
     if (typeof localStorage === 'undefined') return undefined;
     try {
       const raw = localStorage.getItem(`sermas.settings.${this.appId}`);
       if (!raw) return false;
       const json = JSON.parse(raw) as Partial<AppSettings>;
-      // todo: fix to update localStorage, remove after 09/2024
-      if (json.llm && typeof json.llm === 'string') {
-        json.llm = llmDefaults();
-      }
-      // /fix
 
       // align tts settings, propagated to backend
       json.ttsEnabled = json.enableAudio;
@@ -109,11 +116,32 @@ export class Settings {
     }
   }
 
+  private loadSessionStorage(): Partial<AppSettings> | false | undefined {
+    if (typeof sessionStorage === 'undefined') return undefined;
+    try {
+      const raw = sessionStorage.getItem(`sermas.settings.${this.appId}`);
+      if (!raw) return false;
+      const json = JSON.parse(raw) as Partial<AppSettings>;
+      if (json.llm && typeof json.llm === 'string') {
+        json.llm = llmDefaults();
+      }
+      return json;
+    } catch (e: any) {
+      logger.error(`Failed session session storage: ${e.message}`);
+      return false;
+    }
+  }
+
   init(appId: string) {
     this.appId = appId;
-    const storage = this.loadLocalStorage();
-    if (storage) {
-      this.settings = { ...this.settings, ...(storage || {}) };
+    const savedLocalStorage = this.loadLocalStorage();
+    const savedSessionStorage = this.loadSessionStorage();
+    if (savedLocalStorage || savedSessionStorage) {
+      this.settings = {
+        ...this.settings,
+        ...(savedLocalStorage || {}),
+        ...(savedSessionStorage || {}),
+      };
     }
   }
 
@@ -123,20 +151,27 @@ export class Settings {
     return this.settings;
   }
 
+  getPartial(): Partial<AppSettings> {
+    return this.settings;
+  }
+
   async save(cfg: Partial<AppSettings>): Promise<AppSettings> {
     cfg = cfg || {};
     this.settings = { ...this.settings, ...cfg };
     this.saveLocalStorage(this.settings);
+    this.saveSessionStorage(this.settings);
     emitter.emit('settings', this.settings);
     return this.settings;
   }
 
   async load(): Promise<AppSettings> {
-    const saved = this.loadLocalStorage();
+    const savedLocalStorage = this.loadLocalStorage();
+    const savedSessionStorage = this.loadSessionStorage();
 
     this.settings = {
       ...this.settings,
-      ...(saved || {}),
+      ...(savedLocalStorage || {}),
+      ...(savedSessionStorage || {}),
     } as AppSettings;
 
     this.settings.llm = this.settings.llm || llmDefaults();
@@ -144,7 +179,11 @@ export class Settings {
     return this.settings;
   }
 
-  hasSavedSettings() {
+  hasSavedLocalSettings() {
     return !!this.loadLocalStorage();
+  }
+
+  hasSavedSessionSettings() {
+    return !!this.loadSessionStorage();
   }
 }
