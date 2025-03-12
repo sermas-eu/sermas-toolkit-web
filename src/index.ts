@@ -301,21 +301,29 @@ export class SermasToolkit {
 
     this.api.setAppId(app?.appId);
     this.broker.setAppId(app?.appId);
+    const appSettings = app.settings || {};
 
-    let appSettings = app.settings || {};
     const loadedSettings = this.settings.getPartial();
     const loadedLlmSettings = loadedSettings.llm;
     delete loadedSettings.llm;
 
-    if (this.settings.hasSavedLocalSettings()) {
-      appSettings = { ...appSettings, ...{ llm: loadedLlmSettings } };
-    }
+    let tmpSet = { ...appSettings };
+
+    if (
+      !this.settings.hasSavedLocalSettings() &&
+      !this.settings.hasSavedSessionSettings()
+    )
+      tmpSet = { ...loadedSettings, ...appSettings };
 
     if (this.settings.hasSavedSessionSettings()) {
-      appSettings = { ...appSettings, ...loadedSettings };
+      tmpSet = { ...tmpSet, ...{ llm: loadedLlmSettings } };
     }
 
-    this.settings.save(appSettings);
+    if (this.settings.hasSavedLocalSettings()) {
+      tmpSet = { ...tmpSet, ...loadedSettings };
+    }
+
+    this.settings.save(tmpSet);
   }
 
   onAvatarSpeechStop() {
