@@ -301,14 +301,29 @@ export class SermasToolkit {
 
     this.api.setAppId(app?.appId);
     this.broker.setAppId(app?.appId);
-    const lsSettings = this.settings.hasSavedSettings();
     const appSettings = app.settings || {};
-    const loadedSettings = this.settings.get();
-    if (lsSettings) {
-      this.settings.save({ ...appSettings, ...loadedSettings });
-    } else {
-      this.settings.save({ ...loadedSettings, ...appSettings });
+
+    const loadedSettings = this.settings.getPartial();
+    const loadedLlmSettings = loadedSettings.llm;
+    delete loadedSettings.llm;
+
+    let tmpSet = { ...appSettings };
+
+    if (
+      !this.settings.hasSavedLocalSettings() &&
+      !this.settings.hasSavedSessionSettings()
+    )
+      tmpSet = { ...loadedSettings, ...appSettings };
+
+    if (this.settings.hasSavedSessionSettings()) {
+      tmpSet = { ...tmpSet, ...{ llm: loadedLlmSettings } };
     }
+
+    if (this.settings.hasSavedLocalSettings()) {
+      tmpSet = { ...tmpSet, ...loadedSettings };
+    }
+
+    this.settings.save(tmpSet);
   }
 
   onAvatarSpeechStop() {
@@ -437,7 +452,7 @@ export class SermasToolkit {
     // load previous session if credentials are available
     const appRequiresLogin = await this.userAuth.appRequiresLogin();
     if (appRequiresLogin) {
-      this.logger.debug(`Login requred for app ${this.getAppId()}`);
+      this.logger.debug(`Login required for app ${this.getAppId()}`);
 
       const currentUser = await this.userAuth.loadUser();
 
