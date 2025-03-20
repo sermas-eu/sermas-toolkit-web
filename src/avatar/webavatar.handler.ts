@@ -169,13 +169,13 @@ export class WebAvatarHandler {
     if (ev.operation === 'created') {
       this.sessionStarted = true;
       // avatar greeting
-      this.avatar.getAnimation()?.playGestureWaving();
+      // this.avatar.getAnimation()?.playGestureWaving();
     }
     if (ev.operation === 'updated') {
       if (ev.record.closedAt) {
         this.sessionStarted = false;
         // avatar bye bye
-        this.avatar.getAnimation()?.playGestureWaving();
+        // this.avatar.getAnimation()?.playGestureWaving();
       }
     }
   }
