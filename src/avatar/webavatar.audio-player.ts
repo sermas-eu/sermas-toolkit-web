@@ -2,7 +2,7 @@ import EventEmitter2 from 'eventemitter2';
 import { Logger } from '../logger.js';
 import { AudioPlayerStatus } from './webavatar.audio-player.dto.js';
 
-const logger = new Logger('webavatar.player');
+const logger = new Logger('webavatar.audio-player');
 
 const defaultStatus = (enabled: boolean): AudioPlayerStatus => ({
   enabled: enabled,

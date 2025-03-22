@@ -249,9 +249,9 @@ export class WebAvatarHandler {
     // to allow the sentences to be wrapped together,
     // wait to reach a threshold before playing
     // const threshold = 100;
-    // if (size < threshold && wait < 2) {
-    if (this.processedQueue < 2 && this.audioQueue.length < 3 && wait > 0) {
-      const waitFor = 300 / wait;
+    // NOTE this should be handle from backend now
+    if (this.processedQueue < 2 && this.audioQueue.length < 2 && wait > 0) {
+      const waitFor = 200 / wait;
       logger.debug(
         `Waiting queue threshold to be reached size=${size}kb wait=${wait} length=${this.audioQueue.length} waitFor=${waitFor}`,
       );
@@ -296,7 +296,7 @@ export class WebAvatarHandler {
   }
 
   onAudioPlayerStatus(ev: AudioPlayerStatus) {
-    logger.debug(`Audio player status event: ${JSON.stringify(ev)}`);
+    // logger.debug(`Audio player status event: ${JSON.stringify(ev)}`);
     switch (ev.playback) {
       case 'started':
       case 'resumed':
