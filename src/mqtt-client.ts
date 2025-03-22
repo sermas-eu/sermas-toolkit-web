@@ -149,7 +149,7 @@ export class MqttClient extends EventEmitter2 {
       this.mqttClient.publish(
         `app/${this.options.appId}/${topic}`,
         json ? JSON.stringify(data) : data,
-        { qos: 2, retain: false },
+        { qos: 1, retain: false },
       );
     } catch (e: any) {
       this.logger.warn(`Failed to send: ${e.message}`);

@@ -251,7 +251,7 @@ export class WebAvatarHandler {
     // const threshold = 100;
     // NOTE this should be handle from backend now
     if (this.processedQueue < 2 && this.audioQueue.length < 2 && wait > 0) {
-      const waitFor = 200 / wait;
+      const waitFor = 300 / wait;
       logger.debug(
         `Waiting queue threshold to be reached size=${size}kb wait=${wait} length=${this.audioQueue.length} waitFor=${waitFor}`,
       );

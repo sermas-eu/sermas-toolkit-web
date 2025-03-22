@@ -8,6 +8,7 @@ import type {
   RealTimeVADOptions,
 } from '@ricky0123/vad-web/dist/real-time-vad';
 import axios from 'axios';
+import { Buffer } from "buffer";
 import EventEmitter2 from 'eventemitter2';
 import { emitter } from '../events.js';
 import {
@@ -21,6 +22,8 @@ import { getChunkId } from '../utils.js';
 import { AudioClassificationValue } from './audio/audio.detection.dto.js';
 import { createAudioClassifier } from './audio/mediapipe/audio.classifier.js';
 import classes from './audio/mediapipe/classes.json' assert { type: 'json' };
+
+const SEND_VIA_BROKER = true
 
 const VAD_SAMPLE_RATE = 16000;
 const SPEECH_CLASSIFIER_THRESHOLD = 0.5;
@@ -465,9 +468,15 @@ export class AudioDetection extends EventEmitter2 {
     formData.append('ttsEnabled', settings.ttsEnabled ? 'true' : 'false');
 
     try {
-      await this.toolkit.getApi().sendAudio(formData, {
-        sampleRate,
-      });
+      
+      if (SEND_VIA_BROKER) {
+        this.toolkit.getBroker().publish(`dialogue/user-speech/${this.toolkit.getSessionId()}/${chunkId}`, Buffer.from(new Uint8Array(audio)), false)
+      } else {
+        await this.toolkit.getApi().sendAudio(formData, {
+          sampleRate,
+        });
+      }
+
       this.logger.debug(`Audio clip sent`);
     } catch (err: any) {
       this.logger.error(`Failed to send clip: ${err.stack}`);
