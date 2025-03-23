@@ -19,6 +19,7 @@ import {
 
 import {
   DialogueMessageDto,
+  SermasSessionDto,
   SessionChangedDto,
   UserCharacterizationEventDto,
 } from '@sermas/api-client';
@@ -57,6 +58,8 @@ export class WebAvatarHandler {
       'dialogue.messages': this.onDialogueMessage,
       'session.session': this.onSession,
       'dialogue.speech': this.onAvatarSpeechMessage,
+      'dialogue.continue': this.onAvatarSpeechContinue,
+      'dialogue.stop': this.onAvatarSpeechStop,
     },
     emitter: {
       'detection.characterization': this.onDetection,
@@ -104,6 +107,18 @@ export class WebAvatarHandler {
     emitter.emit('avatar.speech', ev);
 
     this.avatar.getAnimation()?.playGestureIdle();
+  }
+
+  async onAvatarSpeechContinue(ev: SermasSessionDto) {
+    if (ev.sessionId !== this.avatar.getToolkit()?.getSessionId()) return
+    logger.debug("Received speech CONTINUE")
+    await this.resumeSpeech()
+  }
+  
+  async onAvatarSpeechStop(ev: SermasSessionDto) {
+    if (ev.sessionId !== this.avatar.getToolkit()?.getSessionId()) return
+    logger.debug("Received speech STOP")
+    await this.stopSpeech()
   }
 
   updateProgressSpeech(chunkId: string, progress: number) {
