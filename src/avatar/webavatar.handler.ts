@@ -18,8 +18,8 @@ import {
 } from './index.js';
 
 import {
+  DialogueAvatarSpeechControlDto,
   DialogueMessageDto,
-  SermasSessionDto,
   SessionChangedDto,
   UserCharacterizationEventDto,
 } from '@sermas/api-client';
@@ -109,21 +109,20 @@ export class WebAvatarHandler {
     this.avatar.getAnimation()?.playGestureIdle();
   }
 
-  async onAvatarSpeechContinue(ev: SermasSessionDto) {
+  async onAvatarSpeechContinue(ev: DialogueAvatarSpeechControlDto) {
     if (ev.sessionId !== this.avatar.getToolkit()?.getSessionId()) return
     logger.debug("Received speech CONTINUE")
     await this.resumeSpeech()
   }
   
-  async onAvatarSpeechStop(ev: SermasSessionDto) {
+  async onAvatarSpeechStop(ev: DialogueAvatarSpeechControlDto) {
     if (ev.sessionId !== this.avatar.getToolkit()?.getSessionId()) return
     logger.debug("Received speech STOP")
-    await this.stopSpeech()
+    await this.stopSpeech(ev.chunkId)
   }
 
   updateProgressSpeech(chunkId: string, progress: number) {
     // logger.debug('playing speech progress');
-
     const ev: AvatarAudioPlaybackStatus = {
       status: 'playing',
       chunkId,
@@ -197,7 +196,8 @@ export class WebAvatarHandler {
 
   // avatar speech received
   onAvatarSpeechMessage(ev: unknown, raw: MqttMessageEvent) {
-    logger.debug(`Avatar Speech message event: ${JSON.stringify(ev)}`);
+    // logger.debug(`Avatar Speech message event: ${JSON.stringify(ev)}`);
+
     if (!this.lipsync) return;
 
     const buffer = raw.message.payload as any as Uint8Array;

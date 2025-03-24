@@ -183,6 +183,10 @@ export class WebAvatarAudioPlayer extends EventEmitter2 {
     this.status.volume = this.getVolume();
     if (lastVolume !== this.status.volume) hasChanges = true;
 
+    // skip updates when not playing
+    if (this.status.playback === 'completed' || this.status.playback === 'stopped'|| this.status.playback === 'paused') 
+      return
+
     if (hasChanges) this.emitStatus();
   }
 }
