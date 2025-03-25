@@ -88,7 +88,7 @@ export class Logger {
       return this.formatterCallback(v);
     }
     return [
-      `${level} ${this.showDates ? new Date() + ' ' : ''}[${this.prefix}]`,
+      `${level} ${new Date().toLocaleTimeString().split(' ')[0]} ${this.showDates ? new Date() + ' ' : ''}[${this.prefix}]`,
       ...v,
     ];
   }

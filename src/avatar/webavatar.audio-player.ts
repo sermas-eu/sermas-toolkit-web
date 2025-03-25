@@ -2,7 +2,7 @@ import EventEmitter2 from 'eventemitter2';
 import { Logger } from '../logger.js';
 import { AudioPlayerStatus } from './webavatar.audio-player.dto.js';
 
-const logger = new Logger('webavatar.player');
+const logger = new Logger('webavatar.audio-player');
 
 const defaultStatus = (enabled: boolean): AudioPlayerStatus => ({
   enabled: enabled,
@@ -182,6 +182,10 @@ export class WebAvatarAudioPlayer extends EventEmitter2 {
     const lastVolume = this.status.volume;
     this.status.volume = this.getVolume();
     if (lastVolume !== this.status.volume) hasChanges = true;
+
+    // skip updates when not playing
+    if (this.status.playback === 'completed' || this.status.playback === 'stopped'|| this.status.playback === 'paused') 
+      return
 
     if (hasChanges) this.emitStatus();
   }

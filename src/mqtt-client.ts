@@ -85,7 +85,7 @@ export class MqttClient extends EventEmitter2 {
 
   unsubscribe(topic: string) {
     if (!this.isConnected()) {
-      this.logger.debug(`Cannot unsubsribe, not connected`);
+      this.logger.debug(`Cannot unsubscribe, not connected`);
       return;
     }
     // this.logger.debug(`UNSUB ${topic}`);
@@ -149,7 +149,7 @@ export class MqttClient extends EventEmitter2 {
       this.mqttClient.publish(
         `app/${this.options.appId}/${topic}`,
         json ? JSON.stringify(data) : data,
-        { qos: 2, retain: false },
+        { qos: 1, retain: false },
       );
     } catch (e: any) {
       this.logger.warn(`Failed to send: ${e.message}`);
@@ -227,7 +227,7 @@ export class MqttClient extends EventEmitter2 {
       (() => this.emit(`${resource}.${scope}`, ev.payload, ev))();
 
       // emitter.emit('mqtt.message', ev)
-      (() => emitter.emit(`${resource}.${scope}`, ev.payload, ev))();
+      // (() => emitter.emit(`${resource}.${scope}`, ev.payload, ev))();
 
       this.addACLEvent('sub', `${resource}.${scope}`);
       // this.logger.debug(`received mqtt event ${resource}.${scope} `, ev.payload)
