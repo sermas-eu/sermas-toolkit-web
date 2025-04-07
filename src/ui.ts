@@ -24,7 +24,7 @@ export class UI {
   private readonly emitter: EventEmitter2;
   private readonly listeners: EventListenerTracker;
 
-  // private lastClearScreen: string;
+  private lastClearScreen: string;
 
   private history: ChatMessage[] = [];
   private initialized = false;
@@ -144,8 +144,6 @@ export class UI {
   }
 
   async handleCleanScreen(ev: UIContentDto) {
-    // this.lastClearScreen = ev.messageId || getMessageId();
-
     if (ev.options && ev.options.stopSpeech) {
       this.logger.debug(`Stop avatar speech`);
       this.stopAvatarSpeech(
@@ -158,6 +156,12 @@ export class UI {
       ev.contentType === 'clear-screen' ||
       (ev.options && ev.options.clearScreen)
     ) {
+      this.lastClearScreen =
+        ev.messageId || (ev.content as any)?.messageId || getMessageId();
+      // this.logger.warn(
+      //   `Set last clear screen ${ev.messageId} ${ev.ts ? new Date(ev.ts) : undefined}`,
+      // );
+
       this.logger.debug(`Clear screen`);
       this.clearHistory();
     }
@@ -173,19 +177,20 @@ export class UI {
     )
       return;
 
-    // const lastMessageId = ev.messageId;
-    // const lastContentMessageId = ev.content?.messageId;
-    // if (
-    //   (this.lastClearScreen &&
-    //     lastMessageId &&
-    //     lastMessageId < this.lastClearScreen) ||
-    //   (lastContentMessageId && lastContentMessageId < this.lastClearScreen)
-    // ) {
-    //   this.logger.debug(
-    //     `Skip ui content older than last clear screen ev.messageId=${ev.messageId} ev.content.messageId=${ev.content?.messageId} lastClearScreen=${this.lastClearScreen}`,
-    //   );
-    //   return;
-    // }
+    const lastMessageId = (ev.content as any)?.messageId || ev.messageId;
+    // this.logger.log(
+    //   `current messageId ${lastMessageId} ${ev.ts ? new Date(ev.ts) : undefined} | skip=${lastMessageId < this.lastClearScreen}`,
+    // );
+    if (
+      this.lastClearScreen &&
+      lastMessageId &&
+      lastMessageId < this.lastClearScreen
+    ) {
+      this.logger.debug(
+        `Skip ui content older than last clear screen ev.messageId=${ev.messageId} ev.content.messageId=${ev.content?.messageId} lastClearScreen=${this.lastClearScreen}`,
+      );
+      return;
+    }
 
     if (ev.content) {
       const uiContent = ev.content as UIContentDto;
