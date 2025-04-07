@@ -625,7 +625,7 @@ export class SermasToolkit {
   ): Promise<string | undefined> {
     let config = await this.getAssetConfig(type, id);
     if (!config) {
-      this.logger.warn(`Asset config ${type} ${id} not found`);
+      this.logger.debug(`Asset config ${type} ${id} not found`);
       if (!useDefaults) return undefined;
       this.logger.debug(`using default asset for ${type} loader`);
 

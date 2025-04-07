@@ -2,7 +2,7 @@ import { AvatarModelConfig } from './webavatar.dto.js';
 
 export const DefaultAvatarConfig: AvatarModelConfig = {
   type: 'avatars',
-  id: 'default',
+  id: 'fallback',
   path: 'https://models.readyplayer.me/654cc759f1a79ed2ebab0207.glb',
 
   gender: 'F',

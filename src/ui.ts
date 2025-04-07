@@ -24,6 +24,8 @@ export class UI {
   private readonly emitter: EventEmitter2;
   private readonly listeners: EventListenerTracker;
 
+  private lastClearScreen: string;
+
   private history: ChatMessage[] = [];
   private initialized = false;
 
@@ -142,6 +144,8 @@ export class UI {
   }
 
   async handleCleanScreen(ev: UIContentDto) {
+    this.lastClearScreen = ev.messageId || getMessageId();
+
     if (ev.options && ev.options.stopSpeech) {
       this.logger.debug(`Stop avatar speech`);
       this.stopAvatarSpeech(
@@ -169,9 +173,25 @@ export class UI {
     )
       return;
 
+    const lastMessageId = ev.messageId;
+    const lastContentMessageId = ev.content?.messageId;
+
+    if (
+      (this.lastClearScreen &&
+        lastMessageId &&
+        lastMessageId < this.lastClearScreen) ||
+      (lastContentMessageId && lastContentMessageId < this.lastClearScreen)
+    ) {
+      this.logger.debug(
+        `Skip ui content older than last clear screen ev.messageId=${ev.messageId} ev.content.messageId=${ev.content?.messageId} lastClearScreen=${this.lastClearScreen}`,
+      );
+      return;
+    }
+
     if (ev.content) {
-      ev.content.messageId = ev.content.messageId || getChunkId();
-      ev.content.chunkId = ev.content.chunkId || getChunkId();
+      const uiContent = ev.content as UIContentDto;
+      uiContent.messageId = uiContent.messageId || getMessageId();
+      uiContent.chunkId = uiContent.chunkId || getChunkId();
     }
 
     // this.logger.debug(`ev ${JSON.stringify(ev)}`);

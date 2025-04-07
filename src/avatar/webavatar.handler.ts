@@ -110,15 +110,15 @@ export class WebAvatarHandler {
   }
 
   async onAvatarSpeechContinue(ev: DialogueAvatarSpeechControlDto) {
-    if (ev.sessionId !== this.avatar.getToolkit()?.getSessionId()) return
-    logger.debug("Received speech CONTINUE")
-    await this.resumeSpeech()
+    if (ev.sessionId !== this.avatar.getToolkit()?.getSessionId()) return;
+    logger.debug('Received speech CONTINUE');
+    await this.resumeSpeech();
   }
-  
+
   async onAvatarSpeechStop(ev: DialogueAvatarSpeechControlDto) {
-    if (ev.sessionId !== this.avatar.getToolkit()?.getSessionId()) return
-    logger.debug("Received speech STOP")
-    await this.stopSpeech(ev.chunkId)
+    if (ev.sessionId !== this.avatar.getToolkit()?.getSessionId()) return;
+    logger.debug('Received speech STOP');
+    await this.stopSpeech(ev.chunkId);
   }
 
   updateProgressSpeech(chunkId: string, progress: number) {
@@ -398,8 +398,10 @@ export class WebAvatarHandler {
   async destroy() {
     Object.keys(this.callbacks).forEach((key) => {
       if (!this.callbacks[key]) return;
-      emitter.off(key, this.callbacks[key]);
-      delete this.callbacks[key];
+      try {
+        emitter.off(key, this.callbacks[key]);
+        delete this.callbacks[key];
+      } catch {}
     });
     this.player?.off('status', this.onAudioPlayerStatus);
 

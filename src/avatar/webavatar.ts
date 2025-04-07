@@ -401,25 +401,26 @@ export class AvatarModel {
   }
 
   // load 3D model
-  async loadModel(): Promise<THREE.Group | undefined> {
-    const format = this.config.path.endsWith('.fbx') ? 'fbx' : 'glb';
+  async loadModel(
+    config?: AvatarModelConfig,
+    fallbackToDefault?: boolean,
+  ): Promise<THREE.Group | undefined> {
+    config = config || this.config;
+
+    const format = config.path.endsWith('.fbx') ? 'fbx' : 'glb';
     const loader = format === 'fbx' ? new FBXLoader() : new GLTFLoader();
 
-    let url: string | undefined = this.config.path;
+    let url: string | undefined = config.path;
 
-    if (this.toolkit && this.config.id != 'rpm') {
-      url = await this.toolkit.configureLoader(
-        'avatars',
-        this.config.id,
-        loader,
-      );
+    if (this.toolkit && config.id != 'rpm') {
+      url = await this.toolkit.configureLoader('avatars', config.id, loader);
     }
 
     // path is an URL
+    const suffix = 'morphTargets=ARKit,Oculus%20Visemes%2032';
     if (url && url.startsWith('http') && url.indexOf('readyplayer') > -1) {
       // ready player me path
       if (url.indexOf('morphTargets') === -1) {
-        const suffix = 'morphTargets=ARKit,Oculus%20Visemes%2032';
         url = `${url}${url.indexOf('?') === -1 ? '?' : '&'}${suffix}`;
       }
     }
@@ -429,18 +430,25 @@ export class AvatarModel {
       return undefined;
     }
 
-    logger.log(`loading ${format} from ${url}`);
-    const model = await loader.loadAsync(
-      url,
-      (ev: ProgressEvent<EventTarget>) =>
+    let model: GLTF | THREE.Group | undefined = undefined;
+    try {
+      logger.log(`loading ${format} from ${url}`);
+      model = await loader.loadAsync(url, (ev: ProgressEvent<EventTarget>) =>
         this.showLoadingProgress(ev.loaded, ev.total),
-    );
-    // loading completed
+      );
+    } catch (e: any) {
+      logger.error(`Failed to load ${url}: ${e.message}`);
+      if (fallbackToDefault !== false) {
+        logger.debug(`Loading default model ${DefaultAvatarConfig.path}`);
+        return await this.loadModel(DefaultAvatarConfig, false);
+      }
+    }
+
     sendStatus('');
+    if (!model) return undefined;
 
     // handle gltf/glb
     const gltf = model as GLTF;
-
     if (gltf.parser !== undefined && gltf.scene !== undefined) {
       return gltf.scene;
     }
