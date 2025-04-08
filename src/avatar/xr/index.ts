@@ -218,7 +218,7 @@ export class WebAvatarXR {
     this.controller.addEventListener('select', this.onSelect);
     if (model) {
       this.modelPosition = model.position;
-      this.modelScale = model.scale;
+      this.modelScale = model.scale.set(4.5,4.5,4.5)
       this.cameraConfig = this.avatar.getCameraConfig();
       scene.remove(model);
     }
