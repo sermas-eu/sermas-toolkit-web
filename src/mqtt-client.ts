@@ -2,7 +2,6 @@ import EventEmitter2 from 'eventemitter2';
 import mqtt from 'mqtt';
 import { v4 as uuidv4 } from 'uuid';
 import type { MqttMessageEvent } from './dto.js';
-import { emitter } from './events.js';
 import { Logger } from './logger.js';
 
 export interface MqttClientOptions {
@@ -41,7 +40,14 @@ export class MqttClient extends EventEmitter2 {
   }
 
   getACLEvents() {
-    return this.events;
+    return [
+      ...(this.events?.pub?.length
+        ? this.events?.pub?.map((e) => `${e}:write`)
+        : []),
+      ...(this.events?.sub?.length
+        ? this.events?.sub?.map((e) => `${e}:read`)
+        : []),
+    ];
   }
 
   setTopics(topics: string[]) {
