@@ -1,6 +1,9 @@
 import EventEmitter2 from 'eventemitter2';
 import { Logger } from '../logger.js';
-import { AudioPlayerStatus } from './webavatar.audio-player.dto.js';
+import {
+  AudioPlayerStatus,
+  PlaybackStatus,
+} from './webavatar.audio-player.dto.js';
 
 const logger = new Logger('webavatar.audio-player');
 
@@ -17,6 +20,8 @@ const defaultStatus = (enabled: boolean): AudioPlayerStatus => ({
 
 export class WebAvatarAudioPlayer extends EventEmitter2 {
   private status = defaultStatus(true);
+
+  private lastStatus: PlaybackStatus | undefined = undefined;
 
   private audioContext?: AudioContext;
   private source?: AudioBufferSourceNode;
@@ -41,26 +46,33 @@ export class WebAvatarAudioPlayer extends EventEmitter2 {
     this.emit('status', state);
   }
 
+  private setPlaybackStatus(status: PlaybackStatus) {
+    this.lastStatus = this.status.playback;
+    this.status.playback = status;
+  }
+
   async stop() {
     logger.debug(`Player stopped chunkId=${this.status.chunkId}`);
     this.source?.stop();
     this.status = defaultStatus(this.status.enabled);
-    this.status.playback = 'stopped';
+    this.setPlaybackStatus('stopped');
     this.emitStatus();
   }
 
   async pause() {
     if (!this.audioContext) return;
     logger.debug(`Player paused chunkId=${this.status.chunkId}`);
-    this.status.playback = 'paused';
+    this.setPlaybackStatus('paused');
     await this.audioContext.suspend();
     this.emitStatus();
   }
 
   async resume() {
     if (!this.audioContext) return;
+    if (this.status.playback === 'playing') return;
+
     logger.debug(`Player resumed chunkId=${this.status.chunkId}`);
-    this.status.playback = 'playing';
+    this.setPlaybackStatus('playing');
     await this.audioContext.resume();
     this.emitStatus({ playback: 'resumed' });
   }
@@ -92,11 +104,15 @@ export class WebAvatarAudioPlayer extends EventEmitter2 {
 
     this.source.connect(this.audioContext.destination);
 
-    this.source.onended = () => {
+    this.source.onended = async () => {
       logger.debug(`Player completed chunkId=${this.status.chunkId}`);
-      this.status.playback = 'stopped';
+
+      this.setPlaybackStatus('stopped');
       this.emitStatus({ playback: 'completed' });
       this.status = defaultStatus(this.status.enabled);
+
+      // destroy the audio context, will be recreated on next play
+      await this.destroy();
     };
 
     this.source.start();
@@ -106,7 +122,7 @@ export class WebAvatarAudioPlayer extends EventEmitter2 {
     this.status.progress = 0;
     this.status.duration = buffer.duration;
 
-    this.status.playback = 'playing';
+    this.setPlaybackStatus('playing');
     this.emitStatus({ playback: 'started' });
     logger.debug(`Player playing chunkId=${this.status.chunkId}`);
 
@@ -114,7 +130,7 @@ export class WebAvatarAudioPlayer extends EventEmitter2 {
   }
 
   animationFrameCallback() {
-    if (!this.isPlaying()) return;
+    if (!this.audioContext) return;
     this.updatePlaybackStatus();
     requestAnimationFrame(() => this.animationFrameCallback());
   }
@@ -132,11 +148,15 @@ export class WebAvatarAudioPlayer extends EventEmitter2 {
       this.analyzer = undefined;
     }
 
+    await this.closeAudioContext();
+  }
+
+  private async closeAudioContext() {
     if (this.audioContext) {
       try {
         await this.audioContext?.close();
-        this.audioContext = undefined;
       } catch {}
+      this.audioContext = undefined;
     }
   }
 
@@ -183,9 +203,19 @@ export class WebAvatarAudioPlayer extends EventEmitter2 {
     this.status.volume = this.getVolume();
     if (lastVolume !== this.status.volume) hasChanges = true;
 
+    if (this.status.playback !== this.lastStatus) {
+      this.lastStatus = this.status.playback;
+      hasChanges = true;
+    }
+
     // skip updates when not playing
-    if (this.status.playback === 'completed' || this.status.playback === 'stopped'|| this.status.playback === 'paused') 
-      return
+    if (
+      this.status.playback === this.lastStatus &&
+      (this.status.playback === 'completed' ||
+        this.status.playback === 'stopped' ||
+        this.status.playback === 'paused')
+    )
+      return;
 
     if (hasChanges) this.emitStatus();
   }
