@@ -13,3 +13,7 @@ export interface UiButtonSession {
   source: string;
   trigger: string;
 }
+
+export interface UserSpeaking {
+  status: 'speaking' | 'noise' | 'completed';
+}
