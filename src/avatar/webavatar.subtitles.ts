@@ -61,7 +61,7 @@ export class WebAvatarSubtitles {
       });
 
       this.messageQ[ev.chunkId] = {
-        mex: ev.text,
+        message: ev.text,
         messageList,
         id: ev.chunkId,
         duration,
@@ -95,7 +95,7 @@ export class WebAvatarSubtitles {
       ) {
         const newEv = {
           id: `${ev.chunkId}${id}`,
-          mex: this.messageQ[ev.chunkId].messageList[id].text,
+          message: this.messageQ[ev.chunkId].messageList[id].text,
         } as SubtitleMessage;
         emitter.emit('avatar.subtitle', newEv);
         this.lastId = id;
@@ -152,7 +152,7 @@ export class WebAvatarSubtitles {
       if (id != this.lastId && id < this.messageQ[playId].messageList.length) {
         const newEv = {
           id: `${playId}${id}`,
-          mex: this.messageQ[playId].messageList[id].text,
+          message: this.messageQ[playId].messageList[id].text,
         } as SubtitleMessage;
 
         emitter.emit('avatar.subtitle', newEv);
