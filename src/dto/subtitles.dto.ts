@@ -1,11 +1,11 @@
 export interface SubtitleMessage {
   id: string;
-  mex: string;
+  message: string;
 }
 
 export interface messageQueue {
   [chunkId: string]: {
-    mex: string;
+    message: string;
     messageList: messageListDto[];
     id: string;
     duration: number;
