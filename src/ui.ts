@@ -13,7 +13,7 @@ import {
 } from './avatar/index.js';
 import { DialogueActor } from './dto/dialogue.dto';
 import { SessionStatus } from './dto/session.dto';
-import { ChatMessage, UiButtonSession } from './dto/ui.dto.js';
+import { ChatMessage, UiButtonSession, UserSpeaking } from './dto/ui.dto.js';
 import { EventListenerTracker, emitter } from './events.js';
 import { Logger } from './logger.js';
 import { deepCopy, getChunkId, getMessageId } from './utils.js';
@@ -319,6 +319,10 @@ export class UI {
     if (status) {
       this.emitter.emit('ui.session.changed', status);
     }
+  }
+
+  userSpeaking(ev: UserSpeaking) {
+    this.emitter.emit('ui.user.speaking', ev);
   }
 
   on(event: string, fn: ListenerFn) {
