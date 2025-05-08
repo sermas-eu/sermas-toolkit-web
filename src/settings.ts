@@ -135,12 +135,13 @@ export class Settings {
   init(appId: string) {
     this.appId = appId;
     const savedLocalStorage = this.loadLocalStorage();
-    const savedSessionStorage = this.loadSessionStorage();
-    if (savedLocalStorage || savedSessionStorage) {
+    // const savedSessionStorage = this.loadSessionStorage();
+    // if (savedLocalStorage || savedSessionStorage) {
+    if (savedLocalStorage) {
       this.settings = {
         ...this.settings,
         ...(savedLocalStorage || {}),
-        ...(savedSessionStorage || {}),
+        // ...(savedSessionStorage || {}),
       };
     }
   }
@@ -159,7 +160,7 @@ export class Settings {
     cfg = cfg || {};
     this.settings = { ...this.settings, ...cfg };
     this.saveLocalStorage(this.settings);
-    this.saveSessionStorage(this.settings);
+    // this.saveSessionStorage(this.settings);
     emitter.emit('settings', this.settings);
     return this.settings;
   }
