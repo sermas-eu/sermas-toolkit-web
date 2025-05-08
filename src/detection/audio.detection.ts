@@ -163,7 +163,8 @@ export class AudioDetection extends EventEmitter2 {
 
         if (isSpeech) {
           this.logger.debug(`Speech detected`);
-          const wav = vadModule.utils.encodeWAV(audio);
+          // const wav = vadModule.utils.encodeWAV(audio);
+          const wav = vadModule.utils.encodeWAV(audio, 1, 16000, 1, 16);
           const ev = { op, audio, wav };
           this.emit('speech', ev);
           await this.speechDetected(ev);
@@ -190,7 +191,7 @@ export class AudioDetection extends EventEmitter2 {
         // frameSamples: 1536,
         // preSpeechPadFrames:
         // number - number of audio frames to prepend to a speech segment. default: 1
-        preSpeechPadFrames: 1,
+        preSpeechPadFrames: 3,
         // minSpeechFrames:
         // number - minimum number of speech-positive frames for a speech segment. default: 3
         minSpeechFrames: 3,
@@ -250,7 +251,7 @@ export class AudioDetection extends EventEmitter2 {
       this.vad.start();
 
       this.emit('started');
-      this.logger.debug(`VAD started (sampleRate=${this.getSampleRate()})`);
+      this.logger.debug(`VAD started (options=${this.vad.options})`);
 
       return true;
     } catch (e: any) {
@@ -279,9 +280,10 @@ export class AudioDetection extends EventEmitter2 {
           const humanClasses: any = classes.human;
 
           // skip classes
-          if (AUDIO_CLASSIFICATION_SKIP_CLASSES.includes(c.categoryName))
+          if (AUDIO_CLASSIFICATION_SKIP_CLASSES.includes(c.categoryName)) {
+            this.logger.debug(`Skip class ${c.categoryName}`);
             return;
-
+          }
           // check if match speech
           if (
             humanClasses[c.index.toString()] &&
@@ -289,6 +291,9 @@ export class AudioDetection extends EventEmitter2 {
           ) {
             matchSpeech = true;
           }
+          this.logger.debug(
+            `Match speech: ${matchSpeech ? 'YES' : 'NO'} (${c.index}) ${c.score} > ${SPEECH_CLASSIFIER_THRESHOLD}`,
+          );
 
           // emit audio classification
           if (
