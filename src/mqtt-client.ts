@@ -10,6 +10,8 @@ export interface MqttClientOptions {
   moduleId: string;
 }
 
+const SKIP_SUB_TOPICS = ['dialogue/user-speech'];
+
 export class MqttClient extends EventEmitter2 {
   private readonly logger: Logger;
   private mqttClient: mqtt.MqttClient | undefined;
@@ -164,6 +166,16 @@ export class MqttClient extends EventEmitter2 {
 
   mapTopics(topics: string[]): string[] {
     return topics
+      .filter((topic) => {
+        const keepTopic =
+          SKIP_SUB_TOPICS.filter(
+            (filteredTopic) => topic.indexOf(filteredTopic) > -1,
+          ).length === 0;
+
+        if (!keepTopic) this.logger.debug(`SUB filtered topic ${topic}`);
+
+        return keepTopic;
+      })
       .map((topicTemplate) => {
         let topic = topicTemplate;
         if (this.appId) topic = topic.replaceAll(':appId', this.appId);

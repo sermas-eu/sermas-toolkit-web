@@ -19,7 +19,10 @@ import {
 } from '../index.js';
 import { Logger } from '../logger.js';
 import { getChunkId } from '../utils.js';
-import { AudioClassificationValue } from './audio/audio.detection.dto.js';
+import {
+  AudioClassificationValue,
+  SpeechSampleResult,
+} from './audio/audio.detection.dto.js';
 import { createAudioClassifier } from './audio/mediapipe/audio.classifier.js';
 import classes from './audio/mediapipe/classes.json' assert { type: 'json' };
 
@@ -31,13 +34,38 @@ const SPEECH_CLASSIFIER_THRESHOLD = 0.5;
 const AUDIO_CLASSIFICATION_THRESHOLD = 0.3;
 const AUDIO_CLASSIFICATION_SKIP_CLASSES = ['Static', 'Silence', 'White noise'];
 
+// number of samples to collect to evaluate proability of speaking while users is actively speaking
+const MIN_SPEECH_SAMPLING = 10;
+// minimum length of speech before providing feedback on speech probability
+const MIN_SPEECH_LENGTH = 800;
+// maximum length of speech before resetting the detection
+const MAX_SPEECH_LENGTH = 20 * 1000;
+
 type AudioConstraints = Omit<
   MediaTrackConstraints,
   'channelCount' | 'echoCancellation' | 'autoGainControl' | 'noiseSuppression'
 >;
 
+type SpeechSampling = {
+  speechLength: number;
+  speechDetectionSamples: boolean[];
+  probability: number;
+  start: Date;
+  started: boolean;
+};
+
+const defaultSpeechSamples = (started = false): SpeechSampling => ({
+  probability: 0,
+  speechDetectionSamples: [],
+  speechLength: 0,
+  start: new Date(),
+  started,
+});
+
 export class AudioDetection extends EventEmitter2 {
   private readonly logger = new Logger(AudioDetection.name);
+
+  private speechSamples: SpeechSampling = defaultSpeechSamples();
 
   private stream?: MediaStream;
   private vad?: MicVAD;
@@ -99,6 +127,10 @@ export class AudioDetection extends EventEmitter2 {
     this.vad?.start();
   }
 
+  private resetSpeechSamples(started = false) {
+    this.speechSamples = defaultSpeechSamples(started);
+  }
+
   async start(stream?: MediaStream): Promise<boolean> {
     this.logger.debug(`Start microphone detection`);
     if (this.stream) {
@@ -155,7 +187,10 @@ export class AudioDetection extends EventEmitter2 {
         // notify toolkit
         emitter.emit('detection.audio', op);
 
+        // audio is available only on 'stopped'
         if (!audio) return;
+
+        this.resetSpeechSamples();
         const isSpeech = await this.classify(audio);
 
         this.logger.debug(`Audio ${isSpeech ? ' ' : 'NOT '}classify as speech`);
@@ -198,15 +233,13 @@ export class AudioDetection extends EventEmitter2 {
       };
       const params = Object.assign({}, vadDefaultParams, this.vadParams);
 
-      let speechLength: number | null = null;
-
       this.vad = await vadModule.MicVAD.new({
         ...params,
         stream,
         workletURL: '/vad.worklet.bundle.min.js',
         modelURL: '/silero_vad.onnx',
         modelFetcher: async (path: string) => {
-          this.logger.log(`Loading model ${path}`);
+          this.logger.debug(`Loading VAD model ${path}`);
           const res = await axios.get(path, {
             responseType: 'arraybuffer',
           });
@@ -220,22 +253,76 @@ export class AudioDetection extends EventEmitter2 {
         },
 
         onSpeechEnd: (audio: Float32Array) => {
-          speechLength = null;
+          this.resetSpeechSamples();
           onSpeech('stopped', audio);
         },
         onSpeechStart: () => {
-          speechLength = Date.now();
+          this.resetSpeechSamples(true);
           onSpeech('started');
         },
         onFrameProcessed: (probs: SpeechProbabilities) => {
-          // console.warn('FRAME PROCESSED', probs);
-          if (speechLength === null) return;
+          if (!this.speechSamples.started) return;
 
-          this.emit(
-            'speaking',
+          // calculate the percentage of positive speech detection and emit a speaking event
+          this.speechSamples.speechDetectionSamples.push(
             probs.isSpeech > params.positiveSpeechThreshold,
-            Date.now() - speechLength,
           );
+
+          if (
+            this.speechSamples.speechDetectionSamples.length <
+            MIN_SPEECH_SAMPLING
+          ) {
+            return;
+          }
+
+          // clear queue longer than MIN_SPEECH_SAMPLING
+          if (
+            this.speechSamples.speechDetectionSamples.length >
+            MIN_SPEECH_SAMPLING + 1
+          ) {
+            this.speechSamples.speechDetectionSamples.splice(
+              0,
+              this.speechSamples.speechDetectionSamples.length -
+                MIN_SPEECH_SAMPLING,
+            );
+          }
+
+          this.speechSamples.speechLength =
+            Date.now() - this.speechSamples.start.getTime();
+
+          if (this.speechSamples.speechLength < MIN_SPEECH_LENGTH) {
+            return;
+          }
+
+          if (this.speechSamples.speechLength > MAX_SPEECH_LENGTH) {
+            this.resetSpeechSamples();
+            return;
+          }
+
+          const positiveMatches =
+            this.speechSamples.speechDetectionSamples.filter((v) => v).length;
+          this.speechSamples.probability =
+            positiveMatches / this.speechSamples.speechDetectionSamples.length;
+
+          // console.warn(
+          //   'length',
+          //   this.speechSamples.speechDetectionSamples.length,
+          //   'probability',
+          //   this.speechSamples.probability,
+          //   'speechLength',
+          //   this.speechSamples.speechLength,
+          // );
+
+          if (this.speechSamples.probability < 0.2) return;
+
+          const isSpeaking = this.speechSamples.probability > 0.5;
+
+          const result: SpeechSampleResult = {
+            isSpeaking: isSpeaking,
+            probability: this.speechSamples.probability,
+            speechLength: this.speechSamples.speechLength,
+          };
+          this.emit('speaking', result);
         },
         // onVADMisfire: () => {
         // console.warn('MISFIRE');
@@ -251,7 +338,9 @@ export class AudioDetection extends EventEmitter2 {
       this.vad.start();
 
       this.emit('started');
-      this.logger.debug(`VAD started (options=${this.vad.options})`);
+      this.logger.debug(
+        `VAD started (options=${JSON.stringify(this.vad.options)})`,
+      );
 
       return true;
     } catch (e: any) {

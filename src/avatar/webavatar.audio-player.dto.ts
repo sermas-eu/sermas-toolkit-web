@@ -9,6 +9,7 @@ export type PlaybackStatus =
 export type AudioPlayerStatus = {
   enabled: boolean;
   playback: PlaybackStatus;
+  messageId?: string;
   chunkId: string;
   progress: number;
   duration: number;

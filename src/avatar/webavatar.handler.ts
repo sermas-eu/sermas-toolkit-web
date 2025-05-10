@@ -39,6 +39,8 @@ export class WebAvatarHandler {
   private sessionStarted = false;
 
   private audioQueue: AudioQueue[] = [];
+  private currentAudio?: AudioQueue;
+
   private clearanceQueue: string[] = [];
 
   private processedQueue = 0;
@@ -100,13 +102,34 @@ export class WebAvatarHandler {
     await this.player?.resume();
   }
 
-  stopSpeech(chunkId?: string) {
-    logger.debug('playing speech stopped');
+  async stopSpeech(ev?: { chunkId?: string; messageId?: string }) {
+    ev = ev || { chunkId: undefined, messageId: undefined };
 
-    const ev: AvatarAudioPlaybackStatus = { status: 'ended', chunkId };
-    emitter.emit('avatar.speech', ev);
+    if (!ev.chunkId && this.currentAudio) {
+      ev.chunkId = this.currentAudio.chunkId;
+      ev.messageId = this.currentAudio.messageId;
+    }
+
+    logger.debug(
+      `Stop avatar speech at chunkId=${ev.chunkId || ''} messageId=${ev.messageId || ''}`,
+    );
+
+    this.resetAudioQueue(ev);
+    this.player?.stop();
+
+    const playbackStatus: AvatarAudioPlaybackStatus = {
+      status: 'ended',
+      chunkId: ev.chunkId,
+      messageId: ev.messageId,
+    };
+
+    emitter.emit('avatar.speech', playbackStatus);
 
     this.avatar.getAnimation()?.playGestureIdle();
+  }
+
+  onForceStop(ev: AvatarStopSpeechReference) {
+    this.stopSpeech(ev);
   }
 
   async onAvatarSpeechContinue(ev: DialogueAvatarSpeechControlDto) {
@@ -118,7 +141,9 @@ export class WebAvatarHandler {
   async onAvatarSpeechStop(ev: DialogueAvatarSpeechControlDto) {
     if (ev.sessionId !== this.avatar.getToolkit()?.getSessionId()) return;
     logger.debug('Received speech STOP');
-    await this.stopSpeech(ev.chunkId);
+    await this.stopSpeech({
+      chunkId: ev.chunkId,
+    });
   }
 
   updateProgressSpeech(chunkId: string, progress: number) {
@@ -131,7 +156,7 @@ export class WebAvatarHandler {
     emitter.emit('avatar.speech', ev);
   }
 
-  onForceStop(ev: AvatarStopSpeechReference) {
+  resetAudioQueue(ev: { messageId?: string; chunkId?: string }) {
     // clear messages older than current messageId
     // track the messageId to drop any upcoming chunk with the same messageId
     const messageId = ev.messageId;
@@ -139,15 +164,13 @@ export class WebAvatarHandler {
       this.clearanceQueue.push(
         ...new Set([...this.clearanceQueue, messageId].sort(sortChunks)),
       );
-      this.audioQueue.filter((q) => q.messageId > messageId);
+      this.audioQueue = this.audioQueue.filter((q) => q.messageId > messageId);
     }
 
     const chunkId = ev.chunkId;
     this.audioQueue = chunkId
       ? this.audioQueue.filter((q) => q.chunkId > chunkId)
       : [];
-
-    this.player?.stop();
   }
 
   onDetection(ev: UserCharacterizationEventDto) {
@@ -205,7 +228,9 @@ export class WebAvatarHandler {
     const [, messageId, chunkId] = raw.context;
 
     if (this.clearanceQueue.indexOf(messageId) > -1) {
-      logger.debug(`Skip stopped speech message messageId=${messageId}`);
+      logger.debug(
+        `Skip message older than stopped queue messageId=${messageId}`,
+      );
       return;
     }
 
@@ -231,14 +256,13 @@ export class WebAvatarHandler {
     if (ev.actor === 'user') return;
     if (!ev.text) {
       // empty text comes when the user speech is not recognizable
-      this.stopSpeech(ev.chunkId);
+      this.stopSpeech();
       return;
     }
   }
 
   setListening(op: 'started' | 'stopped') {
     if (op === 'started') {
-      this.stopSpeech();
       // move only if the session has started
       if (this.sessionStarted) {
         this.avatar.getAnimation()?.playGestureListening();
@@ -279,6 +303,8 @@ export class WebAvatarHandler {
     const raw = this.audioQueue.sort(sortChunks).splice(0, 1)[0];
 
     logger.debug(`play queued speech chunkId=${raw.chunkId}`);
+
+    this.currentAudio = raw;
 
     this.player?.play(raw.buffer as Uint8Array, raw.chunkId);
 
@@ -337,7 +363,7 @@ export class WebAvatarHandler {
         this.lipsync?.reset();
 
         this.isPlaying = false;
-        this.stopSpeech(ev.chunkId);
+        // this.stopSpeech(ev);
 
         if (ev.playback === 'completed' && this.audioQueue.length) {
           this.playAudio();
@@ -404,6 +430,9 @@ export class WebAvatarHandler {
       } catch {}
     });
     this.player?.off('status', this.onAudioPlayerStatus);
+
+    this.audioQueue = [];
+    this.clearanceQueue = [];
 
     await this.lipsync?.reset();
     await this.player?.stop();
