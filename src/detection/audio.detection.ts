@@ -41,7 +41,7 @@ const MIN_SPEECH_LENGTH = 800;
 // maximum length of speech before resetting the detection
 const MAX_SPEECH_LENGTH = 20 * 1000;
 // minimum probability an ongoing input is actual user speech
-const MIN_SPEECH_SAMPLE_PROBABILITY = 0.5;
+const MIN_SPEECH_SAMPLE_PROBABILITY = 0.6;
 
 type AudioConstraints = Omit<
   MediaTrackConstraints,
