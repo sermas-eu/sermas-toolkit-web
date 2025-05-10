@@ -13,7 +13,12 @@ import {
 } from './avatar/index.js';
 import { DialogueActor } from './dto/dialogue.dto';
 import { SessionStatus } from './dto/session.dto';
-import { ChatMessage, UiButtonSession, UserSpeaking } from './dto/ui.dto.js';
+import {
+  ChatMessage,
+  RequestProcessing,
+  UiButtonSession,
+  UserSpeaking,
+} from './dto/ui.dto.js';
 import { EventListenerTracker, emitter } from './events.js';
 import { Logger } from './logger.js';
 import { deepCopy, getChunkId, getMessageId } from './utils.js';
@@ -96,7 +101,7 @@ export class UI {
   }
 
   onPlaybackChanged(ev: AvatarAudioPlaybackStatus) {
-    this.emitter.emit('ui.avatar.speaking', ev.status !== 'ended');
+    this.emitter.emit('ui.avatar.speaking', ev.status === 'playing');
   }
 
   onUIContent(ev: UIContentDto) {
@@ -323,6 +328,10 @@ export class UI {
 
   userSpeaking(ev: UserSpeaking) {
     this.emitter.emit('ui.user.speaking', ev);
+  }
+
+  requestProcessing(ev: RequestProcessing) {
+    this.emitter.emit('ui.user.request-processing', ev);
   }
 
   on(event: string, fn: ListenerFn) {

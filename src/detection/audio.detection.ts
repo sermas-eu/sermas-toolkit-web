@@ -40,6 +40,8 @@ const MIN_SPEECH_SAMPLING = 10;
 const MIN_SPEECH_LENGTH = 800;
 // maximum length of speech before resetting the detection
 const MAX_SPEECH_LENGTH = 20 * 1000;
+// minimum probability an ongoing input is actual user speech
+const MIN_SPEECH_SAMPLE_PROBABILITY = 0.5;
 
 type AudioConstraints = Omit<
   MediaTrackConstraints,
@@ -315,7 +317,8 @@ export class AudioDetection extends EventEmitter2 {
 
           if (this.speechSamples.probability < 0.2) return;
 
-          const isSpeaking = this.speechSamples.probability > 0.5;
+          const isSpeaking =
+            this.speechSamples.probability > MIN_SPEECH_SAMPLE_PROBABILITY;
 
           const result: SpeechSampleResult = {
             isSpeaking: isSpeaking,
