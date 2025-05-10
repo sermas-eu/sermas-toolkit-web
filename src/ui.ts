@@ -42,6 +42,7 @@ export class UI {
     this.onSessionChanged = this.onSessionChanged.bind(this);
     this.onPlaybackChanged = this.onPlaybackChanged.bind(this);
     this.onUIContent = this.onUIContent.bind(this);
+    this.onUserSpeech = this.onUserSpeech.bind(this);
   }
 
   async init() {
@@ -51,7 +52,9 @@ export class UI {
     this.toolkit.getBroker().on('dialogue.messages', this.onChatMessage); // arrivo messaggi dal be
     this.toolkit.getBroker().on('session.session', this.onSessionChanged);
     this.toolkit.getBroker().on('ui.content', this.onUIContent);
+
     this.emitter.on('avatar.speech', this.onPlaybackChanged);
+    this.emitter.on('detection.speech', this.onUserSpeech);
   }
 
   async destroy() {
@@ -60,9 +63,18 @@ export class UI {
     this.toolkit.getBroker().off('dialogue.messages', this.onChatMessage);
     this.toolkit.getBroker().off('session.session', this.onSessionChanged);
     this.toolkit.getBroker().off('ui.content', this.onUIContent);
+
     this.emitter.off('avatar.speech', this.onPlaybackChanged);
+    this.emitter.off('detection.speech', this.onUserSpeech);
 
     this.initialized = false;
+  }
+
+  onUserSpeech(ev: { speech: boolean }) {
+    if (!ev.speech) return;
+    this.requestProcessing({
+      status: 'started',
+    });
   }
 
   clearHistory() {
