@@ -135,7 +135,7 @@ export class MqttClient extends EventEmitter2 {
     });
   }
 
-  publish(topic: string, data: any, json = true) {
+  publish(topic: string, data: any, json = true, qos: 0 | 1 | 2 = 1) {
     if (!this.mqttClient) {
       this.logger.error('Mqtt client not initialized');
       return;
@@ -157,7 +157,7 @@ export class MqttClient extends EventEmitter2 {
       this.mqttClient.publish(
         `app/${this.options.appId}/${topic}`,
         json ? JSON.stringify(data) : data,
-        { qos: 1, retain: false },
+        { qos, retain: false },
       );
     } catch (e: any) {
       this.logger.warn(`Failed to send: ${e.message}`);
