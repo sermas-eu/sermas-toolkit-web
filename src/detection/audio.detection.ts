@@ -32,7 +32,7 @@ const SEND_VIA_BROKER = true;
 // stream response as frames
 const STREAM_SPEECH = true;
 // start streaming if probability is more than this
-const STREAM_MIN_PROBABILITY = 0.1;
+const STREAM_MIN_PROBABILITY = 0.0;
 
 const VAD_SAMPLE_RATE = 16000;
 const SPEECH_CLASSIFIER_THRESHOLD = 0.5;
@@ -272,8 +272,7 @@ export class AudioDetection extends EventEmitter2 {
       //   probs.notSpeech,
       //   probs.notSpeech / probs.isSpeech,
       // );
-      const isProbablySpeech = probs.isSpeech >= STREAM_MIN_PROBABILITY;
-
+      const isProbablySpeech = probs.isSpeech > STREAM_MIN_PROBABILITY;
       if (isProbablySpeech) this.sendStreamFrame(frame);
     }
 
