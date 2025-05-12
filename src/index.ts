@@ -347,8 +347,9 @@ export class SermasToolkit {
       `session event ${sessionStatus} sessionId=${ev.record.sessionId}`,
     );
 
+    const app = await this.getApp();
     if (ev.operation === 'created') {
-      this.resetPrivacyFlag(ev.record?.settings?.resetPrivacyEverySession);
+      this.resetPrivacyFlag(app?.settings?.resetPrivacyEverySession);
     }
 
     if (ev.operation === 'updated') {
@@ -356,7 +357,6 @@ export class SermasToolkit {
       if (ev.record.closedAt) {
         this.logger.log('Session closed');
 
-        const app = await this.getApp();
         if (app?.settings?.resetPrivacyEverySession) {
           this.resetPrivacyFlag(true);
           document.location.reload();
