@@ -152,32 +152,33 @@ export class UI {
   }
 
   onProgressMessage(ev: DialogueProgressEventDto) {
-    this.logger.log(ev);
+    this.logger.debug(
+      `System progress event: ${ev.event} ${ev.status ? ev.status : ''}`,
+    );
     this.emitter.emit('ui.dialogue.progress', ev);
   }
 
   onSTTMessage(ev: DialogueMessageDto) {
-    this.logger.debug(
-      `Received STT message actor=${ev.actor} sessionId=${ev.sessionId} appId=${ev.appId}`,
-    );
-
-    const content: UIContentDto = {
-      contentType: 'dialogue-message',
-      content: ev,
-      appId: ev.appId,
-      chunkId: ev.chunkId,
-      messageId: ev.messageId,
-      metadata: {
-        avatar: ev.avatar,
-      },
-      options: {},
-      ts: new Date().toString(),
-      isWelcome: ev.isWelcome ? ev.isWelcome : false,
-    };
-
-    const actor = ev.actor as DialogueActor;
-
-    this.appendContent(actor, content);
+    this.logger.debug(`STT event: ${JSON.stringify(ev)}`);
+    //TODO: append to chat, then wait for confirmation
+    // this.logger.debug(
+    //   `Received STT message actor=${ev.actor} sessionId=${ev.sessionId} appId=${ev.appId}`,
+    // );
+    // const content: UIContentDto = {
+    //   contentType: 'dialogue-message',
+    //   content: ev,
+    //   appId: ev.appId,
+    //   chunkId: ev.chunkId,
+    //   messageId: ev.messageId,
+    //   metadata: {
+    //     avatar: ev.avatar,
+    //   },
+    //   options: {},
+    //   ts: new Date().toString(),
+    //   isWelcome: ev.isWelcome ? ev.isWelcome : false,
+    // };
+    // const actor = ev.actor as DialogueActor;
+    // this.appendContent(actor, content);
   }
 
   private setHistory(history?: ChatMessage[]) {
