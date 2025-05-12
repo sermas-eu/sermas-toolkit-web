@@ -1,6 +1,7 @@
 import {
   DialogueMessageDto,
   DialogueMessageUIContentDto,
+  DialogueProgressEventDto,
   SessionChangedDto,
   UIContentDto,
   sleep,
@@ -38,6 +39,8 @@ export class UI {
     this.emitter = emitter;
     this.listeners = new EventListenerTracker(this.emitter);
 
+    this.onSTTMessage = this.onSTTMessage.bind(this);
+    this.onProgressMessage = this.onProgressMessage.bind(this);
     this.onChatMessage = this.onChatMessage.bind(this);
     this.onSessionChanged = this.onSessionChanged.bind(this);
     this.onPlaybackChanged = this.onPlaybackChanged.bind(this);
@@ -49,6 +52,8 @@ export class UI {
     if (this.initialized) await this.destroy();
     this.initialized = true;
 
+    this.toolkit.getBroker().on('dialogue.stt', this.onSTTMessage); // arrivo messaggi dal be
+    this.toolkit.getBroker().on('dialogue.progress', this.onProgressMessage); // arrivo messaggi dal be
     this.toolkit.getBroker().on('dialogue.messages', this.onChatMessage); // arrivo messaggi dal be
     this.toolkit.getBroker().on('session.session', this.onSessionChanged);
     this.toolkit.getBroker().on('ui.content', this.onUIContent);
@@ -60,6 +65,8 @@ export class UI {
   async destroy() {
     this.listeners.clear();
 
+    this.toolkit.getBroker().off('dialogue.stt', this.onSTTMessage); // arrivo messaggi dal be
+    this.toolkit.getBroker().off('dialogue.progress', this.onProgressMessage); // arrivo messaggi dal be
     this.toolkit.getBroker().off('dialogue.messages', this.onChatMessage);
     this.toolkit.getBroker().off('session.session', this.onSessionChanged);
     this.toolkit.getBroker().off('ui.content', this.onUIContent);
@@ -123,6 +130,35 @@ export class UI {
   onChatMessage(ev: DialogueMessageDto) {
     this.logger.debug(
       `Received chat message actor=${ev.actor} sessionId=${ev.sessionId} appId=${ev.appId}`,
+    );
+
+    const content: UIContentDto = {
+      contentType: 'dialogue-message',
+      content: ev,
+      appId: ev.appId,
+      chunkId: ev.chunkId,
+      messageId: ev.messageId,
+      metadata: {
+        avatar: ev.avatar,
+      },
+      options: {},
+      ts: new Date().toString(),
+      isWelcome: ev.isWelcome ? ev.isWelcome : false,
+    };
+
+    const actor = ev.actor as DialogueActor;
+
+    this.appendContent(actor, content);
+  }
+
+  onProgressMessage(ev: DialogueProgressEventDto) {
+    this.logger.log(ev);
+    this.emitter.emit('ui.dialogue.progress', ev);
+  }
+
+  onSTTMessage(ev: DialogueMessageDto) {
+    this.logger.debug(
+      `Received STT message actor=${ev.actor} sessionId=${ev.sessionId} appId=${ev.appId}`,
     );
 
     const content: UIContentDto = {

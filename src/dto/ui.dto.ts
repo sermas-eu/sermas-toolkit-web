@@ -21,3 +21,8 @@ export interface UserSpeaking {
 export interface RequestProcessing {
   status: 'started' | 'failed' | 'completed';
 }
+
+export interface DialogueProgess {
+  event: string;
+  status?: string;
+}
