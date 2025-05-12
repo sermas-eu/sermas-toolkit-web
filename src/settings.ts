@@ -44,6 +44,7 @@ export class Settings {
     interactionStart: 'on-load',
     virtualKeyboardEnabled: false,
     subtitlesEnabled: true,
+    resetPrivacyEverySession: false,
   };
 
   constructor() {
