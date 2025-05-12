@@ -348,7 +348,7 @@ export class SermasToolkit {
     );
 
     if (ev.operation === 'created') {
-      this.resetPrivacyFlag(ev.record?.settings?.resetPrivacyEverySession);
+      //
     }
 
     if (ev.operation === 'updated') {
