@@ -171,6 +171,10 @@ export class SermasToolkit {
     });
   }
 
+  getEmitter() {
+    return this.emitter;
+  }
+
   getApiClient() {
     return this.apiClient;
   }
