@@ -20,7 +20,7 @@ import {
   UiButtonSession,
   UserSpeaking,
 } from './dto/ui.dto.js';
-import { EventListenerTracker, emitter } from './events.js';
+import { EventListenerTracker } from './events.js';
 import { Logger } from './logger.js';
 import { deepCopy, getChunkId, getMessageId } from './utils.js';
 
@@ -36,7 +36,7 @@ export class UI {
   private initialized = false;
 
   constructor(private readonly toolkit: SermasToolkit) {
-    this.emitter = emitter;
+    this.emitter = toolkit.getEmitter();
     this.listeners = new EventListenerTracker(this.emitter);
 
     this.onSTTMessage = this.onSTTMessage.bind(this);
