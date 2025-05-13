@@ -9,7 +9,6 @@ import {
   type UserInteractionIntentionDto,
 } from '@sermas/api-client';
 import EventEmitter2, { ListenerFn } from 'eventemitter2';
-import { getChunkId } from './utils.js';
 import { v4 as uuidv4 } from 'uuid';
 import { ApiClient } from './api.js';
 import { AuthClient } from './auth.js';
@@ -30,6 +29,7 @@ import { MqttClient } from './mqtt-client.js';
 import { Settings } from './settings.js';
 import { UI } from './ui.js';
 import { UserAuth } from './user-auth.js';
+import { getChunkId } from './utils.js';
 export * from '@sermas/api-client';
 export * from './constants.js';
 // exports
@@ -332,18 +332,38 @@ export class SermasToolkit {
     // this.getApi().sendForceStop();
   }
 
+  resetPrivacyFlag(reset = false) {
+    if (reset && localStorage) {
+      localStorage?.removeItem('privacy');
+      this.logger.log(`Removed privacy settings on session close`);
+    }
+  }
+
   async onSessionChanged(ev: SessionChangedDto) {
+    const sessionStatus =
+      ev.operation && ev.record.closedAt ? 'closed' : ev.operation;
+
     this.logger.debug(
-      `session event ${ev.operation} sessionId=${ev.record.sessionId}`,
+      `session event ${sessionStatus} sessionId=${ev.record.sessionId}`,
     );
 
+    const app = await this.getApp();
     if (ev.operation === 'created') {
+      this.resetPrivacyFlag(app?.settings?.resetPrivacyEverySession);
     }
 
     if (ev.operation === 'updated') {
+      // closed
       if (ev.record.closedAt) {
         this.logger.log('Session closed');
-        if (this.settings?.get().interactionStart == 'on-load') {
+
+        if (app?.settings?.resetPrivacyEverySession) {
+          this.resetPrivacyFlag(true);
+          document.location.reload();
+        }
+
+        const settings = this.settings?.get();
+        if (settings?.interactionStart == 'on-load') {
           // on session close, generate new sessionId and propagate to APIs
           this.logger.log(`Creating new session id`);
           this.createSessionId();
