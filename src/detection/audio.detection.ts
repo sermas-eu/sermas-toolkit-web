@@ -25,14 +25,13 @@ import {
 } from './audio/audio.detection.dto.js';
 import { createAudioClassifier } from './audio/mediapipe/audio.classifier.js';
 import classes from './audio/mediapipe/classes.json' assert { type: 'json' };
+import { SpeechStreamer } from './audio/speech-streamer.js';
 import { float32ToInt16Buffer } from './audio/util.js';
 
 // use broker or HTTP api to send audio buffer
 const SEND_VIA_BROKER = true;
 // stream response as frames
 const STREAM_SPEECH = true;
-// start streaming if probability is more than this
-const STREAM_MIN_PROBABILITY = 0.0;
 
 const VAD_SAMPLE_RATE = 16000;
 const SPEECH_CLASSIFIER_THRESHOLD = 0.5;
@@ -110,6 +109,8 @@ export class AudioDetection extends EventEmitter2 {
   private mediaRecorder?: MediaRecorder;
 
   private chunkId?: string;
+
+  private readonly speechStreamer: SpeechStreamer = new SpeechStreamer();
 
   // from vad.utils.encodeWAV
   private encodeWAV: (
@@ -265,15 +266,10 @@ export class AudioDetection extends EventEmitter2 {
   private onFrameProcessed(probs: SpeechProbabilities, frame: Float32Array) {
     // send stream frame
     if (this.isStreamEnabled()) {
-      // console.log(
-      //   'isSpeech',
-      //   probs.isSpeech,
-      //   'notSpeech',
-      //   probs.notSpeech,
-      //   probs.notSpeech / probs.isSpeech,
-      // );
-      const isProbablySpeech = probs.isSpeech > STREAM_MIN_PROBABILITY;
-      if (isProbablySpeech) this.sendStreamFrame(frame);
+      const frames = this.speechStreamer.onFrame(probs, frame);
+      for (const f of frames) {
+        this.sendStreamFrame(f);
+      }
     }
 
     // notify toolkit that user speech may be ongoing
