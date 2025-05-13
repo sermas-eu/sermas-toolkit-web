@@ -15,13 +15,8 @@ export class SpeechStreamer {
   private streaming: boolean = false;
 
   private frameBuffer: Float32Array[] = [];
+  private firstSpeechDetected: boolean = false; // New flag to track initial speech
 
-  /**
-   * Returns the list of frames to stream.
-   * - If streaming is ongoing: returns [current frame].
-   * - If streaming just started: returns buffered + current frame.
-   * - If not streaming: returns [].
-   */
   public onFrame(
     probs: SpeechProbabilities,
     frame: Float32Array,
@@ -37,7 +32,7 @@ export class SpeechStreamer {
       );
     }
 
-    // Always keep a short buffer of frames just in case we start streaming
+    // Buffer frames in case speech starts soon
     this.frameBuffer.push(frame);
     if (this.frameBuffer.length > this.PRE_BUFFER_SIZE) {
       this.frameBuffer.shift();
@@ -47,13 +42,22 @@ export class SpeechStreamer {
       this.sampleHistory.reduce((sum, val) => sum + val, 0) /
       this.sampleHistory.length;
 
-    if (!this.streaming) {
-      if (avg > this.START_THRESHOLD) {
+    // Check if speech has been detected early
+    if (!this.streaming && !this.firstSpeechDetected) {
+      // If speech is detected even with early frames, begin streaming
+      if (probs.isSpeech > this.START_THRESHOLD) {
         this.startStreaming();
-        // Return buffered frames + current
-        return [...this.frameBuffer];
+        // Immediately flush buffered frames
+        return this.frameBuffer.concat([frame]);
       }
-    } else {
+    } else if (!this.streaming && avg > this.START_THRESHOLD) {
+      // Once speech is detected from moving average, start streaming
+      this.startStreaming();
+      return this.frameBuffer.concat([frame]);
+    }
+
+    // If streaming, just send the current frame
+    if (this.streaming) {
       if (avg < this.STOP_THRESHOLD) {
         this.silenceCounter++;
         if (this.silenceCounter >= this.SILENCE_FRAMES_TO_STOP) {
@@ -65,19 +69,20 @@ export class SpeechStreamer {
       return [frame];
     }
 
-    // Not streaming yet, return nothing
+    // No streaming yet, return empty array
     return [];
   }
 
   private startStreaming(): void {
     this.streaming = true;
+    this.firstSpeechDetected = true; // Mark that speech has started
     this.silenceCounter = 0;
     this.logger.debug('streaming started');
   }
 
   private stopStreaming(): void {
     this.streaming = false;
-    this.frameBuffer = []; // Clear buffer to avoid stale frames
+    this.frameBuffer = []; // Clear buffer to avoid sending stale frames
     this.logger.debug('streaming stopped');
   }
 
