@@ -1,7 +1,39 @@
+import EventEmitter2, {
+  event,
+  eventNS,
+  Listener,
+  ListenerFn,
+  OnOptions,
+} from 'eventemitter2';
 import type { UiStatus } from './dto.js';
-import EventEmitter2, { ListenerFn } from 'eventemitter2';
+import { Logger } from './logger.js';
 
-export const emitter = new EventEmitter2();
+const LOG_EVENTS = false;
+
+class SermasEventEmitter extends EventEmitter2 {
+  private readonly logger = new Logger('event-emitter');
+
+  on(
+    event: event | eventNS,
+    listener: ListenerFn,
+    options?: boolean | OnOptions,
+  ): this | Listener {
+    if (LOG_EVENTS) this.logger.debug(`on '${event.toString()}'`);
+    return super.on(event, listener, options);
+  }
+
+  emit(event: event | eventNS, ...values: any[]): boolean {
+    if (LOG_EVENTS) this.logger.debug(`emit '${event.toString()}'`);
+    return super.emit(event, ...values);
+  }
+
+  off(event: event | eventNS, listener: ListenerFn): this {
+    if (LOG_EVENTS) this.logger.debug(`off '${event.toString()}'`);
+    return super.off(event, listener);
+  }
+}
+
+export const emitter = new SermasEventEmitter();
 
 export const sendStatus = (message: string) => {
   emitter.emit('ui.status', { message } as UiStatus);

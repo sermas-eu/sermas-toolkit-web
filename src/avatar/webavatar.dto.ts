@@ -21,6 +21,7 @@ export type GestureMappingKeys =
 type Subset<T extends U, U> = U;
 
 export interface AvatarAudioPlaybackStatus {
+  messageId?: string;
   chunkId?: string;
   status: 'started' | 'ended' | 'playing';
   duration?: number; // seconds

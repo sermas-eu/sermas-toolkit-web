@@ -11,3 +11,9 @@ export class AudioClassificationValue {
   probability: number;
   value: string;
 }
+
+export type SpeechSampleResult = {
+  speechLength: number;
+  probability: number;
+  isSpeaking: boolean;
+};

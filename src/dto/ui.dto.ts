@@ -17,3 +17,12 @@ export interface UiButtonSession {
 export interface UserSpeaking {
   status: 'speaking' | 'noise' | 'completed';
 }
+
+export interface RequestProcessing {
+  status: 'started' | 'failed' | 'completed';
+}
+
+export interface DialogueProgess {
+  event: string;
+  status?: string;
+}

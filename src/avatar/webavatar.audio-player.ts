@@ -35,6 +35,14 @@ export class WebAvatarAudioPlayer extends EventEmitter2 {
     return this.status.playback === 'playing';
   }
 
+  isStopped() {
+    return this.status.playback === 'stopped';
+  }
+
+  isPaused() {
+    return this.status.playback === 'paused';
+  }
+
   toggle(enabled?: boolean) {
     this.status.enabled =
       enabled === undefined ? !this.status.enabled : enabled;

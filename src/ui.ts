@@ -1,6 +1,7 @@
 import {
   DialogueMessageDto,
   DialogueMessageUIContentDto,
+  DialogueProgressEventDto,
   SessionChangedDto,
   UIContentDto,
   sleep,
@@ -13,8 +14,13 @@ import {
 } from './avatar/index.js';
 import { DialogueActor } from './dto/dialogue.dto';
 import { SessionStatus } from './dto/session.dto';
-import { ChatMessage, UiButtonSession, UserSpeaking } from './dto/ui.dto.js';
-import { EventListenerTracker, emitter } from './events.js';
+import {
+  ChatMessage,
+  RequestProcessing,
+  UiButtonSession,
+  UserSpeaking,
+} from './dto/ui.dto.js';
+import { EventListenerTracker } from './events.js';
 import { Logger } from './logger.js';
 import { deepCopy, getChunkId, getMessageId } from './utils.js';
 
@@ -30,34 +36,55 @@ export class UI {
   private initialized = false;
 
   constructor(private readonly toolkit: SermasToolkit) {
-    this.emitter = emitter;
+    this.emitter = toolkit.getEmitter();
     this.listeners = new EventListenerTracker(this.emitter);
 
+    this.onSTTMessage = this.onSTTMessage.bind(this);
+    this.onProgressMessage = this.onProgressMessage.bind(this);
     this.onChatMessage = this.onChatMessage.bind(this);
     this.onSessionChanged = this.onSessionChanged.bind(this);
+    this.onAvatarSpeechCompleted = this.onAvatarSpeechCompleted.bind(this);
     this.onPlaybackChanged = this.onPlaybackChanged.bind(this);
     this.onUIContent = this.onUIContent.bind(this);
+    this.onUserSpeech = this.onUserSpeech.bind(this);
   }
 
   async init() {
     if (this.initialized) await this.destroy();
     this.initialized = true;
 
+    this.toolkit.getBroker().on('dialogue.stt', this.onSTTMessage); // arrivo messaggi dal be
+    this.toolkit.getBroker().on('dialogue.progress', this.onProgressMessage); // arrivo messaggi dal be
     this.toolkit.getBroker().on('dialogue.messages', this.onChatMessage); // arrivo messaggi dal be
     this.toolkit.getBroker().on('session.session', this.onSessionChanged);
     this.toolkit.getBroker().on('ui.content', this.onUIContent);
+
+    this.emitter.on('avatar.speech.completed', this.onAvatarSpeechCompleted);
     this.emitter.on('avatar.speech', this.onPlaybackChanged);
+    this.emitter.on('detection.speech', this.onUserSpeech);
   }
 
   async destroy() {
     this.listeners.clear();
 
+    this.toolkit.getBroker().off('dialogue.stt', this.onSTTMessage); // arrivo messaggi dal be
+    this.toolkit.getBroker().off('dialogue.progress', this.onProgressMessage); // arrivo messaggi dal be
     this.toolkit.getBroker().off('dialogue.messages', this.onChatMessage);
     this.toolkit.getBroker().off('session.session', this.onSessionChanged);
     this.toolkit.getBroker().off('ui.content', this.onUIContent);
+
     this.emitter.off('avatar.speech', this.onPlaybackChanged);
+    this.emitter.off('detection.speech', this.onUserSpeech);
+    this.emitter.off('avatar.speech.completed', this.onAvatarSpeechCompleted);
 
     this.initialized = false;
+  }
+
+  onUserSpeech(ev: { speech: boolean }) {
+    if (!ev.speech) return;
+    this.requestProcessing({
+      status: 'started',
+    });
   }
 
   clearHistory() {
@@ -95,8 +122,12 @@ export class UI {
     };
   }
 
+  onAvatarSpeechCompleted() {
+    this.emitter.emit('ui.avatar.speaking', false);
+  }
+
   onPlaybackChanged(ev: AvatarAudioPlaybackStatus) {
-    this.emitter.emit('ui.avatar.speaking', ev.status !== 'ended');
+    this.emitter.emit('ui.avatar.speaking', ev.status === 'playing');
   }
 
   onUIContent(ev: UIContentDto) {
@@ -125,6 +156,36 @@ export class UI {
     const actor = ev.actor as DialogueActor;
 
     this.appendContent(actor, content);
+  }
+
+  onProgressMessage(ev: DialogueProgressEventDto) {
+    this.logger.debug(
+      `System progress event: ${ev.event} ${ev.status ? ev.status : ''}`,
+    );
+    this.emitter.emit('dialogue.progress', ev);
+  }
+
+  onSTTMessage(ev: DialogueMessageDto) {
+    this.logger.debug(`STT event: ${JSON.stringify(ev)}`);
+    //TODO: append to chat, then wait for confirmation
+    // this.logger.debug(
+    //   `Received STT message actor=${ev.actor} sessionId=${ev.sessionId} appId=${ev.appId}`,
+    // );
+    // const content: UIContentDto = {
+    //   contentType: 'dialogue-message',
+    //   content: ev,
+    //   appId: ev.appId,
+    //   chunkId: ev.chunkId,
+    //   messageId: ev.messageId,
+    //   metadata: {
+    //     avatar: ev.avatar,
+    //   },
+    //   options: {},
+    //   ts: new Date().toString(),
+    //   isWelcome: ev.isWelcome ? ev.isWelcome : false,
+    // };
+    // const actor = ev.actor as DialogueActor;
+    // this.appendContent(actor, content);
   }
 
   private setHistory(history?: ChatMessage[]) {
@@ -323,6 +384,10 @@ export class UI {
 
   userSpeaking(ev: UserSpeaking) {
     this.emitter.emit('ui.user.speaking', ev);
+  }
+
+  requestProcessing(ev: RequestProcessing) {
+    this.emitter.emit('ui.user.request-processing', ev);
   }
 
   on(event: string, fn: ListenerFn) {

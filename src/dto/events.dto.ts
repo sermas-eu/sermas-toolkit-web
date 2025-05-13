@@ -17,3 +17,9 @@ export interface UiStatus {
   scope?: UiStatusType;
   message: string;
 }
+
+export interface SystemProgressEvent {
+  event: string;
+  status?: string;
+  error?: string;
+}
