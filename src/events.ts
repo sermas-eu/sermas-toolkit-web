@@ -8,7 +8,7 @@ import EventEmitter2, {
 import type { UiStatus } from './dto.js';
 import { Logger } from './logger.js';
 
-const LOG_EVENTS = true;
+const LOG_EVENTS = false;
 
 class SermasEventEmitter extends EventEmitter2 {
   private readonly logger = new Logger('event-emitter');
