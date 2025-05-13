@@ -21,4 +21,5 @@ export interface UiStatus {
 export interface SystemProgressEvent {
   event: string;
   status?: string;
+  error?: string;
 }
