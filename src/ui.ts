@@ -155,7 +155,7 @@ export class UI {
     this.logger.debug(
       `System progress event: ${ev.event} ${ev.status ? ev.status : ''}`,
     );
-    this.emitter.emit('ui.dialogue.progress', ev);
+    this.emitter.emit('dialogue.progress', ev);
   }
 
   onSTTMessage(ev: DialogueMessageDto) {
