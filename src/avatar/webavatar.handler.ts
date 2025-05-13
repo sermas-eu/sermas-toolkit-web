@@ -365,8 +365,12 @@ export class WebAvatarHandler {
         this.isPlaying = false;
         // this.stopSpeech(ev);
 
-        if (ev.playback === 'completed' && this.audioQueue.length) {
-          this.playAudio();
+        if (ev.playback === 'completed') {
+          if (this.audioQueue.length) {
+            this.playAudio();
+          } else {
+            emitter.emit('avatar.speech.completed');
+          }
         }
 
         break;

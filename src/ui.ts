@@ -43,6 +43,7 @@ export class UI {
     this.onProgressMessage = this.onProgressMessage.bind(this);
     this.onChatMessage = this.onChatMessage.bind(this);
     this.onSessionChanged = this.onSessionChanged.bind(this);
+    this.onAvatarSpeechCompleted = this.onAvatarSpeechCompleted.bind(this);
     this.onPlaybackChanged = this.onPlaybackChanged.bind(this);
     this.onUIContent = this.onUIContent.bind(this);
     this.onUserSpeech = this.onUserSpeech.bind(this);
@@ -58,6 +59,7 @@ export class UI {
     this.toolkit.getBroker().on('session.session', this.onSessionChanged);
     this.toolkit.getBroker().on('ui.content', this.onUIContent);
 
+    this.emitter.on('avatar.speech.completed', this.onAvatarSpeechCompleted);
     this.emitter.on('avatar.speech', this.onPlaybackChanged);
     this.emitter.on('detection.speech', this.onUserSpeech);
   }
@@ -73,6 +75,7 @@ export class UI {
 
     this.emitter.off('avatar.speech', this.onPlaybackChanged);
     this.emitter.off('detection.speech', this.onUserSpeech);
+    this.emitter.off('avatar.speech.completed', this.onAvatarSpeechCompleted);
 
     this.initialized = false;
   }
@@ -117,6 +120,10 @@ export class UI {
       ts: new Date(),
       messages: ev ? [ev] : [],
     };
+  }
+
+  onAvatarSpeechCompleted() {
+    this.emitter.emit('ui.avatar.speaking', false);
   }
 
   onPlaybackChanged(ev: AvatarAudioPlaybackStatus) {
