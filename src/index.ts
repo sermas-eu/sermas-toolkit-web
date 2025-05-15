@@ -351,29 +351,30 @@ export class SermasToolkit {
       `session event ${sessionStatus} sessionId=${ev.record.sessionId}`,
     );
 
+    this.emitter.emit('session.status', {
+      sessionId: ev.sessionId,
+      status: sessionStatus,
+    });
+
     const app = await this.getApp();
-    if (ev.operation === 'created') {
+
+    if (sessionStatus === 'created') {
       this.resetPrivacyFlag(app?.settings?.resetPrivacyEverySession);
     }
 
-    if (ev.operation === 'updated') {
-      // closed
-      if (ev.record.closedAt) {
-        this.logger.log('Session closed');
+    // if (sessionStatus === 'updated') {}
 
-        if (app?.settings?.resetPrivacyEverySession) {
-          this.resetPrivacyFlag(true);
-          document.location.reload();
-        }
-
-        const settings = this.settings?.get();
-        if (settings?.interactionStart == 'on-load') {
-          // on session close, generate new sessionId and propagate to APIs
-          this.logger.log(`Creating new session id`);
-          this.createSessionId();
-        } else {
-          this.setSessionId(undefined);
-        }
+    if (sessionStatus === 'closed') {
+      if (app?.settings?.resetPrivacyEverySession) {
+        this.resetPrivacyFlag(true);
+      }
+      const settings = this.settings?.get();
+      if (settings?.interactionStart == 'on-load') {
+        // on session close, generate new sessionId and propagate to APIs
+        this.logger.log(`Creating new session id`);
+        this.createSessionId();
+      } else {
+        this.setSessionId(undefined);
       }
     }
   }
