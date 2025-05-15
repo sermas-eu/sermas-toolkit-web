@@ -19,6 +19,7 @@ import {
 } from './avatar/index.js';
 import { DEFAULT_AVATAR_LANGUAGE, DefaultBackground } from './constants.js';
 import { AudioDetection, VideoDetection } from './detection/index.js';
+import { SessionStatusEvent } from './dto.js';
 import { InteractionType } from './dto/detection.dto.js';
 import { ErrorEventDto, ErrorReason } from './dto/errors.dto.js';
 import { UiButtonSession } from './dto/ui.dto.js';
@@ -344,38 +345,45 @@ export class SermasToolkit {
   }
 
   async onSessionChanged(ev: SessionChangedDto) {
-    const sessionStatus =
-      ev.operation && ev.record.closedAt ? 'closed' : ev.operation;
+    if (!ev.record?.sessionId) return;
+
+    const sessionStatus: SessionStatusEvent = {
+      sessionId: ev.record?.sessionId,
+      status:
+        ev.operation === 'updated' && ev.record?.closedAt
+          ? 'closed'
+          : ev.operation === 'updated'
+            ? 'updated'
+            : 'created',
+    };
 
     this.logger.debug(
       `session event ${sessionStatus} sessionId=${ev.record.sessionId}`,
     );
 
     const app = await this.getApp();
-    if (ev.operation === 'created') {
+
+    if (sessionStatus.status === 'created') {
       this.resetPrivacyFlag(app?.settings?.resetPrivacyEverySession);
     }
 
-    if (ev.operation === 'updated') {
-      // closed
-      if (ev.record.closedAt) {
-        this.logger.log('Session closed');
+    // if (sessionStatus.status === 'updated') {}
 
-        if (app?.settings?.resetPrivacyEverySession) {
-          this.resetPrivacyFlag(true);
-          document.location.reload();
-        }
-
-        const settings = this.settings?.get();
-        if (settings?.interactionStart == 'on-load') {
-          // on session close, generate new sessionId and propagate to APIs
-          this.logger.log(`Creating new session id`);
-          this.createSessionId();
-        } else {
-          this.setSessionId(undefined);
-        }
+    if (sessionStatus.status === 'closed') {
+      if (app?.settings?.resetPrivacyEverySession) {
+        this.resetPrivacyFlag(true);
+      }
+      const settings = this.settings?.get();
+      if (settings?.interactionStart == 'on-load') {
+        // on session close, generate new sessionId and propagate to APIs
+        this.logger.log(`Creating new session id`);
+        this.createSessionId();
+      } else {
+        this.setSessionId(undefined);
       }
     }
+
+    this.emitter.emit('session.status', sessionStatus);
   }
 
   async closeSession() {
