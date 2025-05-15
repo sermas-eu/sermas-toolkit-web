@@ -19,6 +19,7 @@ import {
 } from './avatar/index.js';
 import { DEFAULT_AVATAR_LANGUAGE, DefaultBackground } from './constants.js';
 import { AudioDetection, VideoDetection } from './detection/index.js';
+import { SessionStatusEvent } from './dto.js';
 import { InteractionType } from './dto/detection.dto.js';
 import { ErrorEventDto, ErrorReason } from './dto/errors.dto.js';
 import { UiButtonSession } from './dto/ui.dto.js';
@@ -344,27 +345,31 @@ export class SermasToolkit {
   }
 
   async onSessionChanged(ev: SessionChangedDto) {
-    const sessionStatus =
-      ev.operation && ev.record.closedAt ? 'closed' : ev.operation;
+    if (!ev.record?.sessionId) return;
+
+    const sessionStatus: SessionStatusEvent = {
+      sessionId: ev.record?.sessionId,
+      status:
+        ev.operation === 'updated' && ev.record?.closedAt
+          ? 'closed'
+          : ev.operation === 'updated'
+            ? 'updated'
+            : 'created',
+    };
 
     this.logger.debug(
       `session event ${sessionStatus} sessionId=${ev.record.sessionId}`,
     );
 
-    this.emitter.emit('session.status', {
-      sessionId: ev.sessionId,
-      status: sessionStatus,
-    });
-
     const app = await this.getApp();
 
-    if (sessionStatus === 'created') {
+    if (sessionStatus.status === 'created') {
       this.resetPrivacyFlag(app?.settings?.resetPrivacyEverySession);
     }
 
-    // if (sessionStatus === 'updated') {}
+    // if (sessionStatus.status === 'updated') {}
 
-    if (sessionStatus === 'closed') {
+    if (sessionStatus.status === 'closed') {
       if (app?.settings?.resetPrivacyEverySession) {
         this.resetPrivacyFlag(true);
       }
@@ -377,6 +382,8 @@ export class SermasToolkit {
         this.setSessionId(undefined);
       }
     }
+
+    this.emitter.emit('session.status', sessionStatus);
   }
 
   async closeSession() {

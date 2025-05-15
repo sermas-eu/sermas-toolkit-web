@@ -14,3 +14,8 @@ export enum AgentStatus {
 export type UserReferenceSource = string;
 
 export type SessionStatus = 'started' | 'stopped';
+
+export type SessionStatusEvent = {
+  status: 'closed' | 'updated' | 'created';
+  sessionId: string;
+};
