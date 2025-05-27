@@ -378,7 +378,7 @@ export class SermasToolkit {
       if (settings?.interactionStart == 'on-load') {
         // on session close, generate new sessionId and propagate to APIs
         this.logger.log(`Creating new session id`);
-        this.createSessionId();
+        sessionStatus.sessionId = this.createSessionId();
       } else {
         this.setSessionId(undefined);
       }
