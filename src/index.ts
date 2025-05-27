@@ -346,15 +346,16 @@ export class SermasToolkit {
 
   async onSessionChanged(ev: SessionChangedDto) {
     if (!ev.record?.sessionId) return;
-
+    let status: 'created' | 'updated' | 'closed' = 'created';
+    if (ev.operation === 'updated') status = 'updated';
+    if (
+      (ev.operation === 'updated' && ev.record?.closedAt) ||
+      ev.operation === 'deleted'
+    )
+      status = 'closed';
     const sessionStatus: SessionStatusEvent = {
       sessionId: ev.record?.sessionId,
-      status:
-        ev.operation === 'updated' && ev.record?.closedAt
-          ? 'closed'
-          : ev.operation === 'updated'
-            ? 'updated'
-            : 'created',
+      status,
     };
 
     this.logger.debug(
