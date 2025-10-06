@@ -244,6 +244,8 @@ export class MqttClient extends EventEmitter2 {
       // emit event
       (() => this.emit(`${resource}.${scope}`, ev.payload, ev))();
 
+      // console.warn(`${resource}.${scope}`, ev.payload);
+
       // emitter.emit('mqtt.message', ev)
       // (() => emitter.emit(`${resource}.${scope}`, ev.payload, ev))();
 

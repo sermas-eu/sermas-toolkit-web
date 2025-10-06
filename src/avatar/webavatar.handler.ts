@@ -62,9 +62,9 @@ export class WebAvatarHandler {
       'dialogue.speech': this.onAvatarSpeechMessage,
       'dialogue.continue': this.onAvatarSpeechContinue,
       'dialogue.stop': this.onAvatarSpeechStop,
+      'detection.characterization': this.onDetection,
     },
     emitter: {
-      'detection.characterization': this.onDetection,
       'avatar.face': this.setFace,
       'avatar.speech.stop': this.onForceStop,
       'dialogue.stop': this.onForceStop,
@@ -175,7 +175,6 @@ export class WebAvatarHandler {
 
   onDetection(ev: UserCharacterizationEventDto) {
     if (ev.source !== UserCharacterizationEventSource.emotion_tracker) return;
-
     if (!this.avatar) return;
 
     if (!ev.detections || !ev.detections.length) return;
@@ -183,23 +182,37 @@ export class WebAvatarHandler {
 
     const emotionValue = emotion.value as Emotion;
 
+    logger.debug(
+      `Detected emotion ${emotionValue} (${emotion.probability * 100}) previous ${this.lastSet?.emotion}`,
+    );
+
     if (
       this.lastSet &&
-      (Date.now() - this.lastSet.time < 1000 ||
-        this.lastSet.emotion === emotionValue)
-    )
+      Date.now() - this.lastSet.time < 1000 &&
+      this.lastSet.emotion === emotionValue
+    ) {
+      logger.debug(`Skip set emotion ${emotionValue}`);
       return;
+    }
 
-    // logger.log(emotion.value, emotion.probability);
     this.lastSet = {
       time: Date.now(),
       emotion: emotionValue,
     };
-    // sendStatus(`set face ${emotion.value}`);
 
-    // this.avatarModel.play('gesture', emotion.value);
-    logger.debug(`Set emotion ${emotionValue}`);
-    this.avatar.getBlendShapes()?.setEmotion(emotionValue);
+    this.showEmotion(emotionValue);
+  }
+
+  getLastEmotion(): Emotion {
+    return (this.lastSet?.emotion || 'neutral') as Emotion;
+  }
+
+  showEmotion(emotion?: Emotion) {
+    if (!emotion) {
+      emotion = this.getLastEmotion();
+    }
+    logger.log(`Show emotion ${emotion}`);
+    this.avatar.getBlendShapes()?.setEmotion(emotion);
   }
 
   onSession(ev: SessionChangedDto) {
@@ -370,6 +383,7 @@ export class WebAvatarHandler {
             this.playAudio();
           } else {
             emitter.emit('avatar.speech.completed');
+            this.showEmotion();
           }
         }
 

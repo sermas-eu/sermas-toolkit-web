@@ -54,9 +54,12 @@ export class HumanDetector extends BaseDetector<
   }
 
   async publish(ev: HumanDetectionResult, toolkit: SermasToolkit) {
+    if (!ev.characterization) {
+      this.logger.warn('human.js result: missing characterization');
+    }
     const data = {
       appId: toolkit.getAppId(),
-      detections: [ev],
+      detections: [ev.characterization],
       sessionId: toolkit.getSessionId(),
     };
 
