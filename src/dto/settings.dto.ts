@@ -36,4 +36,5 @@ export class AppSettings implements AppSettingsDto {
   subtitlesEnabled: boolean;
   githubRepository?: string;
   resetPrivacyEverySession?: boolean;
+  pushToTalkEnabled?: boolean;
 }

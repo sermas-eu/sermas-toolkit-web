@@ -45,6 +45,7 @@ export class Settings {
     virtualKeyboardEnabled: false,
     subtitlesEnabled: true,
     resetPrivacyEverySession: false,
+    pushToTalkEnabled: false,
   };
 
   constructor() {
@@ -82,6 +83,7 @@ export class Settings {
       virtualKeyboardEnabled: settings.virtualKeyboardEnabled,
       language: settings.language,
       subtitlesEnabled: settings.subtitlesEnabled,
+      pushToTalkEnabled: settings.pushToTalkEnabled,
     };
 
     localStorage.setItem(`sermas.settings.${this.appId}`, JSON.stringify(cfg));
