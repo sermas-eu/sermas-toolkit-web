@@ -347,6 +347,7 @@ export class AudioDetection extends EventEmitter2 {
 
   async startVAD(stream?: MediaStream) {
     // await this.enableOnnxRuntimeDebug();
+    if (this.vad) return true;
 
     try {
       this.logger.debug(`Loading VAD`);
