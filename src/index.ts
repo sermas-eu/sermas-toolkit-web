@@ -9,7 +9,6 @@ import {
   type UserInteractionIntentionDto,
 } from '@sermas/api-client';
 import EventEmitter2, { ListenerFn } from 'eventemitter2';
-import { v4 as uuidv4 } from 'uuid';
 import { ApiClient } from './api.js';
 import { AuthClient } from './auth.js';
 import {
@@ -252,7 +251,7 @@ export class SermasToolkit {
   }
 
   createSessionId(): string {
-    const sessionId = uuidv4();
+    const sessionId = crypto.randomUUID();
     this.setSessionId(sessionId);
     this.logger.debug(`Created new session sessionId=${this.sessionId}`);
     return sessionId;

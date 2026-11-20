@@ -1,3 +1,4 @@
+import type * as THREE from 'three';
 import {
   AvatarFaceBlendShape,
   DetectionPosition,
@@ -20,7 +21,7 @@ export class BlendShapeAnimation extends AnimationBase {
 
   private gui: GUI;
 
-  animate(delta: number): void {
+  animate(_delta: number): void {
     //
   }
 
@@ -245,7 +246,13 @@ export class BlendShapeAnimation extends AnimationBase {
 
       if (this.gui) {
         this.gui
-          .add(influences, '' + value, 0, 1, 0.01)
+          .add(
+            influences as unknown as Record<string, number>,
+            '' + value,
+            0,
+            1,
+            0.01,
+          )
           .name(key)
           .listen(true);
       }

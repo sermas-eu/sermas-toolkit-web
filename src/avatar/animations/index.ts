@@ -1,5 +1,4 @@
 import * as THREE from 'three';
-import { HolisticV1Results } from '../../detection/index.js';
 import { Logger } from '../../logger.js';
 import { getTypedKeys } from '../util.js';
 import {
@@ -53,7 +52,6 @@ export class WebavatarAnimation extends AnimationBase {
     gesture_show_right: 0,
   };
 
-  private mirrorModeEnabled = false;
   private lookAtUser = false;
 
   constructor(avatar: AvatarModel) {
@@ -136,12 +134,6 @@ export class WebavatarAnimation extends AnimationBase {
     await this.blendShapes.destroy();
   }
 
-  setPoses(results: HolisticV1Results) {
-    if (!this.animationEnabled || !this.mirrorModeEnabled) return;
-    this.stopAnimations('gesture');
-    this.getAnimator()?.animate(results);
-  }
-
   getAnimation(
     group: AnimationGroup | string,
     name?: string,
@@ -190,7 +182,7 @@ export class WebavatarAnimation extends AnimationBase {
         return { ...label, animationName: name, animationClip };
       })
       .reduce(
-        (o, { group, name, animationName, animationClip }) => {
+        (o, { group, name, animationClip }) => {
           let maskedClip = animationClip;
           if (config.animations?.masks) {
             getTypedKeys<AnimationGroup>(config.animations?.masks).forEach(
@@ -422,10 +414,6 @@ export class WebavatarAnimation extends AnimationBase {
 
   getAnimations(group: AnimationGroup): AnimationHandler[] {
     return Object.values(this.animations[group] || {});
-  }
-
-  setMirrorModeEnabled(enabled: boolean) {
-    this.mirrorModeEnabled = enabled;
   }
 
   setAnimationEnabled(enabled: boolean) {

@@ -5,7 +5,6 @@ import {
 } from '../dto.js';
 import { emitter } from '../events.js';
 
-import { HolisticV1Results } from '../detection/index.js';
 import { Logger } from '../utils.js';
 
 import {
@@ -68,7 +67,6 @@ export class WebAvatarHandler {
       'avatar.face': this.setFace,
       'avatar.speech.stop': this.onForceStop,
       'dialogue.stop': this.onForceStop,
-      'detection.pose': this.setPose,
       'detection.audio': this.setListening,
     },
   };
@@ -345,10 +343,6 @@ export class WebAvatarHandler {
     this.avatar?.getBlendShapes()?.setFaceBlendShapes(blendingShapes);
   }
 
-  setPose(poses: HolisticV1Results) {
-    this.avatar?.setPoses(poses);
-  }
-
   onAudioPlayerStatus(ev: AudioPlayerStatus) {
     // logger.debug(`Audio player status event: ${JSON.stringify(ev)}`);
     switch (ev.playback) {
@@ -445,7 +439,9 @@ export class WebAvatarHandler {
       try {
         emitter.off(key, this.callbacks[key]);
         delete this.callbacks[key];
-      } catch {}
+      } catch {
+        // ignore
+      }
     });
     this.player?.off('status', this.onAudioPlayerStatus);
 

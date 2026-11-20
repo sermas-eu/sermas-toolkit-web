@@ -1,13 +1,6 @@
 import type { AudioClassifier } from '@mediapipe/tasks-audio';
-import {
-  ONNXRuntimeAPI,
-  SpeechProbabilities,
-} from '@ricky0123/vad-web/dist/models.js';
-import type {
-  MicVAD,
-  RealTimeVADOptions,
-} from '@ricky0123/vad-web/dist/real-time-vad';
-import axios from 'axios';
+import type { MicVAD, RealTimeVADOptions } from '@ricky0123/vad-web';
+import type { SpeechProbabilities } from './audio/vad.dto.js';
 import { Buffer } from 'buffer';
 import EventEmitter2 from 'eventemitter2';
 import { emitter } from '../events.js';
@@ -24,7 +17,7 @@ import {
   SpeechSampleResult,
 } from './audio/audio.detection.dto.js';
 import { createAudioClassifier } from './audio/mediapipe/audio.classifier.js';
-import classes from './audio/mediapipe/classes.json' assert { type: 'json' };
+import classes from './audio/mediapipe/classes.json' with { type: 'json' };
 import { SpeechStreamer } from './audio/speech-streamer.js';
 import { float32ToInt16Buffer } from './audio/util.js';
 
@@ -59,20 +52,18 @@ const vadDefaultParams = {
   // negativeSpeechThreshold:
   // number - determines the threshold under which a probability is considered to indicate the absence of speech. default: 0.35
   negativeSpeechThreshold: 0.35,
-  // redemptionFrames:
-  // number - number of speech-negative frames to wait before ending a speech segment. default: 8
-  redemptionFrames: 8,
-  // frameSamples:
-  // number - the size of a frame in samples. For the older (default) Silero model, this should probably be 1536.
-  // For the new, Silero version 5 model, it should be 512. default: 1536
-  // frameSamples: 1536,
-  // preSpeechPadFrames:
-  // number - number of audio frames to prepend to a speech segment. default: 1
-  preSpeechPadFrames: 3,
-  // minSpeechFrames:
-  // number - minimum number of speech-positive frames for a speech segment. default: 3
-  minSpeechFrames: 3,
+  // The timings below equal the former frame-based settings with the legacy
+  // model (96 ms frames): 8, 3 and 3 frames.
+  // redemptionMs: silence to wait before ending a speech segment
+  redemptionMs: 768,
+  // preSpeechPadMs: audio prepended to a speech segment
+  preSpeechPadMs: 288,
+  // minSpeechMs: shorter segments are misfires
+  minSpeechMs: 288,
 };
+
+// Silero v5: 32 ms frames (512 samples at 16 kHz)
+const VAD_MODEL = 'v5';
 
 type AudioConstraints = Omit<
   MediaTrackConstraints,
@@ -176,8 +167,8 @@ export class AudioDetection extends EventEmitter2 {
     return this.vad?.options;
   }
 
-  getSampleRate(): number | undefined {
-    return this.vad?.options.frameSamples;
+  getSampleRate(): number {
+    return VAD_SAMPLE_RATE;
   }
 
   /**
@@ -203,7 +194,9 @@ export class AudioDetection extends EventEmitter2 {
     if (this.stream) {
       try {
         await this.stop();
-      } catch {}
+      } catch {
+        // ignore
+      }
     }
 
     if (!this.hasMediaSupport()) {
@@ -351,32 +344,30 @@ export class AudioDetection extends EventEmitter2 {
 
     try {
       this.logger.debug(`Loading VAD`);
-      const vadModuleLoader = await import('@ricky0123/vad-web/dist/index');
-      const vadModule = vadModuleLoader.default || vadModuleLoader;
+      const vadModule = await import('@ricky0123/vad-web');
 
       this.encodeWAV = vadModule.utils.encodeWAV;
 
       this.vadParams = Object.assign({}, vadDefaultParams, this.vadParams);
 
+      const micStream = stream || (await this.createMicrophoneStream());
+      if (!micStream) return false;
+      this.stream = micStream;
+
       this.vad = await vadModule.MicVAD.new({
         ...this.vadParams,
-        stream,
-        workletURL: '/vad.worklet.bundle.min.js',
-        modelURL: '/silero_vad.onnx',
-        modelFetcher: async (path: string) => {
-          this.logger.debug(`Loading VAD model ${path}`);
-          const res = await axios.get(path, {
-            responseType: 'arraybuffer',
-          });
-          return res.data;
+        model: VAD_MODEL,
+        startOnLoad: false,
+        // the kiosk serves the worklet, the models and the ONNX runtime at /
+        baseAssetPath: '/',
+        onnxWASMBasePath: '/',
+        getStream: async () => micStream,
+        pauseStream: async (s: MediaStream) =>
+          s.getTracks().forEach((t) => (t.enabled = false)),
+        resumeStream: async (s: MediaStream) => {
+          s.getTracks().forEach((t) => (t.enabled = true));
+          return s;
         },
-        ortConfig: (ort: ONNXRuntimeAPI) => {
-          // ort.env.wasm.wasmPaths =
-          //   'https://unpkg.com/onnxruntime-web@dev/dist/';
-          ort.env.wasm.wasmPaths = '/';
-          return ort;
-        },
-
         onSpeechEnd: (audio: Float32Array) => {
           this.resetSpeechSamples();
           this.onSpeech('stopped', audio);
@@ -394,13 +385,10 @@ export class AudioDetection extends EventEmitter2 {
         // },
       });
 
-      this.stream = stream ? stream : this.vad.options.stream;
-
       // enable stream track(s)
-      const tracks = this.stream?.getTracks() || [];
-      tracks.forEach((t) => (t.enabled = true));
+      micStream.getTracks().forEach((t) => (t.enabled = true));
 
-      this.vad.start();
+      await this.vad.start();
 
       this.emit('started');
       this.logger.debug(

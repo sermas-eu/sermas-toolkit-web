@@ -1,8 +1,8 @@
 import { Logger } from '../logger.js';
-import { AppSettings, messageQueue, SubtitleMessage } from 'dto.js';
+import { AppSettings, messageQueue, SubtitleMessage } from '../dto.js';
 import { AvatarAudioPlaybackStatus } from './webavatar.dto.js';
 import { emitter } from '../events.js';
-import { DialogueMessageDto, SermasToolkit } from 'index.js';
+import { DialogueMessageDto, SermasToolkit } from '../index.js';
 
 const logger = new Logger('webavatar.subtitles');
 

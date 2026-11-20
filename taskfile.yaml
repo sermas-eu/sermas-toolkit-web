@@ -1,0 +1,38 @@
+version: '3'
+
+# sermas-toolkit-web: the browser toolkit (@sermas/toolkit). The kiosk compiles these
+# sources directly (sermas-dev), so there is no dev server here.
+
+tasks:
+  setup:
+    desc: "Install dependencies from the lockfile"
+    cmds:
+      - npm ci --no-audit --no-fund
+
+  build:
+    desc: "Compile to dist/ (only needed to publish; the kiosk builds from source)"
+    cmds:
+      - npm run build
+
+  typecheck:
+    desc: "Type-check sources and specs"
+    cmds:
+      - npm run typecheck
+
+  lint:
+    desc: "Lint without rewriting files"
+    cmds:
+      - npm run lint
+
+  test:
+    desc: "Unit tests (task test -- <pattern>)"
+    cmds:
+      - npm test -- {{.CLI_ARGS}}
+
+  check:
+    desc: "Everything CI runs"
+    cmds:
+      - task: typecheck
+      - task: lint
+      - task: test
+      - task: build

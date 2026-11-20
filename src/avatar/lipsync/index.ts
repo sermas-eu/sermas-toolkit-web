@@ -1,4 +1,4 @@
-import { AvatarModel } from 'avatar/webavatar.js';
+import { AvatarModel } from '../webavatar.js';
 import { VisemeType } from '../animations/blendshapes/lib/viseme/index.js';
 
 export class LipSync {

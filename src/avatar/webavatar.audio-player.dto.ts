@@ -1,10 +1,5 @@
 export type PlaybackStatus =
-  | 'started'
-  | 'playing'
-  | 'paused'
-  | 'resumed'
-  | 'stopped'
-  | 'completed';
+  'started' | 'playing' | 'paused' | 'resumed' | 'stopped' | 'completed';
 
 export type AudioPlayerStatus = {
   enabled: boolean;

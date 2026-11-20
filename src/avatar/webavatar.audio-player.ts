@@ -163,7 +163,9 @@ export class WebAvatarAudioPlayer extends EventEmitter2 {
     if (this.audioContext) {
       try {
         await this.audioContext?.close();
-      } catch {}
+      } catch {
+        // ignore
+      }
       this.audioContext = undefined;
     }
   }

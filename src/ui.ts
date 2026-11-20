@@ -7,7 +7,7 @@ import {
   sleep,
 } from '@sermas/api-client';
 import EventEmitter2, { ListenerFn } from 'eventemitter2';
-import { SermasToolkit } from 'index.js';
+import { SermasToolkit } from './index.js';
 import {
   AvatarAudioPlaybackStatus,
   AvatarStopSpeechReference,

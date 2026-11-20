@@ -20,8 +20,8 @@ export class TextureLoader2 extends TextureLoader {
     });
   }
 
-  load(url: string, onLoad?, onProgress?, onError?) {
-    const texture = new Texture();
+  load(url: string, onLoad?, onProgress?, onError?): Texture<HTMLImageElement> {
+    const texture = new Texture<HTMLImageElement>();
 
     axios
       .get(url, {
@@ -41,10 +41,10 @@ export class TextureLoader2 extends TextureLoader {
 
         texture.image = img;
         texture.needsUpdate = true;
-        onLoad && onLoad(texture);
+        onLoad?.(texture);
       })
       .catch((err) => {
-        onError && onError(err);
+        onError?.(err);
         return Promise.resolve();
       });
 

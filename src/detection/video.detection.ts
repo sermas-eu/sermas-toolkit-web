@@ -1,6 +1,6 @@
 // import { DrawingUtils } from "@mediapipe/tasks-vision";
 import EventEmitter2 from 'eventemitter2';
-import { SermasToolkit } from 'index.js';
+import { SermasToolkit } from '../index.js';
 import { Logger } from '../logger.js';
 import { CameraHandler, CameraHandlerConfig } from './camera.js';
 import type {
@@ -29,8 +29,6 @@ export class VideoDetection extends EventEmitter2 {
 
   private lastDetection: Record<VideoDetectorType, number> = {
     faceLandmark: performance.now(),
-    holistic_v1: performance.now(),
-    human: performance.now(),
     qrcode: performance.now(),
   };
 
@@ -73,7 +71,9 @@ export class VideoDetection extends EventEmitter2 {
       if (instance.publish && this.toolkit) {
         try {
           await instance.publish(ev, this.toolkit);
-        } catch {}
+        } catch {
+          // ignore
+        }
       }
 
       // cache results for rendering

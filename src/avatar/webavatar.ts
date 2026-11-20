@@ -14,7 +14,6 @@ import type {
   DetectionPosition,
 } from './webavatar.dto.js';
 
-import { HolisticV1Results } from '../detection/index.js';
 import { sendStatus } from '../events.js';
 import { SermasToolkit } from '../index.js';
 import { TextureLoader2 } from './loader/TextureLoader2.js';
@@ -126,10 +125,6 @@ export class AvatarModel {
 
   getHandler() {
     return this.handler;
-  }
-
-  setMirrorModeEnabled(enabled: boolean) {
-    this.animation?.setMirrorModeEnabled(enabled);
   }
 
   setAnimationEnabled(enabled: boolean) {
@@ -454,10 +449,6 @@ export class AvatarModel {
     }
 
     return model as THREE.Group;
-  }
-
-  setPoses(results: HolisticV1Results) {
-    this.animation?.setPoses(results);
   }
 
   showLoadingProgress(loaded: number, total: number) {

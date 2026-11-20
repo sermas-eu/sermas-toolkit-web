@@ -127,9 +127,10 @@ export class AuthClient {
     const jwt = this.auth.getUserInfo();
     if (!jwt?.exp) return null;
 
+    // exp is an epoch time in seconds; expires_in is seconds from now
     return {
       access_token: token,
-      expires_in: jwt.exp,
+      expires_in: Math.max(0, jwt.exp - Math.floor(Date.now() / 1000)),
     };
   }
 

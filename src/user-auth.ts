@@ -35,7 +35,9 @@ export class UserAuth {
       const user = JSON.parse(raw);
       if (!user) return;
       return user as UserLoginResponseDto;
-    } catch {}
+    } catch {
+      // ignore
+    }
   }
 
   async isLoginRequired(): Promise<boolean> {

@@ -1,6 +1,5 @@
 import EventEmitter2 from 'eventemitter2';
 import mqtt from 'mqtt';
-import { v4 as uuidv4 } from 'uuid';
 import type { MqttMessageEvent } from './dto.js';
 import { Logger } from './logger.js';
 
@@ -43,12 +42,8 @@ export class MqttClient extends EventEmitter2 {
 
   getACLEvents() {
     return [
-      ...(this.events?.pub?.length
-        ? this.events?.pub?.map((e) => `${e}:write`)
-        : []),
-      ...(this.events?.sub?.length
-        ? this.events?.sub?.map((e) => `${e}:read`)
-        : []),
+      ...(this.events?.pub || []).map((e) => `${e}:write`),
+      ...(this.events?.sub || []).map((e) => `${e}:read`),
     ];
   }
 
@@ -108,7 +103,7 @@ export class MqttClient extends EventEmitter2 {
   disconnect(): void {
     if (!this.mqttClient) return;
     this.unsubscribeTopics();
-    this.mqttClient.disconnected;
+    this.mqttClient.end();
     this.mqttClient = undefined;
   }
 
@@ -190,7 +185,7 @@ export class MqttClient extends EventEmitter2 {
           this.logger.debug(`SUB Skip topic=${topic} with unmapped param`);
           return '';
         } else {
-          topic = topic.replaceAll(/(:[a-zA-Z0-9]+[^/])/g, '+');
+          topic = topic.replaceAll(/:[a-zA-Z0-9]+/g, '+');
         }
         return topic;
       })
@@ -278,7 +273,7 @@ export class MqttClient extends EventEmitter2 {
       username: token,
       password: 'mqtt',
       protocol: useSSL ? 'wss' : 'ws',
-      clientId: uuidv4(),
+      clientId: crypto.randomUUID(),
       protocolVersion: 5,
       rejectUnauthorized: false,
       clean: true,

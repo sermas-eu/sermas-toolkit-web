@@ -11,8 +11,7 @@ export class WebAvatarXR {
   private started = false;
 
   private planeMarker:
-    | THREE.Mesh<THREE.RingGeometry, THREE.MeshBasicMaterial>
-    | undefined;
+    THREE.Mesh<THREE.RingGeometry, THREE.MeshBasicMaterial> | undefined;
   private controller: THREE.XRTargetRaySpace | undefined;
   private hitTestHandler: HitTestHandler;
 
@@ -218,7 +217,7 @@ export class WebAvatarXR {
     this.controller.addEventListener('select', this.onSelect);
     if (model) {
       this.modelPosition = model.position;
-      this.modelScale = model.scale.set(4.5,4.5,4.5)
+      this.modelScale = model.scale.set(4.5, 4.5, 4.5);
       this.cameraConfig = this.avatar.getCameraConfig();
       scene.remove(model);
     }

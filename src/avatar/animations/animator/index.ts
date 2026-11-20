@@ -1,6 +1,5 @@
 import { Logger } from '../../../logger.js';
 import * as THREE from 'three';
-import type { HolisticV1Results } from '../../../detection/video/mediapipe/v1/holistic/holistic.dto.js';
 import { DetectionPosition } from '../../webavatar.dto.js';
 
 export class Animator {
@@ -92,10 +91,7 @@ export class Animator {
     const left = x - 0.2; //this.pixelToPerc(x) - 0.5;
 
     // TODO: variable Z target position
-    const center_x = 200;
-    const center_y = 200;
-    let dist = Math.sqrt(Math.pow(center_x - x, 2) + Math.pow(center_y - y, 2));
-    dist = 10; //this.pixelToPerc(dist);
+    const dist = 10;
 
     const scale = 3;
     const target: THREE.Vector3 = new THREE.Vector3(
@@ -104,10 +100,6 @@ export class Animator {
       dist,
     );
     this.lookAt(target);
-  }
-
-  animate(results: HolisticV1Results) {
-    //
   }
 
   moveEyes(position: DetectionPosition) {
