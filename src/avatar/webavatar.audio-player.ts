@@ -1,8 +1,8 @@
 import EventEmitter2 from 'eventemitter2';
 import { Logger } from '../logger.js';
 import {
-  AudioPlayerStatus,
-  PlaybackStatus,
+  type AudioPlayerStatus,
+  type PlaybackStatus,
 } from './webavatar.audio-player.dto.js';
 
 const logger = new Logger('webavatar.audio-player');

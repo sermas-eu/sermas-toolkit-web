@@ -20,7 +20,12 @@ export class TextureLoader2 extends TextureLoader {
     });
   }
 
-  load(url: string, onLoad?, onProgress?, onError?): Texture<HTMLImageElement> {
+  load(
+    url: string,
+    onLoad?: (texture: Texture<HTMLImageElement>) => void,
+    _onProgress?: (event: ProgressEvent) => void,
+    onError?: (err: unknown) => void,
+  ): Texture<HTMLImageElement> {
     const texture = new Texture<HTMLImageElement>();
 
     axios

@@ -3,7 +3,10 @@ import { Clock } from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import Stats from 'three/examples/jsm/libs/stats.module.js';
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
-import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import {
+  type GLTF,
+  GLTFLoader,
+} from 'three/examples/jsm/loaders/GLTFLoader.js';
 
 import { Logger } from '../logger.js';
 

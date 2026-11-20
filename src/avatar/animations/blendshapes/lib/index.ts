@@ -1,4 +1,4 @@
-import { Emotion } from '../../../../dto/detection.dto.js';
+import { type Emotion } from '../../../../dto/detection.dto.js';
 import angry from './angry.json' with { type: 'json' };
 import disgust from './disgust.json' with { type: 'json' };
 import eyesClose from './eyes_close.json' with { type: 'json' };

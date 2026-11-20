@@ -1,6 +1,6 @@
 import {
-  RepositoryAvatarDto,
-  RepositoryBackgroundDto,
+  type RepositoryAvatarDto,
+  type RepositoryBackgroundDto,
 } from '@sermas/api-client';
 
 export const DEFAULT_AVATAR_LANGUAGE = 'en-GB';

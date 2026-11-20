@@ -1,4 +1,4 @@
-import { FaceLandmarkerResult } from '@mediapipe/tasks-vision';
+import { type FaceLandmarkerResult } from '@mediapipe/tasks-vision';
 import { VideoDetectorConfig } from '../../../../video/video.dto.js';
 
 export type FaceLandmarkDetectorConfig = VideoDetectorConfig;

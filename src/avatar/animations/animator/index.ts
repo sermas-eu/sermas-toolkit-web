@@ -1,6 +1,6 @@
 import { Logger } from '../../../logger.js';
 import * as THREE from 'three';
-import { DetectionPosition } from '../../webavatar.dto.js';
+import { type DetectionPosition } from '../../webavatar.dto.js';
 
 export class Animator {
   private logger = new Logger('Animator');

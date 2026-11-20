@@ -1,5 +1,5 @@
 import {
-  DialogueMessageDto,
+  type DialogueMessageDto,
   SermasApiClient,
   sleep,
   type PlatformAppDto,
@@ -8,20 +8,20 @@ import {
   type SessionChangedDto,
   type UserInteractionIntentionDto,
 } from '@sermas/api-client';
-import EventEmitter2, { ListenerFn } from 'eventemitter2';
+import EventEmitter2, { type ListenerFn } from 'eventemitter2';
 import { ApiClient } from './api.js';
 import { AuthClient } from './auth.js';
 import {
   AvatarModel,
-  AvatarModelConfig,
+  type AvatarModelConfig,
   createWebAvatar,
 } from './avatar/index.js';
 import { DEFAULT_AVATAR_LANGUAGE, DefaultBackground } from './constants.js';
 import { AudioDetection, VideoDetection } from './detection/index.js';
-import { SessionStatusEvent } from './dto.js';
+import { type SessionStatusEvent } from './dto.js';
 import { InteractionType } from './dto/detection.dto.js';
-import { ErrorEventDto, ErrorReason } from './dto/errors.dto.js';
-import { UiButtonSession } from './dto/ui.dto.js';
+import { type ErrorEventDto, ErrorReason } from './dto/errors.dto.js';
+import { type UiButtonSession } from './dto/ui.dto.js';
 import { EventListenerTracker, emitter } from './events.js';
 import { FpsMonitor } from './fps.js';
 import { Logger, initLogger } from './logger.js';

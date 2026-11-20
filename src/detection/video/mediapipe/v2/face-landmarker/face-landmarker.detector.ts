@@ -1,10 +1,10 @@
 import { FilesetResolver } from '@mediapipe/tasks-audio';
 import { type DrawingUtils, FaceLandmarker } from '@mediapipe/tasks-vision';
 import { BaseDetector } from '../../../base.detector.js';
-import { VideoDetectorType } from '../../../video.dto.js';
+import { type VideoDetectorType } from '../../../video.dto.js';
 import {
-  FaceLandmarkDetectorConfig,
-  FaceLandmarkDetectorResult,
+  type FaceLandmarkDetectorConfig,
+  type FaceLandmarkDetectorResult,
 } from './face-landmarker.dto.js';
 
 export class FaceLandmarkDetector extends BaseDetector<

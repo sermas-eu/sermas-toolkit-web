@@ -1,4 +1,4 @@
-import { AppSettingsDto } from '@sermas/api-client';
+import { type AppSettingsDto } from '@sermas/api-client';
 import { DEFAULT_AVATAR_LANGUAGE } from './constants.js';
 import { AppSettings } from './dto.js';
 import { emitter } from './events.js';

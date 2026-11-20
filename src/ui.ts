@@ -1,24 +1,24 @@
 import {
-  DialogueMessageDto,
-  DialogueMessageUIContentDto,
-  DialogueProgressEventDto,
-  SessionChangedDto,
-  UIContentDto,
+  type DialogueMessageDto,
+  type DialogueMessageUIContentDto,
+  type DialogueProgressEventDto,
+  type SessionChangedDto,
+  type UIContentDto,
   sleep,
 } from '@sermas/api-client';
-import EventEmitter2, { ListenerFn } from 'eventemitter2';
+import EventEmitter2, { type ListenerFn } from 'eventemitter2';
 import { SermasToolkit } from './index.js';
 import {
-  AvatarAudioPlaybackStatus,
-  AvatarStopSpeechReference,
+  type AvatarAudioPlaybackStatus,
+  type AvatarStopSpeechReference,
 } from './avatar/index.js';
-import { DialogueActor } from './dto/dialogue.dto';
-import { SessionStatus } from './dto/session.dto';
+import { type DialogueActor } from './dto/dialogue.dto';
+import { type SessionStatus } from './dto/session.dto';
 import {
-  ChatMessage,
-  RequestProcessing,
-  UiButtonSession,
-  UserSpeaking,
+  type ChatMessage,
+  type RequestProcessing,
+  type UiButtonSession,
+  type UserSpeaking,
 } from './dto/ui.dto.js';
 import { EventListenerTracker } from './events.js';
 import { Logger } from './logger.js';

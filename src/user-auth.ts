@@ -1,5 +1,5 @@
 import { parseJWT } from './auth.js';
-import { UserLoginResponseDto } from './dto.js';
+import { type UserLoginResponseDto } from './dto.js';
 import { SermasToolkit } from './index.js';
 
 const LOCAL_STORAGE_KEY = 'sermas.current-user';

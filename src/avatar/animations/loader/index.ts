@@ -5,8 +5,11 @@ import {
   type GLTF,
 } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { Logger } from '../../../logger.js';
-import { AvatarModelConfig, GestureMappingKeys } from '../../webavatar.dto.js';
-import { RpmAnimation } from './contants.js';
+import {
+  type AvatarModelConfig,
+  type GestureMappingKeys,
+} from '../../webavatar.dto.js';
+import { type RpmAnimation } from './contants.js';
 
 export class AnimationsLoader {
   private logger = new Logger('AnimationsLoader');

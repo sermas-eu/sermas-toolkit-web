@@ -1,5 +1,5 @@
 import { AvatarModel } from '../webavatar.js';
-import { VisemeType } from '../animations/blendshapes/lib/viseme/index.js';
+import { type VisemeType } from '../animations/blendshapes/lib/viseme/index.js';
 
 export class LipSync {
   private lastVowelIndex: number = 0;

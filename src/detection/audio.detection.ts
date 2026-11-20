@@ -6,15 +6,15 @@ import EventEmitter2 from 'eventemitter2';
 import { emitter } from '../events.js';
 import {
   AUDIO_CLASSIFICATION_TOPIC,
-  AudioClassificationEventDto,
-  DialogueMessageDto,
+  type AudioClassificationEventDto,
+  type DialogueMessageDto,
   SermasToolkit,
 } from '../index.js';
 import { Logger } from '../logger.js';
 import { getChunkId, getMessageId } from '../utils.js';
 import {
   AudioClassificationValue,
-  SpeechSampleResult,
+  type SpeechSampleResult,
 } from './audio/audio.detection.dto.js';
 import { createAudioClassifier } from './audio/mediapipe/audio.classifier.js';
 import classes from './audio/mediapipe/classes.json' with { type: 'json' };
@@ -624,8 +624,8 @@ export class AudioDetection extends EventEmitter2 {
         });
         formData.append('file', blob, 'audio.wav');
 
-        for (const key in ev) {
-          formData.append(key, ev[key]);
+        for (const [key, value] of Object.entries(ev)) {
+          formData.append(key, value as string);
         }
 
         const settings = this.toolkit.getSettings().get();

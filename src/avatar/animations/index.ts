@@ -2,11 +2,11 @@ import * as THREE from 'three';
 import { Logger } from '../../logger.js';
 import { getTypedKeys } from '../util.js';
 import {
-  AnimationGroup,
+  type AnimationGroup,
   AnimationHandler,
-  AnimationLabel,
-  DetectionPosition,
-  GestureMappingKeys,
+  type AnimationLabel,
+  type DetectionPosition,
+  type GestureMappingKeys,
 } from '../webavatar.dto.js';
 import { AvatarModel } from '../webavatar.js';
 import { AnimationBase } from './animation.base.js';
@@ -366,7 +366,7 @@ export class WebavatarAnimation extends AnimationBase {
     return this.loopableGestures.some((gesture) => name.indexOf(gesture) > -1);
   }
 
-  setWeight(action, weight) {
+  setWeight(action: THREE.AnimationAction, weight: number) {
     action.enabled = true;
     action.setEffectiveTimeScale(1);
     action.setEffectiveWeight(weight);

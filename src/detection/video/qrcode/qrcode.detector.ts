@@ -1,14 +1,17 @@
 import type { ZBarScanner, ZBarSymbol } from '@undecaf/zbar-wasm';
 import {
   XRMARKER_DETECTION,
-  XRMarkerDto,
+  type XRMarkerDto,
   type SermasToolkit,
   QR_DETECTION,
-  QRCodeEventDto,
+  type QRCodeEventDto,
 } from '../../../index.js';
 import { BaseDetector } from '../base.detector.js';
-import { VideoDetectorType } from '../video.dto.js';
-import { QrcodeDetectorConfig, QrcodeDetectorResult } from './qrcode.dto.js';
+import { type VideoDetectorType } from '../video.dto.js';
+import {
+  type QrcodeDetectorConfig,
+  type QrcodeDetectorResult,
+} from './qrcode.dto.js';
 
 export class QrcodeDetector extends BaseDetector<
   QrcodeDetectorConfig,

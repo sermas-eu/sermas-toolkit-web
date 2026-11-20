@@ -1,4 +1,4 @@
-import { IPublishPacket } from 'mqtt';
+import { type IPublishPacket } from 'mqtt';
 
 export interface MqttMessageEvent {
   topic: string;

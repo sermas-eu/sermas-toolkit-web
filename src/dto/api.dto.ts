@@ -1,4 +1,4 @@
-import { AuthJwtUser, LoginResponseDto } from '@sermas/api-client';
+import { type AuthJwtUser, type LoginResponseDto } from '@sermas/api-client';
 
 export interface UserLoginResponseDto {
   token: LoginResponseDto;
