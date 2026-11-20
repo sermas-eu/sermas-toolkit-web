@@ -1,3 +1,7 @@
+// the kiosk compiles this file without the toolkit tsconfig, so the ambient
+// declaration has to be referenced from here
+// eslint-disable-next-line @typescript-eslint/triple-slash-reference
+/// <reference path="../../lookingglass.d.ts" />
 import type * as THREE from 'three';
 import { VRButton } from 'three/examples/jsm/webxr/VRButton.js';
 
