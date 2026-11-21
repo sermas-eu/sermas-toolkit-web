@@ -1,5 +1,13 @@
 {
   "extends": "./tsconfig.json",
-  "compilerOptions": { "types": [] },
+  "compilerOptions": {
+    "types": [],
+    "rootDir": "./src",
+    // the package build imports @sermas/api-client as a package: its built
+    // declarations (npm run build in sermas-api-client), not its sources
+    "paths": {
+      "@sermas/api-client": ["../../sermas-api-client/dist/index.d.ts"]
+    }
+  },
   "exclude": ["node_modules", "src/**/*.spec.ts"]
 }

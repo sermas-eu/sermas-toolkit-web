@@ -21,7 +21,10 @@
     "moduleResolution": "Bundler",
     "module": "ESNext",
     "baseUrl": "./src",
-    "paths": {},
+    // @sermas/api-client from its sources (sermas-api-client checkout beside this one)
+    "paths": {
+      "@sermas/api-client": ["../../sermas-api-client/src/index.ts"]
+    },
     "declaration": true,
     "sourceMap": true,
     "outDir": "./dist",
