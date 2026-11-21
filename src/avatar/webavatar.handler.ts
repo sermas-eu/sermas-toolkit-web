@@ -43,9 +43,6 @@ export class WebAvatarHandler {
 
   private clearanceQueue: string[] = [];
 
-  private processedQueue = 0;
-  private processedQueueTimer: NodeJS.Timeout;
-
   private player?: WebAvatarAudioPlayer;
   private subtitles?: WebAvatarSubtitles;
 
@@ -283,7 +280,7 @@ export class WebAvatarHandler {
     }
   }
 
-  playAudio(wait = 3) {
+  playAudio() {
     if (this.isPlaying) {
       logger.debug(`already playing`);
       return;
@@ -291,24 +288,8 @@ export class WebAvatarHandler {
 
     if (!this.audioQueue.length) return;
 
-    const size = this.audioQueue.reduce(
-      (sum, { buffer }) => sum + buffer.byteLength / 1000,
-      0,
-    );
-
-    // to allow the sentences to be wrapped together,
-    // wait to reach a threshold before playing
-    // const threshold = 100;
-    // NOTE this should be handle from backend now
-    if (this.processedQueue < 2 && this.audioQueue.length < 2 && wait > 0) {
-      const waitFor = 300 / wait;
-      logger.debug(
-        `Waiting queue threshold to be reached size=${size}kb wait=${wait} length=${this.audioQueue.length} waitFor=${waitFor}`,
-      );
-      setTimeout(() => this.playAudio(wait - 1), waitFor);
-      return;
-    }
-
+    // no hold before the first chunk: the API sends the chunks of a request one at
+    // a time and in order, so waiting for more only delayed the first word (~550ms)
     this.isPlaying = true;
 
     const raw = this.audioQueue.sort(sortChunks).splice(0, 1)[0];
@@ -318,13 +299,6 @@ export class WebAvatarHandler {
     this.currentAudio = raw;
 
     this.player?.play(raw.buffer as Uint8Array, raw.chunkId);
-
-    this.processedQueue++;
-    if (this.processedQueueTimer) clearTimeout(this.processedQueueTimer);
-    this.processedQueueTimer = setTimeout(() => {
-      logger.debug('processed queue counter cleared');
-      this.processedQueue = 0;
-    }, 10 * 1000);
   }
 
   setFace(blendingShapes: AvatarFaceBlendShape[], emotion?: EmotionBlendShape) {
