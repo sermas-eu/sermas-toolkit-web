@@ -1,6 +1,7 @@
 import { type AppSettingsDto } from '@sermas/api-client';
 import { DEFAULT_AVATAR_LANGUAGE } from './constants.js';
 import { AppSettings } from './dto.js';
+import { browserLanguages, resolveLanguage } from './dto/languages.dto.js';
 import { emitter } from './events.js';
 import { logger } from './logger.js';
 
@@ -16,6 +17,11 @@ export const llmDefaults = () => ({
 export class Settings {
   private settings: AppSettings;
   private appId: string;
+  // The language: the visitor's pick for this session, else the browser's, else the
+  // app's, else English (only supported languages count). Never stored on the device:
+  // a kiosk's next visitor starts from detection again.
+  private languagePick?: string;
+  private appLanguage?: string;
 
   private readonly defaults: AppSettings = {
     login: false,
@@ -48,6 +54,30 @@ export class Settings {
 
   constructor() {
     this.settings = this.getDefaults();
+    this.settings.language = this.resolveLanguage();
+  }
+
+  private resolveLanguage() {
+    return resolveLanguage([
+      this.languagePick,
+      ...browserLanguages(),
+      this.appLanguage,
+    ]);
+  }
+
+  /** The app's configured language, used when the browser's is not supported. */
+  setAppLanguage(language?: string) {
+    this.appLanguage = language;
+    this.settings.language = this.resolveLanguage();
+  }
+
+  /** Forgets the visitor's pick (the session ended): back to the detected language. */
+  resetLanguagePick() {
+    this.languagePick = undefined;
+    const language = this.resolveLanguage();
+    if (language === this.settings.language) return;
+    this.settings = { ...this.settings, language };
+    emitter.emit('settings', this.settings);
   }
 
   export() {
@@ -79,7 +109,6 @@ export class Settings {
       background: settings.background,
       interactionStart: settings.interactionStart,
       virtualKeyboardEnabled: settings.virtualKeyboardEnabled,
-      language: settings.language,
       subtitlesEnabled: settings.subtitlesEnabled,
       pushToTalkEnabled: settings.pushToTalkEnabled,
     };
@@ -106,6 +135,8 @@ export class Settings {
       const raw = localStorage.getItem(`sermas.settings.${this.appId}`);
       if (!raw) return false;
       const json = JSON.parse(raw) as Partial<AppSettings>;
+      // stored by earlier versions: the language is detected each session now
+      delete json.language;
 
       // align tts settings, propagated to backend
       json.ttsEnabled = json.enableAudio;
@@ -159,6 +190,11 @@ export class Settings {
 
   async save(cfg: Partial<AppSettings>): Promise<AppSettings> {
     cfg = cfg || {};
+    // a language other than the current one is the visitor's pick (the settings
+    // menu saves everything on each change)
+    if (cfg.language && cfg.language !== this.settings.language) {
+      this.languagePick = cfg.language;
+    }
     this.settings = { ...this.settings, ...cfg };
     this.saveLocalStorage(this.settings);
     // this.saveSessionStorage(this.settings);

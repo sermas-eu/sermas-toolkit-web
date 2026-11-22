@@ -328,6 +328,10 @@ export class SermasToolkit {
       tmpSet = { ...tmpSet, ...loadedSettings };
     }
 
+    // the app's language is only the fallback for an unsupported browser language
+    this.settings.setAppLanguage(app.settings?.language);
+    tmpSet = { ...tmpSet, language: this.settings.get().language };
+
     this.settings.save(tmpSet);
   }
 
@@ -371,6 +375,8 @@ export class SermasToolkit {
     // if (sessionStatus.status === 'updated') {}
 
     if (sessionStatus.status === 'closed') {
+      // the next visitor starts from the detected language
+      this.settings.resetLanguagePick();
       if (app?.settings?.resetPrivacyEverySession) {
         this.resetPrivacyFlag(true);
       }
