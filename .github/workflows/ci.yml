@@ -12,8 +12,8 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: .nvmrc
           cache: npm
@@ -25,3 +25,34 @@ jobs:
       - name: Audit (report only)
         if: always()
         run: npm audit --omit=dev || true
+
+  # On main: semantic-release reads the conventional commits since the last tag,
+  # tags the next version, publishes dist/ to npm (trusted publishing: no token,
+  # with provenance) and writes the GitHub release. Nothing happens when no
+  # commit calls for a release.
+  release:
+    needs: check
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+      - run: npm ci --no-audit --no-fund
+      - run: npm run build
+      - name: Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        # --before pins every transitive package to what was published by then
+        run: >-
+          npx --yes --before=2026-11-08
+          -p semantic-release@25.0.9
+          -p conventional-changelog-conventionalcommits@9.3.1
+          semantic-release
