@@ -1,4 +1,4 @@
-import { RepositoryAvatarDto } from '@sermas/api-client';
+import { type RepositoryAvatarDto } from '@sermas/api-client';
 import * as THREE from 'three';
 
 export type AvatarStopSpeechReference = {

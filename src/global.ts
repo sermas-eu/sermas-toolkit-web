@@ -5,8 +5,10 @@ export const addGlobal = (key: string, value: unknown) => {
 
   // check if it's in DOM env
   try {
-    if (typeof window !== undefined) {
+    if (typeof window !== 'undefined') {
       window.SERMAS = globals;
     }
-  } catch {}
+  } catch {
+    // ignore
+  }
 };

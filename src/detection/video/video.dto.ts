@@ -1,7 +1,7 @@
 // import { DrawingUtils } from "@mediapipe/tasks-vision"
 
 import EventEmitter2 from 'eventemitter2';
-import { SermasToolkit } from 'index.js';
+import { SermasToolkit } from '../../index.js';
 import { CameraHandlerConfig } from '../camera.js';
 
 type AtLeast<T, K extends keyof T> = Partial<T> & Pick<T, K>;
@@ -12,11 +12,7 @@ type AtLeast<T, K extends keyof T> = Partial<T> & Pick<T, K>;
  * eg. VideoDetection.on('faceApi', (res) => {})
  */
 
-export type VideoDetectorType =
-  | 'human'
-  | 'holistic_v1'
-  | 'faceLandmark'
-  | 'qrcode';
+export type VideoDetectorType = 'faceLandmark' | 'qrcode';
 
 export interface VideoDetectionConfig extends Record<string, any> {
   camera: AtLeast<CameraHandlerConfig, 'width' | 'height' | 'video'>;

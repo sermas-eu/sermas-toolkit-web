@@ -21,7 +21,9 @@ const loadLogFilter = () => {
       console.warn(
         `log fitlers set: ${filter}. Use SERMAS.resetLogFilters() to reset`,
       );
-    } catch {}
+    } catch {
+      // ignore
+    }
   }
 };
 

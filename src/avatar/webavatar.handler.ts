@@ -1,37 +1,37 @@
 import {
-  Emotion,
-  MqttMessageEvent,
+  type Emotion,
+  type MqttMessageEvent,
   UserCharacterizationEventSource,
 } from '../dto.js';
 import { emitter } from '../events.js';
 
-import { HolisticV1Results } from '../detection/index.js';
 import { Logger } from '../utils.js';
 
 import {
-  AudioQueue,
-  AvatarAudioPlaybackStatus,
-  AvatarFaceBlendShape,
+  type AudioQueue,
+  type AvatarAudioPlaybackStatus,
+  type AvatarFaceBlendShape,
   AvatarModel,
-  AvatarStopSpeechReference,
+  type AvatarStopSpeechReference,
   LipSync,
 } from './index.js';
 
 import {
-  DialogueAvatarSpeechControlDto,
-  DialogueMessageDto,
-  SessionChangedDto,
-  UserCharacterizationEventDto,
+  type DialogueAvatarSpeechControlDto,
+  type DialogueMessageDto,
+  type SessionChangedDto,
+  type UserCharacterizationEventDto,
 } from '@sermas/api-client';
-import { ListenerFn } from 'eventemitter2';
-import { EmotionBlendShape } from './animations/blendshapes/lib/index.js';
-import { AudioPlayerStatus } from './webavatar.audio-player.dto.js';
+import { type ListenerFn } from 'eventemitter2';
+import { type EmotionBlendShape } from './animations/blendshapes/lib/index.js';
+import { type AudioPlayerStatus } from './webavatar.audio-player.dto.js';
 import { WebAvatarAudioPlayer } from './webavatar.audio-player.js';
 import { WebAvatarSubtitles } from './webavatar.subtitles.js';
 
 const logger = new Logger('webavatar.handler');
 
-const sortChunks = (a, b) => (a.chunkId > b.chunkId ? 1 : -1);
+const sortChunks = (a: AudioQueue, b: AudioQueue) =>
+  a.chunkId > b.chunkId ? 1 : -1;
 
 export class WebAvatarHandler {
   private lastSet: { time: number; emotion: string };
@@ -42,9 +42,6 @@ export class WebAvatarHandler {
   private currentAudio?: AudioQueue;
 
   private clearanceQueue: string[] = [];
-
-  private processedQueue = 0;
-  private processedQueueTimer: NodeJS.Timeout;
 
   private player?: WebAvatarAudioPlayer;
   private subtitles?: WebAvatarSubtitles;
@@ -68,7 +65,6 @@ export class WebAvatarHandler {
       'avatar.face': this.setFace,
       'avatar.speech.stop': this.onForceStop,
       'dialogue.stop': this.onForceStop,
-      'detection.pose': this.setPose,
       'detection.audio': this.setListening,
     },
   };
@@ -161,9 +157,8 @@ export class WebAvatarHandler {
     // track the messageId to drop any upcoming chunk with the same messageId
     const messageId = ev.messageId;
     if (messageId) {
-      this.clearanceQueue.push(
-        ...new Set([...this.clearanceQueue, messageId].sort(sortChunks)),
-      );
+      if (!this.clearanceQueue.includes(messageId))
+        this.clearanceQueue.push(messageId);
       this.audioQueue = this.audioQueue.filter((q) => q.messageId > messageId);
     }
 
@@ -285,7 +280,7 @@ export class WebAvatarHandler {
     }
   }
 
-  playAudio(wait = 3) {
+  playAudio() {
     if (this.isPlaying) {
       logger.debug(`already playing`);
       return;
@@ -293,24 +288,8 @@ export class WebAvatarHandler {
 
     if (!this.audioQueue.length) return;
 
-    const size = this.audioQueue.reduce(
-      (sum, { buffer }) => sum + buffer.byteLength / 1000,
-      0,
-    );
-
-    // to allow the sentences to be wrapped together,
-    // wait to reach a threshold before playing
-    // const threshold = 100;
-    // NOTE this should be handle from backend now
-    if (this.processedQueue < 2 && this.audioQueue.length < 2 && wait > 0) {
-      const waitFor = 300 / wait;
-      logger.debug(
-        `Waiting queue threshold to be reached size=${size}kb wait=${wait} length=${this.audioQueue.length} waitFor=${waitFor}`,
-      );
-      setTimeout(() => this.playAudio(wait - 1), waitFor);
-      return;
-    }
-
+    // no hold before the first chunk: the API sends the chunks of a request one at
+    // a time and in order, so waiting for more only delayed the first word (~550ms)
     this.isPlaying = true;
 
     const raw = this.audioQueue.sort(sortChunks).splice(0, 1)[0];
@@ -320,13 +299,6 @@ export class WebAvatarHandler {
     this.currentAudio = raw;
 
     this.player?.play(raw.buffer as Uint8Array, raw.chunkId);
-
-    this.processedQueue++;
-    if (this.processedQueueTimer) clearTimeout(this.processedQueueTimer);
-    this.processedQueueTimer = setTimeout(() => {
-      logger.debug('processed queue counter cleared');
-      this.processedQueue = 0;
-    }, 10 * 1000);
   }
 
   setFace(blendingShapes: AvatarFaceBlendShape[], emotion?: EmotionBlendShape) {
@@ -343,10 +315,6 @@ export class WebAvatarHandler {
     }
 
     this.avatar?.getBlendShapes()?.setFaceBlendShapes(blendingShapes);
-  }
-
-  setPose(poses: HolisticV1Results) {
-    this.avatar?.setPoses(poses);
   }
 
   onAudioPlayerStatus(ev: AudioPlayerStatus) {
@@ -391,36 +359,31 @@ export class WebAvatarHandler {
     }
   }
 
+  // the bound listeners actually registered, so that they can be removed
+  private registered: {
+    src: 'broker' | 'emitter';
+    key: string;
+    fn: ListenerFn;
+  }[] = [];
+
   registerCallbacks() {
-    Object.keys(this.callbacks).forEach((src) => {
-      Object.keys(this.callbacks[src]).forEach((key) => {
-        this.callbacks[src][key] = this.callbacks[src][key].bind(this);
-        if (src === 'emitter') {
-          emitter.on(key, this.callbacks[src][key]);
-        } else {
-          this.avatar
-            .getToolkit()
-            ?.getBroker()
-            ?.on(key, this.callbacks[src][key]);
-        }
-      });
-    });
+    this.unregisterCallbacks();
+    for (const src of ['broker', 'emitter'] as const) {
+      for (const [key, callback] of Object.entries(this.callbacks[src])) {
+        const fn = callback.bind(this) as ListenerFn;
+        this.registered.push({ src, key, fn });
+        if (src === 'emitter') emitter.on(key, fn);
+        else this.avatar.getToolkit()?.getBroker()?.on(key, fn);
+      }
+    }
   }
 
   unregisterCallbacks() {
-    Object.keys(this.callbacks).forEach((src) => {
-      Object.keys(this.callbacks[src]).forEach((key) => {
-        this.callbacks[src][key] = this.callbacks[src][key].bind(this);
-        if (src === 'emitter') {
-          emitter.off(key, this.callbacks[src][key]);
-        } else {
-          this.avatar
-            .getToolkit()
-            ?.getBroker()
-            ?.off(key, this.callbacks[src][key]);
-        }
-      });
-    });
+    for (const { src, key, fn } of this.registered) {
+      if (src === 'emitter') emitter.off(key, fn);
+      else this.avatar.getToolkit()?.getBroker()?.off(key, fn);
+    }
+    this.registered = [];
   }
 
   async init() {
@@ -440,13 +403,7 @@ export class WebAvatarHandler {
   }
 
   async destroy() {
-    Object.keys(this.callbacks).forEach((key) => {
-      if (!this.callbacks[key]) return;
-      try {
-        emitter.off(key, this.callbacks[key]);
-        delete this.callbacks[key];
-      } catch {}
-    });
+    this.unregisterCallbacks();
     this.player?.off('status', this.onAudioPlayerStatus);
 
     this.audioQueue = [];

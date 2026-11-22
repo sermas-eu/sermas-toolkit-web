@@ -11,25 +11,27 @@
     "node_modules",
   ],
   "compilerOptions": {
+    "types": ["vitest/globals"],
     "lib": [
       "ESNext",
       "DOM",
       "DOM.Iterable"
     ],
     "target": "ESNext",
-    "moduleResolution": "Node",
+    "moduleResolution": "Bundler",
     "module": "ESNext",
-    "ignoreDeprecations": "5.0",
     "baseUrl": "./src",
-    "paths": {},
+    // @sermas/api-client from its sources (sermas-api-client checkout beside this one)
+    "paths": {
+      "@sermas/api-client": ["../../sermas-api-client/src/index.ts"]
+    },
     "declaration": true,
     "sourceMap": true,
     "outDir": "./dist",
-    "importHelpers": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "strict": true,
-    "noImplicitAny": false,
+    "noImplicitAny": true,
     "skipLibCheck": true,
     "strictPropertyInitialization": false,
     "resolveJsonModule": true,

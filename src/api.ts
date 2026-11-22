@@ -20,7 +20,11 @@ import {
   type AxiosRequestConfig,
 } from 'axios';
 import { AuthToken } from './auth.js';
-import { AgentStatus, InteractionType, UserReferenceSource } from './dto.js';
+import {
+  AgentStatus,
+  InteractionType,
+  type UserReferenceSource,
+} from './dto.js';
 import { Logger } from './logger.js';
 
 export interface ApiClientOptions {
@@ -229,12 +233,9 @@ export class ApiClient {
     const sessionId = this.requireSessionId();
     if (!sessionId) return null;
 
-    params = params || {};
-    const qs = Object.keys(params)
-      .reduce((arr: string[], key) => {
-        if (!params || !params[key]) return arr;
-        return [...arr, `${key}=${params[key]}`];
-      }, [])
+    const qs = Object.entries(params || {})
+      .filter(([, value]) => value)
+      .map(([key, value]) => `${key}=${value}`)
       .join('&');
 
     return (

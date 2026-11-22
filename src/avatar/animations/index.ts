@@ -1,19 +1,24 @@
 import * as THREE from 'three';
-import { HolisticV1Results } from '../../detection/index.js';
 import { Logger } from '../../logger.js';
 import { getTypedKeys } from '../util.js';
 import {
-  AnimationGroup,
+  type AnimationGroup,
   AnimationHandler,
-  AnimationLabel,
-  DetectionPosition,
-  GestureMappingKeys,
+  type AnimationLabel,
+  type DetectionPosition,
+  type GestureMappingKeys,
 } from '../webavatar.dto.js';
 import { AvatarModel } from '../webavatar.js';
 import { AnimationBase } from './animation.base.js';
 import { Animator } from './animator/index.js';
 import { BlendShapeAnimation } from './blendshapes/index.js';
 import { AnimationsLoader } from './loader/index.js';
+import {
+  gestureClips,
+  gestureKey,
+  isLoopableGesture,
+  nextGestureClip,
+} from './gestures.js';
 
 const logger = new Logger('webavatar.animation');
 
@@ -38,22 +43,9 @@ export class WebavatarAnimation extends AnimationBase {
 
   private waitAction = false;
 
-  // loopable gestures will be played in a loop. Gesture not in the list will just play once
-  private loopableGestures: string[] = ['idle', 'talking', 'listening'];
+  // per gesture key, the variant played last (gestures cycle through their variants)
+  private gesturePositions: Record<string, number> = {};
 
-  private gestureIndexes: Record<GestureMappingKeys, number> = {
-    gesture_default: 0,
-    gesture_idle: 0,
-    gesture_waving: 0,
-    gesture_listening: 0,
-    gesture_talking: 0,
-    gesture_donotknow: 0,
-    gesture_walk: 0,
-    gesture_show_left: 0,
-    gesture_show_right: 0,
-  };
-
-  private mirrorModeEnabled = false;
   private lookAtUser = false;
 
   constructor(avatar: AvatarModel) {
@@ -136,12 +128,6 @@ export class WebavatarAnimation extends AnimationBase {
     await this.blendShapes.destroy();
   }
 
-  setPoses(results: HolisticV1Results) {
-    if (!this.animationEnabled || !this.mirrorModeEnabled) return;
-    this.stopAnimations('gesture');
-    this.getAnimator()?.animate(results);
-  }
-
   getAnimation(
     group: AnimationGroup | string,
     name?: string,
@@ -183,14 +169,15 @@ export class WebavatarAnimation extends AnimationBase {
 
     const imported = this.animationLoader.getAnimations();
 
-    this.animations = [...model.animations, ...imported]
+    // a clip the model carries wins over the kiosk's generic one of the same name
+    this.animations = [...imported, ...model.animations]
       .map((animationClip) => {
         const name = this.normalizeAnimationName(animationClip.name);
         const label = this.getAnimationLabel(name);
         return { ...label, animationName: name, animationClip };
       })
       .reduce(
-        (o, { group, name, animationName, animationClip }) => {
+        (o, { group, name, animationClip }) => {
           let maskedClip = animationClip;
           if (config.animations?.masks) {
             getTypedKeys<AnimationGroup>(config.animations?.masks).forEach(
@@ -282,14 +269,16 @@ export class WebavatarAnimation extends AnimationBase {
   }
 
   initActions() {
+    // looping gestures run all the time at weight 0 and fade in; any other gesture is a
+    // one-shot, started when requested, that hands back to idle when it finishes
     const actions = this.getAnimations('gesture');
     actions.forEach((a) => {
-      if (a.name.indexOf('waving') > -1) {
-        a.action.setLoop(THREE.LoopOnce, 1);
-        a.action.clampWhenFinished = true;
-      } else {
+      if (this.isLoopable(a.name)) {
         a.action.setLoop(THREE.LoopPingPong, Infinity);
         a.action.play();
+      } else {
+        a.action.setLoop(THREE.LoopOnce, 1);
+        a.action.clampWhenFinished = true;
       }
     });
   }
@@ -312,53 +301,69 @@ export class WebavatarAnimation extends AnimationBase {
     }
   }
 
-  getGestureAnimations(gestureKey: GestureMappingKeys) {
-    return this.animationLoader.getMapping()[gestureKey] || [];
+  getGestureAnimations(key: GestureMappingKeys) {
+    return this.animationLoader.getMapping()[key] || [];
   }
 
-  getNextGestureAnimationName(gestureKey: GestureMappingKeys): string | null {
-    const animations = this.animationLoader.getMapping()[gestureKey] || [];
-    if (!animations.length) return null;
+  /** Clip labels in the gesture group (`idle_0`, `waving_0`, …): kiosk and model clips. */
+  getGestureLabels(): string[] {
+    return this.getAnimations('gesture').map((a) => a.name);
+  }
 
-    const animationLength = animations.length - 1;
-    this.gestureIndexes[gestureKey] = this.gestureIndexes[gestureKey] || 0;
-    this.gestureIndexes[gestureKey]++;
-    if (this.gestureIndexes[gestureKey] >= animationLength)
-      this.gestureIndexes[gestureKey] = 0;
+  hasGesture(name: string): boolean {
+    return gestureClips(this.getGestureLabels(), gestureKey(name)).length > 0;
+  }
 
-    const [, gestureName] = gestureKey.split('_');
-    return `${gestureName}_${this.gestureIndexes[gestureKey]}`;
+  getNextGestureAnimationName(
+    name: GestureMappingKeys | string,
+  ): string | null {
+    const key = gestureKey(name);
+    const next = nextGestureClip(
+      this.getGestureLabels(),
+      key,
+      this.gesturePositions[key],
+    );
+    if (!next) return null;
+    this.gesturePositions[key] = next.position;
+    return next.label;
   }
 
   getCurrentGestureAnimationName(
-    gestureKey: GestureMappingKeys,
+    name: GestureMappingKeys | string,
   ): string | null {
-    const animations = this.animationLoader.getMapping()[gestureKey] || [];
-    if (!animations.length) return null;
-
-    if (this.gestureIndexes[gestureKey] === undefined) return null;
-
-    const [, gestureName] = gestureKey.split('_');
-    return `${gestureName}_${this.gestureIndexes[gestureKey]}`;
+    const key = gestureKey(name);
+    const clips = gestureClips(this.getGestureLabels(), key);
+    const position = this.gesturePositions[key];
+    if (!clips.length || position === undefined) return null;
+    return clips[position] || null;
   }
 
-  setAnimation(name: GestureMappingKeys) {
+  /** Play a gesture by key (`waving`, `gesture_waving`) or clip label (`waving_0`). */
+  setAnimation(name: GestureMappingKeys | string) {
+    const key = gestureKey(name);
     if (
       this.currentAction &&
-      this.currentAction.getClip().name.indexOf(name) > -1
+      gestureKey(
+        this.getAnimationLabel(
+          this.normalizeAnimationName(this.currentAction.getClip().name),
+        ).name,
+      ) === key
     )
       return;
     if (this.waitAction) {
-      // wait action finish
+      // a one-shot gesture is playing: let it finish
       return;
     }
-    const animationName = this.getNextGestureAnimationName(name);
+    const animationName = /_\d+$/.test(name.replace(/^gesture_/, ''))
+      ? name.replace(/^gesture_/, '')
+      : this.getNextGestureAnimationName(key);
     if (!animationName) return;
     const anim = this.getAnimation('gesture', animationName);
     if (!anim) return;
 
     if (!this.isLoopable(anim.name)) {
       this.resetAction(anim.action);
+      anim.action.play();
       this.waitAction = true;
     }
 
@@ -371,13 +376,20 @@ export class WebavatarAnimation extends AnimationBase {
   }
 
   isLoopable(name: string) {
-    return this.loopableGestures.some((gesture) => name.indexOf(gesture) > -1);
+    return isLoopableGesture(gestureKey(name));
   }
 
-  setWeight(action, weight) {
+  setWeight(action: THREE.AnimationAction, weight: number) {
     action.enabled = true;
     action.setEffectiveTimeScale(1);
     action.setEffectiveWeight(weight);
+  }
+
+  /** Public entry point: a gesture key, `gesture_` key or clip label. */
+  playGesture(name: string): boolean {
+    if (!this.hasGesture(name)) return false;
+    this.setAnimation(name);
+    return true;
   }
 
   playGestureIdle() {
@@ -394,7 +406,18 @@ export class WebavatarAnimation extends AnimationBase {
 
   playGestureWaving() {
     this.setAnimation('gesture_waving');
-    this.currentAction?.play();
+  }
+
+  playGestureDoNotKnow() {
+    this.setAnimation('gesture_donotknow');
+  }
+
+  playGestureShowLeft() {
+    this.setAnimation('gesture_show_left');
+  }
+
+  playGestureShowRight() {
+    this.setAnimation('gesture_show_right');
   }
 
   getRunningAnimations(group: AnimationGroup) {
@@ -422,10 +445,6 @@ export class WebavatarAnimation extends AnimationBase {
 
   getAnimations(group: AnimationGroup): AnimationHandler[] {
     return Object.values(this.animations[group] || {});
-  }
-
-  setMirrorModeEnabled(enabled: boolean) {
-    this.mirrorModeEnabled = enabled;
   }
 
   setAnimationEnabled(enabled: boolean) {

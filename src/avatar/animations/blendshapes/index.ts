@@ -1,13 +1,15 @@
+import type * as THREE from 'three';
 import {
-  AvatarFaceBlendShape,
-  DetectionPosition,
+  type AvatarFaceBlendShape,
+  type DetectionPosition,
 } from '../../../avatar/webavatar.dto.js';
 import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js';
 import { Logger } from '../../../logger.js';
 import { AnimationBase } from '../animation.base.js';
 
-import blendShapes, { EmotionBlendShape } from './lib/index.js';
-import { VisemeType } from './lib/viseme/index.js';
+import blendShapes, { type EmotionBlendShape } from './lib/index.js';
+import { type VisemeType } from './lib/viseme/index.js';
+import { mouthOnly, pickFaceMesh } from './face-mesh.js';
 
 const logger = new Logger('webavatar.animation.blendShapes');
 
@@ -15,12 +17,14 @@ export class BlendShapeAnimation extends AnimationBase {
   private blinkInterval = 4000; // Every 4 seconds
   private eyeClosed = false;
 
-  private blendShapeTarget: THREE.Mesh;
+  private blendShapeTarget: THREE.Mesh | undefined;
   private foundBlendShapes: THREE.Mesh[] = [];
+  // teeth in their own mesh do not follow jawOpen: the jaw opens less then
+  private separateTeeth = false;
 
   private gui: GUI;
 
-  animate(delta: number): void {
+  animate(_delta: number): void {
     //
   }
 
@@ -136,7 +140,9 @@ export class BlendShapeAnimation extends AnimationBase {
     const blendshapeViseme = this.getViseme(viseme);
     if (!blendshapeViseme)
       logger.log(`blendshapes for viseme ${viseme} not found`);
-    this.setFaceBlendShapes(blendshapeViseme);
+    // the viseme captures came with the whole face: apply the mouth only, or the
+    // eyes follow the lips and every blink is overwritten 15 times a second
+    this.setFaceBlendShapes(mouthOnly(blendshapeViseme));
   }
 
   setEmotion(emotion: EmotionBlendShape) {
@@ -156,26 +162,19 @@ export class BlendShapeAnimation extends AnimationBase {
     model.traverse((child: any) => {
       if (!child.isMesh || !child.visible) return;
 
-      if (child.morphTargetInfluences) {
-        // logger.debug(
-        //   `Found blend shapes in mesh ${child.name}`,
-        //   Object.keys(child.morphTargetDictionary),
-        // );
+      if (child.morphTargetInfluences && child.morphTargetDictionary) {
         this.foundBlendShapes.push(child);
       }
-
-      if (child.name === config.animations?.blendShapes?.name) {
-        if (!child.morphTargetInfluences && !child.morphTargetDictionary) {
-          logger.warn(`Mesh ${child.name} does not have blend shapes`);
-        } else {
-          if (this.blendShapeTarget) {
-            logger.warn(`Blend shape target '${child.name}' is already set`);
-          } else {
-            this.blendShapeTarget = child;
-          }
-        }
-      }
+      if (/teeth/i.test(child.name)) this.separateTeeth = true;
     });
+
+    const configured = config.animations?.blendShapes?.name;
+    this.blendShapeTarget = pickFaceMesh(this.foundBlendShapes, configured);
+    if (!this.blendShapeTarget) {
+      logger.warn(`No mesh with face blend shapes: no lip sync or expressions`);
+    } else if (![configured].flat().includes(this.blendShapeTarget.name)) {
+      logger.debug(`Face blend shapes on mesh ${this.blendShapeTarget.name}`);
+    }
   }
 
   setFaceBlendShapes(blendShapes: AvatarFaceBlendShape[]) {
@@ -197,9 +196,8 @@ export class BlendShapeAnimation extends AnimationBase {
 
     if (!this.blendShapeTarget.morphTargetInfluences) return undefined;
 
-    // TODO: HACK since we are not controlling  the teeth mesh (Wolf3D_Teeth)
-    // we constrain the jawOpen maximum
-    if (label === 'jawOpen') {
+    // the teeth mesh (Wolf3D_Teeth) is not driven: keep the jaw nearly closed
+    if (label === 'jawOpen' && this.separateTeeth) {
       const maxValue = 0.3;
       const normalized = value * maxValue;
       value = normalized;
@@ -209,6 +207,7 @@ export class BlendShapeAnimation extends AnimationBase {
   }
 
   getBlendShape(label: string): number | undefined {
+    if (!this.blendShapeTarget) return undefined;
     const mappings = this.getConfig().animations?.blendShapes?.mappings || {};
     const morphTargetDictionary =
       this.blendShapeTarget.morphTargetDictionary || {};
@@ -245,7 +244,13 @@ export class BlendShapeAnimation extends AnimationBase {
 
       if (this.gui) {
         this.gui
-          .add(influences, '' + value, 0, 1, 0.01)
+          .add(
+            influences as unknown as Record<string, number>,
+            '' + value,
+            0,
+            1,
+            0.01,
+          )
           .name(key)
           .listen(true);
       }

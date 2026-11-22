@@ -1,6 +1,6 @@
 // import { DrawingUtils } from "@mediapipe/tasks-vision";
 import EventEmitter2 from 'eventemitter2';
-import { SermasToolkit } from 'index.js';
+import { SermasToolkit } from '../index.js';
 import { Logger } from '../logger.js';
 import { CameraHandler, CameraHandlerConfig } from './camera.js';
 import type {
@@ -9,6 +9,8 @@ import type {
   VideoDetectorConfig,
   VideoDetectorType,
 } from './video/video.dto.js';
+
+const DEFAULT_CANVAS = { width: 640, height: 480 };
 
 type RenderCache = {
   fn: CallableFunction;
@@ -29,8 +31,6 @@ export class VideoDetection extends EventEmitter2 {
 
   private lastDetection: Record<VideoDetectorType, number> = {
     faceLandmark: performance.now(),
-    holistic_v1: performance.now(),
-    human: performance.now(),
     qrcode: performance.now(),
   };
 
@@ -73,7 +73,9 @@ export class VideoDetection extends EventEmitter2 {
       if (instance.publish && this.toolkit) {
         try {
           await instance.publish(ev, this.toolkit);
-        } catch {}
+        } catch {
+          // ignore
+        }
       }
 
       // cache results for rendering
@@ -127,6 +129,7 @@ export class VideoDetection extends EventEmitter2 {
 
   async init(config: VideoDetectionConfig) {
     this.config = config;
+    if (this.dataCanvas) this.ensureDataCanvas();
 
     this.config.camera.onFrame = async (video: HTMLVideoElement) => {
       await this.onFrame(video);
@@ -178,12 +181,20 @@ export class VideoDetection extends EventEmitter2 {
       ?.clearRect(0, 0, this.canvas.width, this.canvas.height);
   }
 
+  /**
+   * Detectors can be added before start() sets the camera: use a default size
+   * until then, and resize on start().
+   */
   ensureDataCanvas() {
-    if (this.dataCanvas) return;
-    this.dataCanvas = document.createElement('canvas');
-    this.dataCanvas.getContext('2d', { willReadFrequently: true });
-    this.dataCanvas.width = this.config.camera.width;
-    this.dataCanvas.height = this.config.camera.height;
+    if (!this.dataCanvas) {
+      this.dataCanvas = document.createElement('canvas');
+      this.dataCanvas.getContext('2d', { willReadFrequently: true });
+    }
+    // called on every frame: resizing reallocates the canvas, so only on change
+    const width = this.config?.camera?.width ?? DEFAULT_CANVAS.width;
+    const height = this.config?.camera?.height ?? DEFAULT_CANVAS.height;
+    if (this.dataCanvas.width !== width) this.dataCanvas.width = width;
+    if (this.dataCanvas.height !== height) this.dataCanvas.height = height;
   }
 
   private async onFrame(video: HTMLVideoElement) {

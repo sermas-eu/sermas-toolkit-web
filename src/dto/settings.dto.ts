@@ -9,7 +9,6 @@ export class AppSettings implements AppSettingsDto {
   testFace: string;
   enableAvatar: boolean;
   enableAnimation: boolean;
-  enableMirrorMode: boolean;
   enableMic: boolean;
   enableAudio: boolean;
   enableVideoDetection: boolean;
@@ -20,7 +19,6 @@ export class AppSettings implements AppSettingsDto {
   devMode: boolean;
   rpmUrl: string;
   rpmGender: string;
-  detectorHuman: boolean;
   qrcode: boolean;
   detectorFaceLandmarker: boolean;
   avatar: string;

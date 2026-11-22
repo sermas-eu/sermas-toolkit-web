@@ -1,6 +1,6 @@
-import { UIContentDto } from '@sermas/api-client';
-import { DialogueActor } from './dialogue.dto.js';
-import { SessionStatus } from './session.dto.js';
+import { type UIContentDto } from '@sermas/api-client';
+import { type DialogueActor } from './dialogue.dto.js';
+import { type SessionStatus } from './session.dto.js';
 
 export interface ChatMessage {
   actor: DialogueActor;

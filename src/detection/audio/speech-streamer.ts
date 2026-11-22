@@ -1,4 +1,4 @@
-import { SpeechProbabilities } from '@ricky0123/vad-web/dist/models';
+import type { SpeechProbabilities } from './vad.dto.js';
 import { Logger } from '../../logger.js';
 
 export class SpeechStreamer {

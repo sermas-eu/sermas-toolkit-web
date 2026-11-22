@@ -1,8 +1,12 @@
 import { Logger } from '../logger.js';
-import { AppSettings, messageQueue, SubtitleMessage } from 'dto.js';
-import { AvatarAudioPlaybackStatus } from './webavatar.dto.js';
+import {
+  AppSettings,
+  type messageQueue,
+  type SubtitleMessage,
+} from '../dto.js';
+import { type AvatarAudioPlaybackStatus } from './webavatar.dto.js';
 import { emitter } from '../events.js';
-import { DialogueMessageDto, SermasToolkit } from 'index.js';
+import { type DialogueMessageDto, SermasToolkit } from '../index.js';
 
 const logger = new Logger('webavatar.subtitles');
 
@@ -108,7 +112,7 @@ export class WebAvatarSubtitles {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  onForceStop(ev) {
+  onForceStop(ev?: unknown) {
     if (this.timerRef) clearTimeout(this.timerRef);
     if (this.intervalRef) clearInterval(this.intervalRef);
     this.lastId = null;
@@ -167,7 +171,7 @@ export class WebAvatarSubtitles {
     }, 500);
   }
 
-  private splitMexString(text): string[] {
+  private splitMexString(text: string): string[] {
     return text.replace(/([.?!:])\s*(?=[A-Z\n])/g, '$1|').split('|');
   }
 }

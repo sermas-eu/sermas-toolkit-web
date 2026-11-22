@@ -1,5 +1,5 @@
 import { parseJWT } from './auth.js';
-import { UserLoginResponseDto } from './dto.js';
+import { type UserLoginResponseDto } from './dto.js';
 import { SermasToolkit } from './index.js';
 
 const LOCAL_STORAGE_KEY = 'sermas.current-user';
@@ -15,6 +15,17 @@ export class UserAuth {
 
   getToken() {
     return this.currentUser?.token?.access_token;
+  }
+
+  /**
+   * A logged-in platform admin (realm role `platform-admin`, as in the API). For
+   * showing admin-only controls; the API enforces the real permissions.
+   */
+  isAdmin(): boolean {
+    const user = this.getCurrentUser() as
+      { realm_access?: { roles?: string[] } } | undefined;
+    const roles = user?.realm_access?.roles;
+    return Array.isArray(roles) && roles.includes('platform-admin');
   }
 
   private setUser(user: UserLoginResponseDto) {
@@ -35,7 +46,9 @@ export class UserAuth {
       const user = JSON.parse(raw);
       if (!user) return;
       return user as UserLoginResponseDto;
-    } catch {}
+    } catch {
+      // ignore
+    }
   }
 
   async isLoginRequired(): Promise<boolean> {

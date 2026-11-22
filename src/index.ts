@@ -1,5 +1,5 @@
 import {
-  DialogueMessageDto,
+  type DialogueMessageDto,
   SermasApiClient,
   sleep,
   type PlatformAppDto,
@@ -8,21 +8,21 @@ import {
   type SessionChangedDto,
   type UserInteractionIntentionDto,
 } from '@sermas/api-client';
-import EventEmitter2, { ListenerFn } from 'eventemitter2';
-import { v4 as uuidv4 } from 'uuid';
+import EventEmitter2, { type ListenerFn } from 'eventemitter2';
 import { ApiClient } from './api.js';
 import { AuthClient } from './auth.js';
 import {
   AvatarModel,
-  AvatarModelConfig,
+  type AvatarModelConfig,
   createWebAvatar,
+  isDirectModelPath,
 } from './avatar/index.js';
 import { DEFAULT_AVATAR_LANGUAGE, DefaultBackground } from './constants.js';
 import { AudioDetection, VideoDetection } from './detection/index.js';
-import { SessionStatusEvent } from './dto.js';
+import { type SessionStatusEvent } from './dto.js';
 import { InteractionType } from './dto/detection.dto.js';
-import { ErrorEventDto, ErrorReason } from './dto/errors.dto.js';
-import { UiButtonSession } from './dto/ui.dto.js';
+import { type ErrorEventDto, ErrorReason } from './dto/errors.dto.js';
+import { type UiButtonSession } from './dto/ui.dto.js';
 import { EventListenerTracker, emitter } from './events.js';
 import { FpsMonitor } from './fps.js';
 import { Logger, initLogger } from './logger.js';
@@ -252,7 +252,7 @@ export class SermasToolkit {
   }
 
   createSessionId(): string {
-    const sessionId = uuidv4();
+    const sessionId = crypto.randomUUID();
     this.setSessionId(sessionId);
     this.logger.debug(`Created new session sessionId=${this.sessionId}`);
     return sessionId;
@@ -328,6 +328,10 @@ export class SermasToolkit {
       tmpSet = { ...tmpSet, ...loadedSettings };
     }
 
+    // the app's language is only the fallback for an unsupported browser language
+    this.settings.setAppLanguage(app.settings?.language);
+    tmpSet = { ...tmpSet, language: this.settings.get().language };
+
     this.settings.save(tmpSet);
   }
 
@@ -371,6 +375,8 @@ export class SermasToolkit {
     // if (sessionStatus.status === 'updated') {}
 
     if (sessionStatus.status === 'closed') {
+      // the next visitor starts from the detected language
+      this.settings.resetLanguagePick();
       if (app?.settings?.resetPrivacyEverySession) {
         this.resetPrivacyFlag(true);
       }
@@ -668,7 +674,8 @@ export class SermasToolkit {
       config = repo[0];
     }
 
-    if (config.path.startsWith('http')) return config.path;
+    // a URL or a path on the kiosk's origin (the built-in avatar) needs no API
+    if (isDirectModelPath(config.path)) return config.path;
 
     loader.setWithCredentials(true);
     loader.setRequestHeader({ Authorization: `Bearer ${this.token}` });

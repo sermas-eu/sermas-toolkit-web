@@ -1,9 +1,9 @@
 import EventEmitter2, {
-  event,
-  eventNS,
-  Listener,
-  ListenerFn,
-  OnOptions,
+  type event,
+  type eventNS,
+  type Listener,
+  type ListenerFn,
+  type OnOptions,
 } from 'eventemitter2';
 import type { UiStatus } from './dto.js';
 import { Logger } from './logger.js';

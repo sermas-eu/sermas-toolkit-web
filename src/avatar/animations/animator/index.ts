@@ -1,7 +1,7 @@
 import { Logger } from '../../../logger.js';
 import * as THREE from 'three';
-import type { HolisticV1Results } from '../../../detection/video/mediapipe/v1/holistic/holistic.dto.js';
-import { DetectionPosition } from '../../webavatar.dto.js';
+import { type DetectionPosition } from '../../webavatar.dto.js';
+import { pickFaceMesh } from '../blendshapes/face-mesh.js';
 
 export class Animator {
   private logger = new Logger('Animator');
@@ -31,15 +31,16 @@ export class Animator {
   }
 
   init(model: THREE.Group) {
+    const meshes: any[] = [];
     model.traverse((child: any) => {
-      if (child.morphTargetInfluences) {
-        if (child.name == 'Wolf3D_Head') {
-          this.morphTargets = child.morphTargetInfluences;
-          this.morphDict = child.morphTargetDictionary;
-          // console.log(child.name, this.morphTargets, this.morphDict)
-        }
-      }
+      if (child.morphTargetInfluences && child.morphTargetDictionary)
+        meshes.push(child);
     });
+    const face = pickFaceMesh(meshes, 'Wolf3D_Head');
+    if (face) {
+      this.morphTargets = face.morphTargetInfluences;
+      this.morphDict = face.morphTargetDictionary;
+    }
     const skeletonHelper = new THREE.SkeletonHelper(model);
     this.skeleton = new THREE.Skeleton(skeletonHelper.bones);
     this.loadBones();
@@ -92,10 +93,7 @@ export class Animator {
     const left = x - 0.2; //this.pixelToPerc(x) - 0.5;
 
     // TODO: variable Z target position
-    const center_x = 200;
-    const center_y = 200;
-    let dist = Math.sqrt(Math.pow(center_x - x, 2) + Math.pow(center_y - y, 2));
-    dist = 10; //this.pixelToPerc(dist);
+    const dist = 10;
 
     const scale = 3;
     const target: THREE.Vector3 = new THREE.Vector3(
@@ -104,10 +102,6 @@ export class Animator {
       dist,
     );
     this.lookAt(target);
-  }
-
-  animate(results: HolisticV1Results) {
-    //
   }
 
   moveEyes(position: DetectionPosition) {
