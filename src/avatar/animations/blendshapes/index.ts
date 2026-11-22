@@ -9,7 +9,7 @@ import { AnimationBase } from '../animation.base.js';
 
 import blendShapes, { type EmotionBlendShape } from './lib/index.js';
 import { type VisemeType } from './lib/viseme/index.js';
-import { pickFaceMesh } from './face-mesh.js';
+import { mouthOnly, pickFaceMesh } from './face-mesh.js';
 
 const logger = new Logger('webavatar.animation.blendShapes');
 
@@ -140,7 +140,9 @@ export class BlendShapeAnimation extends AnimationBase {
     const blendshapeViseme = this.getViseme(viseme);
     if (!blendshapeViseme)
       logger.log(`blendshapes for viseme ${viseme} not found`);
-    this.setFaceBlendShapes(blendshapeViseme);
+    // the viseme captures came with the whole face: apply the mouth only, or the
+    // eyes follow the lips and every blink is overwritten 15 times a second
+    this.setFaceBlendShapes(mouthOnly(blendshapeViseme));
   }
 
   setEmotion(emotion: EmotionBlendShape) {

@@ -14,3 +14,10 @@ export const pickFaceMesh = <T extends FaceMesh>(
 ): T | undefined =>
   meshes.find((m) => [configuredName].flat().includes(m.name)) ||
   meshes.find((m) => m.morphTargetDictionary?.jawOpen !== undefined);
+
+const MOUTH = /^(jaw|mouth|cheek|tongue)/;
+
+/** The blend shapes of the mouth (jaw, lips, cheeks, tongue), not eyes or brows. */
+export const mouthOnly = <T extends { categoryName: string }>(
+  shapes: T[],
+): T[] => shapes.filter((s) => MOUTH.test(s.categoryName));

@@ -1,4 +1,4 @@
-import { pickFaceMesh } from './face-mesh.js';
+import { mouthOnly, pickFaceMesh } from './face-mesh.js';
 
 const mesh = (name: string, targets: string[]) => ({
   name,
@@ -23,5 +23,25 @@ describe('pickFaceMesh', () => {
     expect(
       pickFaceMesh([mesh('Body', ['bellyIn'])], 'Wolf3D_Head'),
     ).toBeUndefined();
+  });
+});
+
+describe('mouthOnly', () => {
+  it('keeps jaw, mouth, cheek and tongue shapes, drops eyes and brows', () => {
+    const shapes = [
+      'jawOpen',
+      'mouthPucker',
+      'cheekPuff',
+      'tongueOut',
+      'eyeBlinkLeft',
+      'eyeLookDownLeft',
+      'browInnerUp',
+    ].map((categoryName) => ({ categoryName, score: 0.5 }));
+    expect(mouthOnly(shapes).map((s) => s.categoryName)).toEqual([
+      'jawOpen',
+      'mouthPucker',
+      'cheekPuff',
+      'tongueOut',
+    ]);
   });
 });

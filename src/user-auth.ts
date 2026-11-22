@@ -17,6 +17,17 @@ export class UserAuth {
     return this.currentUser?.token?.access_token;
   }
 
+  /**
+   * A logged-in platform admin (realm role `platform-admin`, as in the API). For
+   * showing admin-only controls; the API enforces the real permissions.
+   */
+  isAdmin(): boolean {
+    const user = this.getCurrentUser() as
+      { realm_access?: { roles?: string[] } } | undefined;
+    const roles = user?.realm_access?.roles;
+    return Array.isArray(roles) && roles.includes('platform-admin');
+  }
+
   private setUser(user: UserLoginResponseDto) {
     if (typeof localStorage === 'undefined') return;
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(user));
