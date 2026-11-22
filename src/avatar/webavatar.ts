@@ -21,16 +21,20 @@ import { sendStatus } from '../events.js';
 import { SermasToolkit } from '../index.js';
 import { TextureLoader2 } from './loader/TextureLoader2.js';
 import {
+  BuiltinAvatarConfig,
   DefaultAvatarConfig,
   DefaultReadyPlayerMeAvatarConfig,
+  isDirectModelPath,
 } from './webavatar.defaults.js';
 import { WebAvatarHandler } from './webavatar.handler.js';
 import { WebAvatarXR } from './xr/index.js';
 
 // exports
 export {
+  BuiltinAvatarConfig,
   DefaultAvatarConfig,
   DefaultReadyPlayerMeAvatarConfig,
+  isDirectModelPath,
 } from './webavatar.defaults.js';
 
 const logger = new Logger('webavatar.api');
@@ -408,9 +412,10 @@ export class AvatarModel {
     const format = config.path.endsWith('.fbx') ? 'fbx' : 'glb';
     const loader = format === 'fbx' ? new FBXLoader() : new GLTFLoader();
 
+    // a URL or a kiosk path is fetched as given; anything else is an asset of the app,
+    // served (with auth) by the API
     let url: string | undefined = config.path;
-
-    if (this.toolkit && config.id != 'rpm') {
+    if (this.toolkit && !isDirectModelPath(config.path)) {
       url = await this.toolkit.configureLoader('avatars', config.id, loader);
     }
 
@@ -437,8 +442,17 @@ export class AvatarModel {
     } catch (e: any) {
       logger.error(`Failed to load ${url}: ${e.message}`);
       if (fallbackToDefault !== false) {
-        logger.debug(`Loading default model ${DefaultAvatarConfig.path}`);
-        return await this.loadModel(DefaultAvatarConfig, false);
+        logger.warn(`Loading the built-in avatar ${BuiltinAvatarConfig.path}`);
+        const builtin = await this.loadModel(BuiltinAvatarConfig, false);
+        if (builtin) {
+          // frame and rig it as itself, not as the avatar that failed
+          Object.assign(this.config, {
+            modelType: BuiltinAvatarConfig.modelType,
+            camera: BuiltinAvatarConfig.camera,
+            cameraMobile: BuiltinAvatarConfig.cameraMobile,
+          });
+        }
+        return builtin;
       }
     }
 
@@ -448,6 +462,8 @@ export class AvatarModel {
     // handle gltf/glb
     const gltf = model as GLTF;
     if (gltf.parser !== undefined && gltf.scene !== undefined) {
+      // keep the clips the model carries: GLTFLoader puts them beside the scene
+      gltf.scene.animations = gltf.animations;
       return gltf.scene;
     }
 
@@ -571,7 +587,9 @@ export class AvatarModel {
 export const getAvatarDefaultConfig = (
   config?: Partial<AvatarModelConfig>,
 ): AvatarModelConfig => {
-  config = config || ({} as AvatarModelConfig);
+  // no avatar at all: the built-in one (the Ready Player Me defaults below carry an
+  // empty path and would leave nothing to load)
+  config = config || { ...BuiltinAvatarConfig };
   const modelType = config.modelType || 'readyplayerme';
 
   const rpmConfig =

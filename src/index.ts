@@ -15,6 +15,7 @@ import {
   AvatarModel,
   type AvatarModelConfig,
   createWebAvatar,
+  isDirectModelPath,
 } from './avatar/index.js';
 import { DEFAULT_AVATAR_LANGUAGE, DefaultBackground } from './constants.js';
 import { AudioDetection, VideoDetection } from './detection/index.js';
@@ -667,7 +668,8 @@ export class SermasToolkit {
       config = repo[0];
     }
 
-    if (config.path.startsWith('http')) return config.path;
+    // a URL or a path on the kiosk's origin (the built-in avatar) needs no API
+    if (isDirectModelPath(config.path)) return config.path;
 
     loader.setWithCredentials(true);
     loader.setRequestHeader({ Authorization: `Bearer ${this.token}` });

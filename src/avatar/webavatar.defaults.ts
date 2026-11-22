@@ -1,9 +1,21 @@
+import { BuiltinAvatar } from '../constants.js';
 import { type AvatarModelConfig } from './webavatar.dto.js';
+
+/** The built-in avatar (Pip) as a model config: used when a model fails to load. */
+export const BuiltinAvatarConfig: AvatarModelConfig = {
+  ...BuiltinAvatar,
+  id: 'builtin',
+  domId: 'web-avatar',
+};
+
+/** A path the loader fetches as given: a URL, or a path on the kiosk's own origin. */
+export const isDirectModelPath = (path?: string): boolean =>
+  !!path && (/^https?:\/\//.test(path) || path.startsWith('/'));
 
 export const DefaultAvatarConfig: AvatarModelConfig = {
   type: 'avatars',
   id: 'fallback',
-  path: 'https://models.readyplayer.me/654cc759f1a79ed2ebab0207.glb',
+  path: BuiltinAvatar.path,
 
   gender: 'F',
   modelType: 'readyplayerme',
