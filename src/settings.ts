@@ -26,7 +26,8 @@ export class Settings {
   private readonly defaults: AppSettings = {
     login: false,
     avatar: 'default',
-    background: 'backgrounds/default',
+    // the id of the built-in background (DefaultBackground)
+    background: 'default',
     llm: llmDefaults(),
     language: DEFAULT_AVATAR_LANGUAGE,
     // developerMode
