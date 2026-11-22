@@ -47,7 +47,7 @@
     "@mediapipe/tasks-audio": "^1.2.3",
     "@mediapipe/tasks-vision": "^1.2.3",
     "@ricky0123/vad-web": "^0.0.31",
-    "@sermas/api-client": "^2.0.0",
+    "@sermas/api-client": "^2.0.1",
     "@undecaf/zbar-wasm": "^0.11.0",
     "axios": "^1.21.1",
     "buffer": "^6.0.3",
