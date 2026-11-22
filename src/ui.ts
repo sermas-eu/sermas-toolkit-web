@@ -126,8 +126,11 @@ export class UI {
     this.emitter.emit('ui.avatar.speaking', false);
   }
 
+  // speaking from a chunk's start until the speech ends (stopped here, or the queue
+  // drained: onAvatarSpeechCompleted). Not only on progress ticks: that read false at
+  // every chunk start and between chunks, and the barge-in guard reads it.
   onPlaybackChanged(ev: AvatarAudioPlaybackStatus) {
-    this.emitter.emit('ui.avatar.speaking', ev.status === 'playing');
+    this.emitter.emit('ui.avatar.speaking', ev.status !== 'ended');
   }
 
   onUIContent(ev: UIContentDto) {

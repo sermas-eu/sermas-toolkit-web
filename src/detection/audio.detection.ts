@@ -16,15 +16,21 @@ import {
   AudioClassificationValue,
   type SpeechSampleResult,
 } from './audio/audio.detection.dto.js';
+import {
+  type BargeInOptions,
+  BargeInTracker,
+  defaultBargeInOptions,
+} from './audio/barge-in.js';
 import { createAudioClassifier } from './audio/mediapipe/audio.classifier.js';
 import classes from './audio/mediapipe/classes.json' with { type: 'json' };
-import { SpeechStreamer } from './audio/speech-streamer.js';
-import { float32ToInt16Buffer } from './audio/util.js';
 
 // use broker or HTTP api to send audio buffer
 const SEND_VIA_BROKER = true;
-// stream response as frames
-const STREAM_SPEECH = true;
+
+// a barge-in that gets neither STOP nor CONTINUE from the API un-ducks after this
+const BARGE_IN_RESUME_MS = 6000;
+// the avatar's volume while the visitor may be talking over it
+const BARGE_IN_DUCK_LEVEL = 0.2;
 
 const VAD_SAMPLE_RATE = 16000;
 const SPEECH_CLASSIFIER_THRESHOLD = 0.5;
@@ -101,7 +107,12 @@ export class AudioDetection extends EventEmitter2 {
 
   private chunkId?: string;
 
-  private readonly speechStreamer: SpeechStreamer = new SpeechStreamer();
+  private bargeIn = new BargeInTracker();
+  private bargeInTimer?: ReturnType<typeof setTimeout>;
+  private readonly onAgentSpeaking = (speaking: boolean) =>
+    this.setAgentSpeaking(speaking);
+  // top non-speech class of the last classified clip, for the turn log
+  private lastTopClass = '';
 
   // from vad.utils.encodeWAV
   private encodeWAV: (
@@ -147,6 +158,9 @@ export class AudioDetection extends EventEmitter2 {
     if (this.classifier) {
       this.classifier.close();
     }
+    emitter.off('ui.avatar.speaking', this.onAgentSpeaking);
+    this.clearBargeIn();
+
     this.emit('stopped');
     this.removeAllListeners();
 
@@ -155,8 +169,42 @@ export class AudioDetection extends EventEmitter2 {
     this.logger.log('Audio detection stopped');
   }
 
+  /** frame streaming was removed: every turn is sent as one clip */
   isStreamEnabled() {
-    return SEND_VIA_BROKER && STREAM_SPEECH;
+    return false;
+  }
+
+  setBargeInOptions(options: Partial<BargeInOptions> = {}) {
+    this.bargeIn = new BargeInTracker({ ...defaultBargeInOptions, ...options });
+  }
+
+  /** whether the avatar is speaking: segments that overlap it are guarded */
+  setAgentSpeaking(speaking: boolean) {
+    this.bargeIn.setAgentSpeaking(speaking);
+    if (!speaking) this.clearBargeIn();
+  }
+
+  private clearBargeIn() {
+    if (this.bargeInTimer) clearTimeout(this.bargeInTimer);
+    this.bargeInTimer = undefined;
+  }
+
+  /**
+   * The visitor talks over the avatar: lower its voice (not pause: if this is echo or
+   * noise it carries on), until the API answers STOP (an accepted turn) or CONTINUE
+   * (a dropped one), or the timeout passes.
+   */
+  private onBargeIn() {
+    this.logger.debug('Barge-in: visitor talking over the avatar, ducking');
+    this.emit('barge-in');
+    const handler = this.toolkit?.getAvatar()?.getHandler();
+    handler?.duckSpeech(BARGE_IN_DUCK_LEVEL);
+    this.clearBargeIn();
+    this.bargeInTimer = setTimeout(() => {
+      this.bargeInTimer = undefined;
+      this.logger.debug('Barge-in: no STOP/CONTINUE, restoring the avatar');
+      handler?.unduckSpeech();
+    }, BARGE_IN_RESUME_MS);
   }
 
   setVADParams(params: Record<string, any> = {}) {
@@ -232,38 +280,59 @@ export class AudioDetection extends EventEmitter2 {
     return ok;
   }
 
-  private async onSpeech(op: 'started' | 'stopped', audio?: Float32Array) {
-    // notify toolkit
-    emitter.emit('detection.audio', op);
+  private onSpeechStart() {
+    this.resetSpeechSamples(true);
+    // the turn's id: its clip is sent under it when the segment ends
+    this.resetChunkId();
+    this.bargeIn.startSegment();
+    emitter.emit('detection.audio', 'started');
+  }
 
-    // audio is available only on 'stopped'
-    if (!audio) return;
-
+  private onSpeechMisfire() {
     this.resetSpeechSamples();
-    const isSpeech = await this.classify(audio);
+    this.bargeIn.endSegment();
+    emitter.emit('detection.audio', 'stopped');
+  }
 
-    this.logger.debug(`Audio ${isSpeech ? ' ' : 'NOT '}classify as speech`);
+  private async onSpeechEnd(audio: Float32Array) {
+    this.resetSpeechSamples();
+    const verdict = this.bargeIn.endSegment();
+    emitter.emit('detection.audio', 'stopped');
+
+    const turn = describeClip(audio);
+
+    if (verdict === 'discard') {
+      // overlapped the avatar without the sustained speech of a real barge-in: its
+      // own voice coming back, or noise
+      this.logger.log(`turn discarded (avatar speaking) ${turn}`);
+      emitter.emit('detection.speech', { speech: false });
+      return;
+    }
+
+    const isSpeech = !!(await this.classify(audio));
     emitter.emit('detection.speech', { speech: isSpeech });
 
-    if (isSpeech) {
-      this.logger.debug(`Speech detected`);
-      await this.speechDetected(audio);
-    } else {
-      if (this.isStreamEnabled()) {
-        // explicitly release buffer backend side
-        await this.sendStreamCompletion(false);
+    if (!isSpeech) {
+      this.logger.log(
+        `turn discarded (not speech, top=${this.lastTopClass || '-'}) ${turn}`,
+      );
+      // a barge-in that turned out not to be speech: restore the avatar now
+      if (verdict === 'barge-in') {
+        this.clearBargeIn();
+        this.toolkit?.getAvatar()?.getHandler()?.unduckSpeech();
       }
+      return;
     }
+
+    this.logger.log(`turn sent (${verdict}) ${turn} chunkId=${this.chunkId}`);
+    await this.speechDetected(audio);
   }
 
   private onFrameProcessed(probs: SpeechProbabilities, frame: Float32Array) {
-    // send stream frame
-    if (this.isStreamEnabled()) {
-      const frames = this.speechStreamer.onFrame(probs, frame);
-      for (const f of frames) {
-        this.sendStreamFrame(f);
-      }
-    }
+    const frameMs = (frame.length / VAD_SAMPLE_RATE) * 1000;
+    if (this.bargeIn.onFrame(probs.isSpeech, frameMs)) this.onBargeIn();
+    // likely the avatar's own voice: no "visitor speaking" feedback yet
+    if (this.bargeIn.isGuarding()) return;
 
     // notify toolkit that user speech may be ongoing
     const valid = this.evaluateSpeechProbability(probs);
@@ -369,24 +438,20 @@ export class AudioDetection extends EventEmitter2 {
           return s;
         },
         onSpeechEnd: (audio: Float32Array) => {
-          this.resetSpeechSamples();
-          this.onSpeech('stopped', audio);
+          void this.onSpeechEnd(audio);
         },
-        onSpeechStart: () => {
-          this.resetSpeechSamples(true);
-          this.resetChunkId();
-          this.onSpeech('started');
-        },
+        onSpeechStart: () => this.onSpeechStart(),
+        onVADMisfire: () => this.onSpeechMisfire(),
         onFrameProcessed: (probs: SpeechProbabilities, frame: Float32Array) => {
           this.onFrameProcessed(probs, frame);
         },
-        // onVADMisfire: () => {
-        // console.warn('MISFIRE');
-        // },
       });
 
       // enable stream track(s)
       micStream.getTracks().forEach((t) => (t.enabled = true));
+
+      emitter.off('ui.avatar.speaking', this.onAgentSpeaking);
+      emitter.on('ui.avatar.speaking', this.onAgentSpeaking);
 
       await this.vad.start();
 
@@ -406,6 +471,12 @@ export class AudioDetection extends EventEmitter2 {
 
   async classify(audio: Float32Array, sampleRate?: number) {
     if (!audio || !audio.length) return;
+    // no classifier (it failed to load): let the API's checks judge the clip,
+    // rather than drop every turn
+    if (!this.classifier) {
+      this.lastTopClass = '';
+      return true;
+    }
 
     let matchSpeech = false;
     const results =
@@ -416,10 +487,14 @@ export class AudioDetection extends EventEmitter2 {
 
     const classesMaps: Record<string, number> = {};
 
+    let top = { name: '', score: 0 };
+
     results.forEach((r) => {
       r.classifications.forEach((cs) => {
         cs.categories.forEach((c) => {
           const humanClasses: any = classes.human;
+          if (c.score > top.score)
+            top = { name: c.categoryName, score: c.score };
 
           // skip classes
           if (AUDIO_CLASSIFICATION_SKIP_CLASSES.includes(c.categoryName)) {
@@ -462,6 +537,8 @@ export class AudioDetection extends EventEmitter2 {
         });
       });
     });
+
+    this.lastTopClass = top.name ? `${top.name}:${top.score.toFixed(2)}` : '';
 
     if (classMatches.length)
       this.logger.debug(`Matches: ${classMatches.join('; ')}`);
@@ -563,11 +640,6 @@ export class AudioDetection extends EventEmitter2 {
     const ev = { op: 'stopped', audio, wav };
     this.emit('speech', ev);
 
-    if (this.isStreamEnabled()) {
-      await this.sendStreamCompletion(true);
-      return;
-    }
-
     await this.sendSpeechAudio('wav', ev.wav);
   }
 
@@ -590,16 +662,19 @@ export class AudioDetection extends EventEmitter2 {
       return;
     }
 
-    this.pause();
+    // the id given to this turn when the visitor started speaking
+    const chunkId = this.getChunkId();
 
-    this.logger.log(`Sending speech chunk type=${type}`);
+    this.logger.log(`Sending speech chunk type=${type} chunkId=${chunkId}`);
 
+    // the microphone stays live: pausing the VAD here reset it and dropped whatever
+    // the visitor said next
     try {
       if (SEND_VIA_BROKER) {
         this.toolkit
           .getBroker()
           .publish(
-            `dialogue/user-speech/${this.toolkit.getSessionId()}/${getChunkId()}`,
+            `dialogue/user-speech/${this.toolkit.getSessionId()}/${chunkId}`,
             Buffer.from(new Uint8Array(audio)),
             false,
           );
@@ -612,7 +687,7 @@ export class AudioDetection extends EventEmitter2 {
           actor: 'user',
           language: this.toolkit.getAppLanguage(),
           messageId: getMessageId(),
-          chunkId: getChunkId(),
+          chunkId,
           text: '',
           sessionId: this.toolkit.getSessionId(),
           userId: this.toolkit.getUserId(),
@@ -639,64 +714,16 @@ export class AudioDetection extends EventEmitter2 {
       this.logger.debug(`Audio clip sent`);
     } catch (err: any) {
       this.logger.error(`Failed to send clip: ${err.stack}`);
-    } finally {
-      this.restore();
     }
   }
-
-  async sendStreamFrame(frame: Float32Array) {
-    if (!this.toolkit) return;
-
-    const sessionId = this.toolkit?.getSessionId();
-    if (!sessionId) return;
-
-    const chunkId = this.getChunkId();
-
-    this.logger.verbose(`Send frame chunkId=${chunkId}`);
-
-    const buffer = float32ToInt16Buffer(frame);
-
-    this.sendStream({
-      chunkId,
-      sessionId,
-      frame: buffer,
-    });
-  }
-
-  async sendStreamCompletion(isSpeech: boolean) {
-    if (!this.toolkit) return;
-
-    const sessionId = this.toolkit?.getSessionId();
-    if (!sessionId) return;
-
-    const chunkId = this.getChunkId();
-
-    this.logger.verbose(`Send stream completion chunkId=${chunkId}`);
-
-    this.sendStream({
-      sessionId,
-      chunkId,
-      data: {
-        isSpeech,
-      },
-    });
-  }
-
-  private sendStream(data: {
-    chunkId: string;
-    sessionId: string;
-    frame?: Buffer;
-    data?: { isSpeech: boolean };
-  }) {
-    if (!this.toolkit) return;
-
-    this.toolkit
-      .getBroker()
-      .publish(
-        `dialogue/user-speech/stream/${data.sessionId}/${data.chunkId}`,
-        data.frame ? data.frame : data.data,
-        data.frame ? false : true,
-        2,
-      );
-  }
 }
+
+/** duration and level of a clip, for the per-turn log */
+export const describeClip = (audio: Float32Array): string => {
+  const durationMs = Math.round((audio.length / VAD_SAMPLE_RATE) * 1000);
+  let sum = 0;
+  for (let i = 0; i < audio.length; i++) sum += audio[i] * audio[i];
+  const rms = audio.length ? Math.sqrt(sum / audio.length) : 0;
+  const dbfs = rms > 0 ? (20 * Math.log10(rms)).toFixed(1) : '-inf';
+  return `duration=${durationMs}ms level=${dbfs}dBFS`;
+};

@@ -98,6 +98,15 @@ export class WebAvatarHandler {
     await this.player?.resume();
   }
 
+  /** lower the avatar's voice while the visitor may be talking over it */
+  duckSpeech(level: number) {
+    this.player?.duck(level);
+  }
+
+  unduckSpeech() {
+    this.player?.unduck();
+  }
+
   async stopSpeech(ev?: { chunkId?: string; messageId?: string }) {
     ev = ev || { chunkId: undefined, messageId: undefined };
 
@@ -131,6 +140,8 @@ export class WebAvatarHandler {
   async onAvatarSpeechContinue(ev: DialogueAvatarSpeechControlDto) {
     if (ev.sessionId !== this.avatar.getToolkit()?.getSessionId()) return;
     logger.debug('Received speech CONTINUE');
+    // the turn that interrupted was dropped: carry on at full volume
+    this.unduckSpeech();
     await this.resumeSpeech();
   }
 
@@ -252,7 +263,8 @@ export class WebAvatarHandler {
     // remove messageId references older than this messageId
     this.clearanceQueue = this.clearanceQueue.filter((q) => q > messageId);
 
-    if (this.player?.isPlaying()) {
+    // playing, paused or ducked: the chunk waits its turn
+    if (this.isPlaying || this.player?.isBusy()) {
       logger.debug(`player: avatar already speaking`);
       return;
     }
@@ -339,12 +351,14 @@ export class WebAvatarHandler {
         this.lipsync?.updateViseme(ev.volume);
         break;
       case 'paused':
+        // still holding its chunk: the queue waits for resume or stop
+        this.lipsync?.reset();
+        break;
       case 'stopped':
       case 'completed':
         this.lipsync?.reset();
 
         this.isPlaying = false;
-        // this.stopSpeech(ev);
 
         if (ev.playback === 'completed') {
           if (this.audioQueue.length) {
@@ -410,7 +424,7 @@ export class WebAvatarHandler {
     this.clearanceQueue = [];
 
     await this.lipsync?.reset();
-    await this.player?.stop();
+    await this.player?.close();
     await this.subtitles?.destroy();
   }
 }
