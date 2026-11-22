@@ -15,7 +15,8 @@ export const UI_INTERACTION_TOPIC = 'ui/interaction';
  * The built-in avatar: Pip, a small robot (Apache-2.0, sermas-eu/sermas-avatar-pip),
  * served by the kiosk at /avatars/pip.glb. A path starting with "/" is loaded from the
  * kiosk's own origin. Its rig answers to the Ready Player Me bone names, hence modelType;
- * the cameras are framed for it. The API's RepositoryAvatarDefault mirrors this entry.
+ * the cameras are framed for it: landscape puts Pip in the left half of the screen (x 0.62,
+ * centred there at 16:9), portrait keeps it centred. The API's RepositoryAvatarDefault mirrors this entry.
  */
 export const BuiltinAvatar: RepositoryAvatarDto = {
   id: 'default',
@@ -25,7 +26,7 @@ export const BuiltinAvatar: RepositoryAvatarDto = {
   gender: 'F',
   modelType: 'readyplayerme',
   camera: {
-    position: { x: -0.0001, y: 0.278, z: 1.664 },
+    position: { x: 0.62, y: 0.278, z: 1.664 },
     rotation: { x: -0.1235, y: 0, z: 0 },
   },
   cameraMobile: {
